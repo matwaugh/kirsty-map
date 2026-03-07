@@ -149,20 +149,6 @@
       `;
     }
 
-    async function geocode(location) {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(location)}`;
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      const data = await response.json();
-      if (data && data.length > 0) {
-        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-      }
-      return null;
-    }
-
     async function loadMapData() {
       try {
         const response = await fetch(sheetUrl);
@@ -170,11 +156,12 @@
         const bounds = [];
 
         for (const row of rows) {
-          if (!row.Location) continue;
+          const lat = parseFloat(row.Lat);
+          const lng = parseFloat(row.Lng);
 
-          const coords = await geocode(row.Location);
-          if (!coords) continue;
+          if (isNaN(lat) || isNaN(lng)) continue;
 
+          const coords = [lat, lng];
           const layerName = (row.Layer || '').trim().toLowerCase();
           const markerColor = layerName === 'kirsties' ? '#d63384' : '#198754';
 
