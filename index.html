@@ -42,6 +42,16 @@ margin:0 0 6px 0;
 font-size:14px;
 }
 
+/* recolour star */
+.star-icon{
+filter: hue-rotate(290deg) saturate(5);
+}
+
+/* recolour heart */
+.heart-icon{
+filter: hue-rotate(80deg) saturate(4);
+}
+
 </style>
 </head>
 
@@ -67,27 +77,21 @@ L.tileLayer(
 
 /* ICONS */
 
-const starSVG =
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#EB068C">
-<path d="M12 2l2.9 6.9 7.4.6-5.6 4.8 1.7 7.3L12 17.8 5.6 21.6l1.7-7.3-5.6-4.8 7.4-.6z"/>
-</svg>`;
-
-const heartSVG =
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#E00000">
-<path d="M12 21s-7-4.5-9.5-8C.5 10 2.5 6 6 6c2 0 3.2 1 4 2 0 0 1.2-2 4-2 3.5 0 5.5 4 3.5 7-2.5 3.5-9.5 8-9.5 8z"/>
-</svg>`;
-
-function svgIcon(svg){
-return L.icon({
-iconUrl:"data:image/svg+xml;base64," + btoa(svg),
+const starIcon = L.divIcon({
+className:'',
+html:'<img class="star-icon" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2b50.png" width="32">',
 iconSize:[32,32],
 iconAnchor:[16,32],
 popupAnchor:[0,-30]
 });
-}
 
-const kirstyIcon = svgIcon(starSVG);
-const supporterIcon = svgIcon(heartSVG);
+const heartIcon = L.divIcon({
+className:'',
+html:'<img class="heart-icon" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2764.png" width="32">',
+iconSize:[32,32],
+iconAnchor:[16,32],
+popupAnchor:[0,-30]
+});
 
 
 
@@ -155,11 +159,11 @@ const layer=(row.Layer||'').trim().toLowerCase();
 let marker;
 
 if(layer==="kirsties"){
-marker=L.marker([lat,lng],{icon:kirstyIcon});
+marker=L.marker([lat,lng],{icon:starIcon});
 marker.addTo(kirstiesLayer);
 }
 else{
-marker=L.marker([lat,lng],{icon:supporterIcon});
+marker=L.marker([lat,lng],{icon:heartIcon});
 marker.addTo(supportersLayer);
 }
 
