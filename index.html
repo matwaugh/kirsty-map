@@ -176,8 +176,8 @@ function buildPopup(row) {
   const description = escapeHtml(row.Description || '');
   let image = row.Image || '';
 
-  if (image) {
-    image = "https://res.cloudinary.com/dokkdedmu/image/fetch/w_600,f_auto,q_auto/" + encodeURIComponent(image);
+  if (image && image.includes('res.cloudinary.com')) {
+    image = image.replace('/image/upload/', '/image/upload/w_600,f_auto,q_auto/');
   }
 
   return `
