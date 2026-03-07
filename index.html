@@ -1,187 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kirsty Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kirsty Map</title>
 
-<link rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 
-<style>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
 
-html,body{
-margin:0;
-padding:0;
-height:100%;
-font-family:Arial,sans-serif;
-}
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
 
-#map{
-width:100%;
-height:100vh;
-}
+    .popup {
+      max-width: 260px;
+    }
 
-.popup{
-max-width:260px;
-}
+    .popup img {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 0 10px 0;
+      border-radius: 8px;
+    }
 
-.popup img{
-width:100%;
-border-radius:8px;
-margin-bottom:8px;
-}
+    .popup h3 {
+      margin: 0 0 6px 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
 
-.popup h3{
-margin:0 0 6px 0;
-font-size:18px;
-}
+    .popup p {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
 
-.popup p{
-margin:0 0 6px 0;
-font-size:14px;
-}
-
-/* recolour star */
-.star-icon{
-filter: hue-rotate(290deg) saturate(5);
-}
-
-/* recolour heart */
-.heart-icon{
-filter: hue-rotate(80deg) saturate(4);
-}
-
-</style>
+    .leaflet-control-layers-expanded {
+      font-size: 14px;
+    }
+  </style>
 </head>
-
 <body>
+  <div id="map"></div>
 
-<div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const sheetUrl = "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
 
-<script>
+    const map = L.map('map').setView([54.5, -3], 5);
 
-const sheetUrl =
-"https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-const map = L.map('map').setView([54.5,-3],5);
+    const kirstiesLayer = L.layerGroup().addTo(map);
+    const supportersLayer = L.layerGroup().addTo(map);
 
-L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-{ attribution:'© OpenStreetMap contributors'}
-).addTo(map);
+    L.control.layers(null, {
+      "Kirsties": kirstiesLayer,
+      "Supporters": supportersLayer
+    }, { collapsed: false }).addTo(map);
 
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
+    function buildPopup(row) {
+      const name = escapeHtml(row.Name || '');
+      const location = escapeHtml(row.Location || '');
+      const description = escapeHtml(row.Description || '');
+      const image = row.Image || '';
 
-/* ICONS */
+      return `
+        <div class="popup">
+          ${image ? `<img src="${image}" alt="${name}" loading="lazy">` : ''}
+          <h3>${name}</h3>
+          ${location ? `<p><strong>${location}</strong></p>` : ''}
+          ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
+        </div>
+      `;
+    }
 
-const starIcon = L.divIcon({
-className:'',
-html:'<img class="star-icon" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2b50.png" width="32">',
-iconSize:[32,32],
-iconAnchor:[16,32],
-popupAnchor:[0,-30]
-});
+    function svgToDataUrl(svg) {
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
 
-const heartIcon = L.divIcon({
-className:'',
-html:'<img class="heart-icon" src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2764.png" width="32">',
-iconSize:[32,32],
-iconAnchor:[16,32],
-popupAnchor:[0,-30]
-});
+    const starSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 72 72">
+        <defs>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.18"/>
+          </filter>
+        </defs>
+        <g filter="url(#shadow)">
+          <path d="M36 8l7.2 14.6 16.1 2.3-11.7 11.4 2.8 16L36 44.9 21.6 52.3l2.8-16L12.7 24.9l16.1-2.3L36 8z"
+                fill="#EB068C" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    `;
 
+    const heartSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 72 72">
+        <defs>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.18"/>
+          </filter>
+        </defs>
+        <g filter="url(#shadow)">
+          <path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
+                fill="#ADEBB3" stroke="#ffffff" stroke-width="3" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    `;
 
+    const kirstyIcon = L.icon({
+      iconUrl: svgToDataUrl(starSvg),
+      iconSize: [36, 36],
+      iconAnchor: [18, 30],
+      popupAnchor: [0, -28]
+    });
 
-const kirstiesLayer = L.layerGroup().addTo(map);
-const supportersLayer = L.layerGroup().addTo(map);
+    const supporterIcon = L.icon({
+      iconUrl: svgToDataUrl(heartSvg),
+      iconSize: [36, 36],
+      iconAnchor: [18, 30],
+      popupAnchor: [0, -28]
+    });
 
-L.control.layers(
-null,
-{
-"Kirsties":kirstiesLayer,
-"Supporters":supportersLayer
-},
-{collapsed:false}
-).addTo(map);
+    async function loadMapData() {
+      try {
+        const response = await fetch(sheetUrl);
+        const rows = await response.json();
+        const bounds = [];
 
+        for (const row of rows) {
+          const lat = parseFloat(row.Lat);
+          const lng = parseFloat(row.Lng);
 
+          if (isNaN(lat) || isNaN(lng)) continue;
 
-function escapeHtml(str){
-return String(str||'')
-.replace(/&/g,'&amp;')
-.replace(/</g,'&lt;')
-.replace(/>/g,'&gt;')
-.replace(/"/g,'&quot;')
-.replace(/'/g,'&#39;');
-}
+          const layer = (row.Layer || '').trim().toLowerCase();
+          const coords = [lat, lng];
 
+          let marker;
+          if (layer === 'kirsties') {
+            marker = L.marker(coords, { icon: kirstyIcon }).addTo(kirstiesLayer);
+          } else {
+            marker = L.marker(coords, { icon: supporterIcon }).addTo(supportersLayer);
+          }
 
+          marker.bindPopup(buildPopup(row));
+          bounds.push(coords);
+        }
 
-function buildPopup(row){
+        if (bounds.length) {
+          map.fitBounds(bounds, { padding: [30, 30] });
+        }
+      } catch (error) {
+        console.error('Error loading map data:', error);
+      }
+    }
 
-const name=escapeHtml(row.Name||'');
-const location=escapeHtml(row.Location||'');
-const description=escapeHtml(row.Description||'');
-const image=row.Image||'';
-
-return `
-<div class="popup">
-${image?`<img src="${image}">`:''}
-<h3>${name}</h3>
-${location?`<p><b>${location}</b></p>`:''}
-${description?`<p>${description.replace(/\n/g,'<br>')}</p>`:''}
-</div>
-`;
-
-}
-
-
-
-async function loadMapData(){
-
-const response = await fetch(sheetUrl);
-const rows = await response.json();
-
-const bounds=[];
-
-for(const row of rows){
-
-const lat=parseFloat(row.Lat);
-const lng=parseFloat(row.Lng);
-
-if(isNaN(lat)||isNaN(lng)) continue;
-
-const layer=(row.Layer||'').trim().toLowerCase();
-
-let marker;
-
-if(layer==="kirsties"){
-marker=L.marker([lat,lng],{icon:starIcon});
-marker.addTo(kirstiesLayer);
-}
-else{
-marker=L.marker([lat,lng],{icon:heartIcon});
-marker.addTo(supportersLayer);
-}
-
-marker.bindPopup(buildPopup(row));
-
-bounds.push([lat,lng]);
-
-}
-
-if(bounds.length){
-map.fitBounds(bounds,{padding:[30,30]});
-}
-
-}
-
-loadMapData();
-
-</script>
-
+    loadMapData();
+  </script>
 </body>
 </html>
