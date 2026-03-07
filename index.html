@@ -1,197 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kirsty Map</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kirsty Map</title>
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
-    }
+<style>
 
-    #map {
-      width: 100%;
-      height: 100vh;
-    }
+html,body{
+margin:0;
+padding:0;
+height:100%;
+font-family:Arial,sans-serif;
+}
 
-    .popup {
-      max-width: 260px;
-    }
+#map{
+width:100%;
+height:100vh;
+}
 
-    .popup img {
-      width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 0 10px 0;
-      border-radius: 8px;
-    }
+.popup{
+max-width:260px;
+}
 
-    .popup h3 {
-      margin: 0 0 6px 0;
-      font-size: 18px;
-      line-height: 1.2;
-    }
+.popup img{
+width:100%;
+border-radius:8px;
+margin-bottom:8px;
+}
 
-    .popup p {
-      margin: 0 0 6px 0;
-      font-size: 14px;
-      line-height: 1.4;
-    }
+.popup h3{
+margin:0 0 6px 0;
+font-size:18px;
+}
 
-    .popup .location {
-      font-weight: bold;
-    }
+.popup p{
+margin:0 0 6px 0;
+font-size:14px;
+}
 
-    .legend {
-      background: white;
-      padding: 10px 12px;
-      border-radius: 8px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
-      line-height: 1.5;
-      font-size: 14px;
-    }
+.legend{
+background:white;
+padding:10px 12px;
+border-radius:8px;
+box-shadow:0 1px 5px rgba(0,0,0,0.2);
+font-size:14px;
+}
 
-    .legend div {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 4px 0;
-    }
+.legend div{
+display:flex;
+align-items:center;
+gap:8px;
+margin:4px 0;
+}
 
-    .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .dot.kirsties {
-      background: #d63384;
-    }
-
-    .dot.supporters {
-      background: #198754;
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <div id="map"></div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
+<div id="map"></div>
 
-  <script>
-    const sheetUrl = "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    const map = L.map('map').setView([54.5, -3], 5);
+<script>
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+const sheetUrl =
+"https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
 
-    const kirstiesLayer = L.layerGroup().addTo(map);
-    const supportersLayer = L.layerGroup().addTo(map);
+const map = L.map('map').setView([54.5,-3],5);
 
-    const overlays = {
-      "Kirsties": kirstiesLayer,
-      "Supporters": supportersLayer
-    };
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{ attribution:'© OpenStreetMap contributors'}
+).addTo(map);
 
-    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-    const legend = L.control({ position: 'bottomright' });
-    legend.onAdd = function () {
-      const div = L.DomUtil.create('div', 'legend');
-      div.innerHTML = `
-        <div><span class="dot kirsties"></span> Kirsties</div>
-        <div><span class="dot supporters"></span> Supporters</div>
-      `;
-      return div;
-    };
-    legend.addTo(map);
 
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+/* ICONS */
 
-    function buildPopup(row) {
-      const name = escapeHtml(row.Name || '');
-      const location = escapeHtml(row.Location || '');
-      const description = escapeHtml(row.Description || '');
-      const image = row.Image || '';
+const kirstyIcon = L.icon({
+iconUrl:'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/2b50.png',
+iconSize:[28,28],
+iconAnchor:[14,28],
+popupAnchor:[0,-28]
+});
 
-      return `
-        <div class="popup">
-          ${image ? `<img src="${image}" alt="${name}">` : ''}
-          <h3>${name}</h3>
-          ${location ? `<p class="location">${location}</p>` : ''}
-          ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
-        </div>
-      `;
-    }
+const supporterIcon = L.icon({
+iconUrl:'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f499.png',
+iconSize:[28,28],
+iconAnchor:[14,28],
+popupAnchor:[0,-28]
+});
 
-    async function loadMapData() {
-      try {
-        const response = await fetch(sheetUrl);
-        const rows = await response.json();
-        const bounds = [];
 
-        for (const row of rows) {
-          const lat = parseFloat(row.Lat);
-          const lng = parseFloat(row.Lng);
 
-          if (isNaN(lat) || isNaN(lng)) continue;
+const kirstiesLayer = L.layerGroup().addTo(map);
+const supportersLayer = L.layerGroup().addTo(map);
 
-          const coords = [lat, lng];
-          const layerName = (row.Layer || '').trim().toLowerCase();
-          const markerColor = layerName === 'kirsties' ? '#d63384' : '#198754';
+L.control.layers(
+null,
+{
+"Kirsties":kirstiesLayer,
+"Supporters":supportersLayer
+},
+{collapsed:false}
+).addTo(map);
 
-          const marker = L.circleMarker(coords, {
-            radius: 8,
-            fillColor: markerColor,
-            color: '#ffffff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.9
-          }).bindPopup(buildPopup(row));
 
-          if (layerName === 'kirsties') {
-            marker.addTo(kirstiesLayer);
-          } else {
-            marker.addTo(supportersLayer);
-          }
 
-          bounds.push(coords);
-        }
+function escapeHtml(str){
+return String(str||'')
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;')
+.replace(/"/g,'&quot;')
+.replace(/'/g,'&#39;');
+}
 
-        if (bounds.length) {
-          map.fitBounds(bounds, { padding: [30, 30] });
-        }
-      } catch (error) {
-        console.error('Error loading map data:', error);
-      }
-    }
 
-    loadMapData();
-  </script>
+
+function buildPopup(row){
+
+const name=escapeHtml(row.Name||'');
+const location=escapeHtml(row.Location||'');
+const description=escapeHtml(row.Description||'');
+const image=row.Image||'';
+
+return `
+<div class="popup">
+${image?`<img src="${image}">`:''}
+<h3>${name}</h3>
+${location?`<p><b>${location}</b></p>`:''}
+${description?`<p>${description.replace(/\n/g,'<br>')}</p>`:''}
+</div>
+`;
+
+}
+
+
+
+async function loadMapData(){
+
+const response = await fetch(sheetUrl);
+const rows = await response.json();
+
+const bounds=[];
+
+for(const row of rows){
+
+const lat=parseFloat(row.Lat);
+const lng=parseFloat(row.Lng);
+
+if(isNaN(lat)||isNaN(lng)) continue;
+
+const layer=(row.Layer||'').trim().toLowerCase();
+
+let marker;
+
+if(layer==="kirsties"){
+marker=L.marker([lat,lng],{icon:kirstyIcon});
+marker.addTo(kirstiesLayer);
+}
+else{
+marker=L.marker([lat,lng],{icon:supporterIcon});
+marker.addTo(supportersLayer);
+}
+
+marker.bindPopup(buildPopup(row));
+
+bounds.push([lat,lng]);
+
+}
+
+if(bounds.length){
+map.fitBounds(bounds,{padding:[30,30]});
+}
+
+}
+
+loadMapData();
+
+</script>
+
 </body>
 </html>
