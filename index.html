@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kirsty Map</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    #map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    .popup {
+      max-width: 260px;
+    }
+
+    .popup img {
+      width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 0 10px 0;
+      border-radius: 8px;
+    }
+
+    .popup h3 {
+      margin: 0 0 6px 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .popup p {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .popup .location {
+      font-weight: bold;
+    }
+
+    .legend {
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .legend div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot.kirsties {
+      background: #d63384;
+    }
+
+    .dot.supporters {
+      background: #198754;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script>
+    const sheetUrl = "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
+
+    const map = L.map('map').setView([54.5, -3], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const kirstiesLayer = L.layerGroup().addTo(map);
+    const supportersLayer = L.layerGroup().addTo(map);
+
+    const overlays = {
+      "Kirsties": kirstiesLayer,
+      "Supporters": supportersLayer
+    };
+
+    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = `
+        <div><span class="dot kirsties"></span> Kirsties</div>
+        <div><span class="dot supporters"></span> Supporters</div>
+      `;
+      return div;
+    };
+    legend.addTo(map);
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function buildPopup(row) {
+      const name = escapeHtml(row.Name || '');
+      const location = escapeHtml(row.Location || '');
+      const description = escapeHtml(row.Description || '');
+      const image = row.Image || '';
+
+      return `
+        <div class="popup">
+          ${image ? `<img src="${image}" alt="${name}">` : ''}
+          <h3>${name}</h3>
+          ${location ? `<p class="location">${location}</p>` : ''}
+          ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
+        </div>
+      `;
+    }
+
+    async function geocode(location) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(location)}`;
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      }
+      return null;
+    }
+
+    async function loadMapData() {
+      try {
+        const response = await fetch(sheetUrl);
+        const rows = await response.json();
+        const bounds = [];
+
+        for (const row of rows) {
+          if (!row.Location) continue;
+
+          const coords = await geocode(row.Location);
+          if (!coords) continue;
+
+          const layerName = (row.Layer || '').trim().toLowerCase();
+          const markerColor = layerName === 'kirsties' ? '#d63384' : '#198754';
+
+          const marker = L.circleMarker(coords, {
+            radius: 8,
+            fillColor: markerColor,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+          }).bindPopup(buildPopup(row));
+
+          if (layerName === 'kirsties') {
+            marker.addTo(kirstiesLayer);
+          } else {
+            marker.addTo(supportersLayer);
+          }
+
+          bounds.push(coords);
+        }
+
+        if (bounds.length) {
+          map.fitBounds(bounds, { padding: [30, 30] });
+        }
+      } catch (error) {
+        console.error('Error loading map data:', error);
+      }
+    }
+
+    loadMapData();
+  </script>
+</body>
+</html>
