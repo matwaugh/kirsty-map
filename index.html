@@ -170,22 +170,24 @@ return String(str||'')
 
 
 
-function buildPopup(row){
+function buildPopup(row) {
+  const name = escapeHtml(row.Name || '');
+  const location = escapeHtml(row.Location || '');
+  const description = escapeHtml(row.Description || '');
+  let image = row.Image || '';
 
-const name=escapeHtml(row.Name||'');
-const location=escapeHtml(row.Location||'');
-const description=escapeHtml(row.Description||'');
-const image=row.Image||'';
+  if (image) {
+    image = "https://res.cloudinary.com/dokkdedmu/image/fetch/w_600,f_auto,q_auto/" + encodeURIComponent(image);
+  }
 
-return `
-<div class="popup">
-${image?`<img src="${image}" loading="lazy">`:''}
-<h3>${name}</h3>
-${location?`<p><b>${location}</b></p>`:''}
-${description?`<p>${description.replace(/\n/g,'<br>')}</p>`:''}
-</div>
-`;
-
+  return `
+    <div class="popup">
+      ${image ? `<img src="${image}" alt="${name}" loading="lazy">` : ''}
+      <h3>${name}</h3>
+      ${location ? `<p><strong>${location}</strong></p>` : ''}
+      ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
+    </div>
+  `;
 }
 
 
