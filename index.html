@@ -189,6 +189,18 @@ function buildPopup(row) {
   `;
 }
 
+function getOffsetCoords(lat, lng, index, total) {
+  if (total <= 1) return [lat, lng];
+
+  const angle = (2 * Math.PI * index) / total;
+  const radius = 0.012;
+
+  const latOffset = Math.sin(angle) * radius;
+  const lngOffset = Math.cos(angle) * radius / Math.max(Math.cos(lat * Math.PI / 180), 0.2);
+
+  return [lat + latOffset, lng + lngOffset];
+}
+
 async function loadMapData() {
   try {
     const response = await fetch(sheetUrl);
@@ -198,26 +210,45 @@ async function loadMapData() {
     kirstiesLayer.clearLayers();
     supportersLayer.clearLayers();
 
+    const groupedByCoords = {};
+
     for (const row of rows) {
       const lat = parseFloat(row.Lat);
       const lng = parseFloat(row.Lng);
 
       if (isNaN(lat) || isNaN(lng)) continue;
 
-      const layer = (row.Layer || '').trim().toLowerCase();
-      const coords = [lat, lng];
+      const key = `${lat.toFixed(6)},${lng.toFixed(6)}`;
 
-      let marker;
-      if (layer === 'kirsties') {
-        marker = L.marker(coords, { icon: kirstyIcon });
-        kirstiesLayer.addLayer(marker);
-      } else {
-        marker = L.marker(coords, { icon: supporterIcon });
-        supportersLayer.addLayer(marker);
+      if (!groupedByCoords[key]) {
+        groupedByCoords[key] = [];
       }
 
-      marker.bindPopup(buildPopup(row));
-      bounds.push(coords);
+      groupedByCoords[key].push(row);
+    }
+
+    for (const key of Object.keys(groupedByCoords)) {
+      const group = groupedByCoords[key];
+      const baseLat = parseFloat(group[0].Lat);
+      const baseLng = parseFloat(group[0].Lng);
+
+      for (let i = 0; i < group.length; i++) {
+        const row = group[i];
+        const layer = (row.Layer || '').trim().toLowerCase();
+        const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
+
+        let marker;
+        if (layer === 'kirsties') {
+          marker = L.marker(coords, { icon: kirstyIcon });
+          kirstiesLayer.addLayer(marker);
+        } else {
+          marker = L.marker(coords, { icon: supporterIcon });
+          supportersLayer.addLayer(marker);
+        }
+
+        marker.bindPopup(buildPopup(row));
+        bounds.push(coords);
+      }
     }
 
     if (bounds.length) {
