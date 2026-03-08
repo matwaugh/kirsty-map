@@ -42,27 +42,72 @@ html,body{
   font-size:14px;
 }
 
-/* legend */
+/* search */
 
-.legend{
+.search-box{
   background:white;
-  padding:10px 12px;
+  padding:10px;
   border-radius:8px;
   box-shadow:0 1px 5px rgba(0,0,0,0.2);
-  font-size:14px;
-  line-height:1.5;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:240px;
 }
 
-.legend-row{
+.search-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.search-box input{
+  flex:1;
+  min-width:0;
+  padding:8px 10px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  font-size:14px;
+}
+
+.search-box button{
+  padding:8px 10px;
+  border:1px solid #ccc;
+  background:#fff;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.search-box button:hover{
+  background:#f5f5f5;
+}
+
+.search-status{
+  font-size:12px;
+  color:#666;
+  min-height:16px;
+}
+
+/* layer labels with icons */
+
+.layer-label{
   display:flex;
   align-items:center;
   gap:8px;
-  margin:4px 0;
 }
 
-.legend svg{
-  width:22px;
-  height:22px;
+.layer-label svg{
+  width:18px;
+  height:18px;
+  flex:0 0 auto;
+}
+
+/* slightly tidy the default Leaflet control stack */
+
+.leaflet-top.leaflet-right .leaflet-control{
+  margin-top:10px;
+  margin-right:10px;
 }
 </style>
 </head>
@@ -137,28 +182,11 @@ supportersLayer.addTo(map);
 L.control.layers(
   null,
   {
-    "Kirsties": kirstiesLayer,
-    "Supporters": supportersLayer
+    [`<span class="layer-label">${starSvg}<span>Kirsties</span></span>`]: kirstiesLayer,
+    [`<span class="layer-label">${heartSvg}<span>Supporters</span></span>`]: supportersLayer
   },
-  {collapsed:false}
+  {collapsed:false, position:'topright'}
 ).addTo(map);
-
-/* legend */
-
-const legend = L.control({position:'bottomright'});
-
-legend.onAdd = function(){
-  const div = L.DomUtil.create('div','legend');
-
-  div.innerHTML = `
-    <div class="legend-row">${starSvg} Kirsties</div>
-    <div class="legend-row">${heartSvg} Supporters</div>
-  `;
-
-  return div;
-};
-
-legend.addTo(map);
 
 function escapeHtml(str){
   return String(str||'')
@@ -201,6 +229,80 @@ function getOffsetCoords(lat, lng, index, total) {
   return [lat + latOffset, lng + lngOffset];
 }
 
+/* SEARCH CONTROL */
+
+let searchableMarkers = [];
+
+const SearchControl = L.Control.extend({
+  options: {
+    position: 'topright'
+  },
+
+  onAdd: function() {
+    const container = L.DomUtil.create('div', 'search-box');
+
+    container.innerHTML = `
+      <div class="search-row">
+        <input id="map-search-input" type="text" placeholder="Search name or location">
+        <button id="map-search-button" type="button">Search</button>
+      </div>
+      <div id="map-search-status" class="search-status"></div>
+    `;
+
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+
+    return container;
+  }
+});
+
+map.addControl(new SearchControl());
+
+function runSearch() {
+  const input = document.getElementById('map-search-input');
+  const status = document.getElementById('map-search-status');
+
+  if (!input || !status) return;
+
+  const query = String(input.value || '').trim().toLowerCase();
+
+  if (!query) {
+    status.textContent = 'Enter a name or location.';
+    return;
+  }
+
+  const match = searchableMarkers.find(item => {
+    const name = String(item.row.Name || '').toLowerCase();
+    const location = String(item.row.Location || '').toLowerCase();
+    return name.includes(query) || location.includes(query);
+  });
+
+  if (!match) {
+    status.textContent = 'No match found.';
+    return;
+  }
+
+  status.textContent = `Found: ${match.row.Name || match.row.Location || 'match'}`;
+
+  match.group.zoomToShowLayer(match.marker, function() {
+    map.setView(match.marker.getLatLng(), Math.max(map.getZoom(), 8));
+    match.marker.openPopup();
+  });
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'map-search-button') {
+    runSearch();
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.target && e.target.id === 'map-search-input' && e.key === 'Enter') {
+    e.preventDefault();
+    runSearch();
+  }
+});
+
 async function loadMapData() {
   try {
     const response = await fetch(sheetUrl);
@@ -209,6 +311,7 @@ async function loadMapData() {
 
     kirstiesLayer.clearLayers();
     supportersLayer.clearLayers();
+    searchableMarkers = [];
 
     const groupedByCoords = {};
 
@@ -238,15 +341,25 @@ async function loadMapData() {
         const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
 
         let marker;
+        let markerGroup;
+
         if (layer === 'kirsties') {
           marker = L.marker(coords, { icon: kirstyIcon });
           kirstiesLayer.addLayer(marker);
+          markerGroup = kirstiesLayer;
         } else {
           marker = L.marker(coords, { icon: supporterIcon });
           supportersLayer.addLayer(marker);
+          markerGroup = supportersLayer;
         }
 
         marker.bindPopup(buildPopup(row));
+        searchableMarkers.push({
+          row: row,
+          marker: marker,
+          group: markerGroup
+        });
+
         bounds.push(coords);
       }
     }
