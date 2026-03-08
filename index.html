@@ -42,59 +42,11 @@ html,body{
   font-size:14px;
 }
 
-/* search */
-
-.search-box{
-  background:white;
-  padding:10px;
-  border-radius:8px;
-  box-shadow:0 1px 5px rgba(0,0,0,0.2);
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  min-width:240px;
-}
-
-.search-row{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-
-.search-box input{
-  flex:1;
-  min-width:0;
-  padding:8px 10px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  font-size:14px;
-}
-
-.search-box button{
-  padding:8px 10px;
-  border:1px solid #ccc;
-  background:#fff;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:14px;
-}
-
-.search-box button:hover{
-  background:#f5f5f5;
-}
-
-.search-status{
-  font-size:12px;
-  color:#666;
-  min-height:16px;
-}
-
-/* layer labels with icons */
-
 .layer-label{
-  display:flex;
+  display:inline-flex;
   align-items:center;
   gap:8px;
+  white-space:nowrap;
 }
 
 .layer-label svg{
@@ -103,11 +55,100 @@ html,body{
   flex:0 0 auto;
 }
 
-/* slightly tidy the default Leaflet control stack */
+.leaflet-control-layers-overlays label{
+  white-space:nowrap;
+}
 
 .leaflet-top.leaflet-right .leaflet-control{
   margin-top:10px;
   margin-right:10px;
+}
+
+/* search */
+
+.search-toggle{
+  width:42px;
+  height:42px;
+  border:none;
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  font-size:20px;
+  line-height:1;
+}
+
+.search-toggle:hover{
+  background:#f6f6f6;
+}
+
+.search-panel{
+  background:white;
+  padding:10px;
+  border-radius:8px;
+  box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  display:none;
+  min-width:260px;
+  max-width:min(320px,80vw);
+}
+
+.search-panel.open{
+  display:block;
+}
+
+.search-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.search-panel input{
+  flex:1;
+  min-width:0;
+  padding:8px 10px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  font-size:14px;
+}
+
+.search-panel button{
+  padding:8px 10px;
+  border:1px solid #ccc;
+  background:#fff;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.search-panel button:hover{
+  background:#f5f5f5;
+}
+
+.search-status{
+  margin-top:8px;
+  font-size:12px;
+  color:#666;
+  min-height:16px;
+}
+
+.search-nav{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+
+.search-nav button{
+  flex:1;
+}
+
+@media (max-width: 640px){
+  .search-panel{
+    min-width:220px;
+    max-width:78vw;
+  }
 }
 </style>
 </head>
@@ -229,9 +270,11 @@ function getOffsetCoords(lat, lng, index, total) {
   return [lat + latOffset, lng + lngOffset];
 }
 
-/* SEARCH CONTROL */
+/* SEARCH UI */
 
 let searchableMarkers = [];
+let currentMatches = [];
+let currentMatchIndex = 0;
 
 const SearchControl = L.Control.extend({
   options: {
@@ -239,14 +282,21 @@ const SearchControl = L.Control.extend({
   },
 
   onAdd: function() {
-    const container = L.DomUtil.create('div', 'search-box');
+    const container = L.DomUtil.create('div');
 
     container.innerHTML = `
-      <div class="search-row">
-        <input id="map-search-input" type="text" placeholder="Search name or location">
-        <button id="map-search-button" type="button">Search</button>
+      <button id="map-search-toggle" class="search-toggle" type="button" aria-label="Open search">🔍</button>
+      <div id="map-search-panel" class="search-panel">
+        <div class="search-row">
+          <input id="map-search-input" type="text" placeholder="Search name or location">
+          <button id="map-search-button" type="button">Go</button>
+        </div>
+        <div id="map-search-status" class="search-status"></div>
+        <div class="search-nav">
+          <button id="map-search-prev" type="button">Prev</button>
+          <button id="map-search-next" type="button">Next</button>
+        </div>
       </div>
-      <div id="map-search-status" class="search-status"></div>
     `;
 
     L.DomEvent.disableClickPropagation(container);
@@ -258,31 +308,37 @@ const SearchControl = L.Control.extend({
 
 map.addControl(new SearchControl());
 
-function runSearch() {
-  const input = document.getElementById('map-search-input');
+function setSearchStatus(text) {
   const status = document.getElementById('map-search-status');
+  if (status) status.textContent = text || '';
+}
 
-  if (!input || !status) return;
+function toggleSearchPanel(forceOpen) {
+  const panel = document.getElementById('map-search-panel');
+  const input = document.getElementById('map-search-input');
+  if (!panel) return;
 
-  const query = String(input.value || '').trim().toLowerCase();
+  const shouldOpen = typeof forceOpen === 'boolean'
+    ? forceOpen
+    : !panel.classList.contains('open');
 
-  if (!query) {
-    status.textContent = 'Enter a name or location.';
-    return;
+  panel.classList.toggle('open', shouldOpen);
+
+  if (shouldOpen && input) {
+    setTimeout(() => input.focus(), 50);
   }
+}
 
-  const match = searchableMarkers.find(item => {
-    const name = String(item.row.Name || '').toLowerCase();
-    const location = String(item.row.Location || '').toLowerCase();
-    return name.includes(query) || location.includes(query);
-  });
+function showMatch(index) {
+  if (!currentMatches.length) return;
 
-  if (!match) {
-    status.textContent = 'No match found.';
-    return;
-  }
+  if (index < 0) index = currentMatches.length - 1;
+  if (index >= currentMatches.length) index = 0;
 
-  status.textContent = `Found: ${match.row.Name || match.row.Location || 'match'}`;
+  currentMatchIndex = index;
+  const match = currentMatches[currentMatchIndex];
+
+  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${match.row.Name || match.row.Location || 'match'}`);
 
   match.group.zoomToShowLayer(match.marker, function() {
     map.setView(match.marker.getLatLng(), Math.max(map.getZoom(), 8));
@@ -290,9 +346,49 @@ function runSearch() {
   });
 }
 
+function runSearch() {
+  const input = document.getElementById('map-search-input');
+  if (!input) return;
+
+  const query = String(input.value || '').trim().toLowerCase();
+
+  if (!query) {
+    currentMatches = [];
+    currentMatchIndex = 0;
+    setSearchStatus('Enter a name or location.');
+    return;
+  }
+
+  currentMatches = searchableMarkers.filter(item => {
+    const name = String(item.row.Name || '').toLowerCase();
+    const location = String(item.row.Location || '').toLowerCase();
+    return name.includes(query) || location.includes(query);
+  });
+
+  if (!currentMatches.length) {
+    currentMatchIndex = 0;
+    setSearchStatus('No match found.');
+    return;
+  }
+
+  showMatch(0);
+}
+
 document.addEventListener('click', function(e) {
+  if (e.target && e.target.id === 'map-search-toggle') {
+    toggleSearchPanel();
+  }
+
   if (e.target && e.target.id === 'map-search-button') {
     runSearch();
+  }
+
+  if (e.target && e.target.id === 'map-search-prev') {
+    if (currentMatches.length) showMatch(currentMatchIndex - 1);
+  }
+
+  if (e.target && e.target.id === 'map-search-next') {
+    if (currentMatches.length) showMatch(currentMatchIndex + 1);
   }
 });
 
@@ -312,6 +408,9 @@ async function loadMapData() {
     kirstiesLayer.clearLayers();
     supportersLayer.clearLayers();
     searchableMarkers = [];
+    currentMatches = [];
+    currentMatchIndex = 0;
+    setSearchStatus('');
 
     const groupedByCoords = {};
 
@@ -354,6 +453,7 @@ async function loadMapData() {
         }
 
         marker.bindPopup(buildPopup(row));
+
         searchableMarkers.push({
           row: row,
           marker: marker,
