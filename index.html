@@ -5,66 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Kirsty Map</title>
 
-<link rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 
 <style>
-
 html,body{
-margin:0;
-padding:0;
-height:100%;
-font-family:Arial,sans-serif;
+  margin:0;
+  padding:0;
+  height:100%;
+  font-family:Arial,sans-serif;
 }
 
 #map{
-width:100%;
-height:100vh;
+  width:100%;
+  height:100vh;
 }
 
 .popup{
-max-width:260px;
+  max-width:260px;
 }
 
 .popup img{
-width:100%;
-border-radius:8px;
-margin-bottom:8px;
+  width:100%;
+  border-radius:8px;
+  margin-bottom:8px;
 }
 
 .popup h3{
-margin:0 0 6px 0;
-font-size:18px;
+  margin:0 0 6px 0;
+  font-size:18px;
 }
 
 .popup p{
-margin:0 0 6px 0;
-font-size:14px;
+  margin:0 0 6px 0;
+  font-size:14px;
 }
 
 /* legend */
 
 .legend{
-background:white;
-padding:10px 12px;
-border-radius:8px;
-box-shadow:0 1px 5px rgba(0,0,0,0.2);
-font-size:14px;
-line-height:1.5;
+  background:white;
+  padding:10px 12px;
+  border-radius:8px;
+  box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  font-size:14px;
+  line-height:1.5;
 }
 
 .legend-row{
-display:flex;
-align-items:center;
-gap:8px;
-margin:4px 0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:4px 0;
 }
 
 .legend svg{
-width:22px;
-height:22px;
+  width:22px;
+  height:22px;
 }
-
 </style>
 </head>
 
@@ -73,11 +72,11 @@ height:22px;
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script>
-
 const sheetUrl =
-"https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
+  "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Map%20Export";
 
 const map = L.map('map').setView([54.5,-3],5);
 
@@ -86,13 +85,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
   maxZoom: 19
 }).addTo(map);
 
-const markers = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40
-});
-
-  map.addLayer(markers);
 /* ICON SVGs */
 
 const starSvg =
@@ -108,72 +100,74 @@ fill="#ADEBB3" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
 function svgToUrl(svg){
-return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
 }
 
-
-
 const kirstyIcon = L.icon({
-iconUrl: svgToUrl(starSvg),
-iconSize:[32,32],
-iconAnchor:[16,30],
-popupAnchor:[0,-28]
+  iconUrl: svgToUrl(starSvg),
+  iconSize:[32,32],
+  iconAnchor:[16,30],
+  popupAnchor:[0,-28]
 });
 
 const supporterIcon = L.icon({
-iconUrl: svgToUrl(heartSvg),
-iconSize:[32,32],
-iconAnchor:[16,30],
-popupAnchor:[0,-28]
+  iconUrl: svgToUrl(heartSvg),
+  iconSize:[32,32],
+  iconAnchor:[16,30],
+  popupAnchor:[0,-28]
 });
 
+/* CLUSTERED OVERLAYS */
 
+const kirstiesLayer = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom: true,
+  maxClusterRadius: 40
+});
 
-const kirstiesLayer = L.layerGroup().addTo(map);
-const supportersLayer = L.layerGroup().addTo(map);
+const supportersLayer = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom: true,
+  maxClusterRadius: 40
+});
+
+kirstiesLayer.addTo(map);
+supportersLayer.addTo(map);
 
 L.control.layers(
-null,
-{
-"Kirsties":kirstiesLayer,
-"Supporters":supportersLayer
-},
-{collapsed:false}
+  null,
+  {
+    "Kirsties": kirstiesLayer,
+    "Supporters": supportersLayer
+  },
+  {collapsed:false}
 ).addTo(map);
-
-
 
 /* legend */
 
 const legend = L.control({position:'bottomright'});
 
 legend.onAdd = function(){
+  const div = L.DomUtil.create('div','legend');
 
-const div = L.DomUtil.create('div','legend');
+  div.innerHTML = `
+    <div class="legend-row">${starSvg} Kirsties</div>
+    <div class="legend-row">${heartSvg} Supporters</div>
+  `;
 
-div.innerHTML = `
-<div class="legend-row">${starSvg} Kirsties</div>
-<div class="legend-row">${heartSvg} Supporters</div>
-`;
-
-return div;
-
+  return div;
 };
 
 legend.addTo(map);
 
-
-
 function escapeHtml(str){
-return String(str||'')
-.replace(/&/g,'&amp;')
-.replace(/</g,'&lt;')
-.replace(/>/g,'&gt;')
-.replace(/"/g,'&quot;')
-.replace(/'/g,'&#39;');
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
-
-
 
 function buildPopup(row) {
   const name = escapeHtml(row.Name || '');
@@ -195,8 +189,6 @@ function buildPopup(row) {
   `;
 }
 
-
-
 async function loadMapData() {
   try {
     const response = await fetch(sheetUrl);
@@ -216,17 +208,16 @@ async function loadMapData() {
       const coords = [lat, lng];
 
       let marker;
-if (layer === 'kirsties') {
-  marker = L.marker(coords, { icon: kirstyIcon });
-  kirstiesLayer.addLayer(marker);
-} else {
-  marker = L.marker(coords, { icon: supporterIcon });
-  supportersLayer.addLayer(marker);
-}
+      if (layer === 'kirsties') {
+        marker = L.marker(coords, { icon: kirstyIcon });
+        kirstiesLayer.addLayer(marker);
+      } else {
+        marker = L.marker(coords, { icon: supporterIcon });
+        supportersLayer.addLayer(marker);
+      }
 
-markers.addLayer(marker);
-marker.bindPopup(buildPopup(row));
-bounds.push(coords);
+      marker.bindPopup(buildPopup(row));
+      bounds.push(coords);
     }
 
     if (bounds.length) {
@@ -245,14 +236,13 @@ bounds.push(coords);
   }
 }
 
-  window.addEventListener('load', () => {
+window.addEventListener('load', () => {
   setTimeout(() => {
     map.invalidateSize();
   }, 400);
 });
-  
-loadMapData();
 
+loadMapData();
 </script>
 
 </body>
