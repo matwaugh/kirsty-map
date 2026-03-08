@@ -193,7 +193,7 @@ function getOffsetCoords(lat, lng, index, total) {
   if (total <= 1) return [lat, lng];
 
   const angle = (2 * Math.PI * index) / total;
-  const radius = 0.012;
+  const radius = 0.003;
 
   const latOffset = Math.sin(angle) * radius;
   const lngOffset = Math.cos(angle) * radius / Math.max(Math.cos(lat * Math.PI / 180), 0.2);
