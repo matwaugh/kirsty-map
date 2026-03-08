@@ -86,8 +86,13 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
   maxZoom: 19
 }).addTo(map);
 
+const markers = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom: true,
+  maxClusterRadius: 40
+});
 
-
+  map.addLayer(markers);
 /* ICON SVGs */
 
 const starSvg =
@@ -211,14 +216,17 @@ async function loadMapData() {
       const coords = [lat, lng];
 
       let marker;
-      if (layer === 'kirsties') {
-        marker = L.marker(coords, { icon: kirstyIcon }).addTo(kirstiesLayer);
-      } else {
-        marker = L.marker(coords, { icon: supporterIcon }).addTo(supportersLayer);
-      }
+if (layer === 'kirsties') {
+  marker = L.marker(coords, { icon: kirstyIcon });
+  kirstiesLayer.addLayer(marker);
+} else {
+  marker = L.marker(coords, { icon: supporterIcon });
+  supportersLayer.addLayer(marker);
+}
 
-      marker.bindPopup(buildPopup(row));
-      bounds.push(coords);
+markers.addLayer(marker);
+marker.bindPopup(buildPopup(row));
+bounds.push(coords);
     }
 
     if (bounds.length) {
