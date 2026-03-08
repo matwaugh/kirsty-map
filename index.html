@@ -192,45 +192,57 @@ function buildPopup(row) {
 
 
 
-async function loadMapData(){
+async function loadMapData() {
+  try {
+    const response = await fetch(sheetUrl);
+    const rows = await response.json();
+    const bounds = [];
 
-const response = await fetch(sheetUrl);
-const rows = await response.json();
+    kirstiesLayer.clearLayers();
+    supportersLayer.clearLayers();
 
-const bounds=[];
+    for (const row of rows) {
+      const lat = parseFloat(row.Lat);
+      const lng = parseFloat(row.Lng);
 
-for(const row of rows){
+      if (isNaN(lat) || isNaN(lng)) continue;
 
-const lat=parseFloat(row.Lat);
-const lng=parseFloat(row.Lng);
+      const layer = (row.Layer || '').trim().toLowerCase();
+      const coords = [lat, lng];
 
-if(isNaN(lat)||isNaN(lng)) continue;
+      let marker;
+      if (layer === 'kirsties') {
+        marker = L.marker(coords, { icon: kirstyIcon }).addTo(kirstiesLayer);
+      } else {
+        marker = L.marker(coords, { icon: supporterIcon }).addTo(supportersLayer);
+      }
 
-const layer=(row.Layer||'').trim().toLowerCase();
+      marker.bindPopup(buildPopup(row));
+      bounds.push(coords);
+    }
 
-let marker;
+    if (bounds.length) {
+      const latLngBounds = L.latLngBounds(bounds);
 
-if(layer==="kirsties"){
-marker=L.marker([lat,lng],{icon:kirstyIcon});
-marker.addTo(kirstiesLayer);
+      setTimeout(() => {
+        map.invalidateSize();
+        map.fitBounds(latLngBounds, {
+          padding: [30, 30],
+          maxZoom: 6
+        });
+      }, 300);
+    }
+  } catch (error) {
+    console.error('Error loading map data:', error);
+  }
 }
-else{
-marker=L.marker([lat,lng],{icon:supporterIcon});
-marker.addTo(supportersLayer);
-}
 
-marker.bindPopup(buildPopup(row));
-
-bounds.push([lat,lng]);
-
-}
-
-if(bounds.length){
-map.fitBounds(bounds,{padding:[30,30]});
-}
-
-}
-
+  window.addEventListener('load', () => {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 400);
+});
+  
 loadMapData();
 
 </script>
