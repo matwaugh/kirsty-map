@@ -66,6 +66,12 @@ html,body{
 
 /* search */
 
+.search-wrap{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+}
+
 .search-toggle{
   width:42px;
   height:42px;
@@ -79,6 +85,7 @@ html,body{
   cursor:pointer;
   font-size:20px;
   line-height:1;
+  flex:0 0 auto;
 }
 
 .search-toggle:hover{
@@ -91,8 +98,8 @@ html,body{
   border-radius:8px;
   box-shadow:0 1px 5px rgba(0,0,0,0.2);
   display:none;
-  min-width:260px;
-  max-width:min(320px,80vw);
+  width:320px;
+  max-width:min(320px,72vw);
 }
 
 .search-panel.open{
@@ -145,9 +152,13 @@ html,body{
 }
 
 @media (max-width: 640px){
+  .search-wrap{
+    gap:8px;
+  }
+
   .search-panel{
-    min-width:220px;
-    max-width:78vw;
+    width:240px;
+    max-width:68vw;
   }
 }
 </style>
@@ -282,10 +293,9 @@ const SearchControl = L.Control.extend({
   },
 
   onAdd: function() {
-    const container = L.DomUtil.create('div');
+    const container = L.DomUtil.create('div', 'search-wrap');
 
     container.innerHTML = `
-      <button id="map-search-toggle" class="search-toggle" type="button" aria-label="Open search">🔍</button>
       <div id="map-search-panel" class="search-panel">
         <div class="search-row">
           <input id="map-search-input" type="text" placeholder="Search name or location">
@@ -297,6 +307,7 @@ const SearchControl = L.Control.extend({
           <button id="map-search-next" type="button">Next</button>
         </div>
       </div>
+      <button id="map-search-toggle" class="search-toggle" type="button" aria-label="Open search">🔍</button>
     `;
 
     L.DomEvent.disableClickPropagation(container);
