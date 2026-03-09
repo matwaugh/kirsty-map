@@ -319,24 +319,44 @@ const SearchControl = L.Control.extend({
 
 map.addControl(new SearchControl());
 
+function getSearchPanel() {
+  return document.getElementById('map-search-panel');
+}
+
+function getSearchInput() {
+  return document.getElementById('map-search-input');
+}
+
 function setSearchStatus(text) {
   const status = document.getElementById('map-search-status');
   if (status) status.textContent = text || '';
 }
 
-function toggleSearchPanel(forceOpen) {
-  const panel = document.getElementById('map-search-panel');
-  const input = document.getElementById('map-search-input');
+function closeSearchPanel() {
+  const panel = getSearchPanel();
+  if (panel) panel.classList.remove('open');
+}
+
+function openSearchPanel() {
+  const panel = getSearchPanel();
+  const input = getSearchInput();
   if (!panel) return;
 
-  const shouldOpen = typeof forceOpen === 'boolean'
-    ? forceOpen
-    : !panel.classList.contains('open');
+  panel.classList.add('open');
 
-  panel.classList.toggle('open', shouldOpen);
-
-  if (shouldOpen && input) {
+  if (input) {
     setTimeout(() => input.focus(), 50);
+  }
+}
+
+function toggleSearchPanel() {
+  const panel = getSearchPanel();
+  if (!panel) return;
+
+  if (panel.classList.contains('open')) {
+    closeSearchPanel();
+  } else {
+    openSearchPanel();
   }
 }
 
@@ -358,7 +378,7 @@ function showMatch(index) {
 }
 
 function runSearch() {
-  const input = document.getElementById('map-search-input');
+  const input = getSearchInput();
   if (!input) return;
 
   const query = String(input.value || '').trim().toLowerCase();
@@ -404,10 +424,18 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeSearchPanel();
+  }
+
   if (e.target && e.target.id === 'map-search-input' && e.key === 'Enter') {
     e.preventDefault();
     runSearch();
   }
+});
+
+map.on('click', function() {
+  closeSearchPanel();
 });
 
 async function loadMapData() {
