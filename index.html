@@ -46,38 +46,33 @@ html,body{
   font-size:14px;
 }
 
-.layer-label{
-  display:inline-flex;
+.custom-legend{
+  background:#fff;
+  padding:10px 12px;
+  border-radius:8px;
+  box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  line-height:1.2;
+}
+
+.custom-legend .legend-item{
+  display:flex;
   align-items:center;
   gap:8px;
   white-space:nowrap;
 }
 
-.layer-label svg{
+.custom-legend .legend-item + .legend-item{
+  margin-top:8px;
+}
+
+.custom-legend svg{
   width:18px;
   height:18px;
   flex:0 0 auto;
 }
 
-.leaflet-control-layers-overlays label{
-  white-space:nowrap;
-}
-
-.leaflet-top.leaflet-right .leaflet-control{
-  margin-top:10px;
-  margin-right:10px;
-}
-
-.legend-note{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  white-space:nowrap;
-  padding-left:2px;
-}
-
-.donation-badge,
-.legend-donation-badge{
+.legend-donation-badge,
+.donation-badge{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -91,6 +86,11 @@ html,body{
   line-height:1;
   vertical-align:middle;
   box-sizing:border-box;
+}
+
+.leaflet-top.leaflet-right .leaflet-control{
+  margin-top:10px;
+  margin-right:10px;
 }
 
 /* search */
@@ -295,49 +295,49 @@ const supporterIcon = L.icon({
   popupAnchor:[0,-22]
 });
 
-/* CLUSTERED OVERLAYS */
+/* SINGLE SHARED CLUSTER LAYER */
 
-const kirstiesLayer = L.markerClusterGroup({
+const markersLayer = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   maxClusterRadius: 40
 });
 
-const supportersLayer = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40
-});
+markersLayer.addTo(map);
 
-kirstiesLayer.addTo(map);
-supportersLayer.addTo(map);
+/* SIMPLE LEGEND */
 
-const layerControl = L.control.layers(
-  null,
-  {
-    [`<span class="layer-label">${starSvg}<span>Kirsties</span></span>`]: kirstiesLayer,
-    [`<span class="layer-label">${supporterHeartSvg}<span>Supporters</span></span>`]: supportersLayer
+const LegendControl = L.Control.extend({
+  options: {
+    position: 'topright'
   },
-  {collapsed:false, position:'topright'}
-).addTo(map);
 
-function addDonationLegendNote() {
-  const overlaysList = document.querySelector('.leaflet-control-layers-overlays');
-  if (!overlaysList || overlaysList.querySelector('.legend-note-entry')) return;
+  onAdd: function() {
+    const container = L.DomUtil.create('div', 'custom-legend');
 
-  const donationRow = document.createElement('div');
-  donationRow.className = 'legend-note-entry';
-  donationRow.innerHTML = `
-    <div class="legend-note">
-      <span class="legend-donation-badge">✓</span>
-      <span>Donated</span>
-    </div>
-  `;
+    container.innerHTML = `
+      <div class="legend-item">
+        ${starSvg}
+        <span>Kirsties</span>
+      </div>
+      <div class="legend-item">
+        ${supporterHeartSvg}
+        <span>Supporters</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-donation-badge">✓</span>
+        <span>Donated</span>
+      </div>
+    `;
 
-  overlaysList.appendChild(donationRow);
-}
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
 
-setTimeout(addDonationLegendNote, 0);
+    return container;
+  }
+});
+
+map.addControl(new LegendControl());
 
 function escapeHtml(str){
   return String(str||'')
@@ -550,8 +550,7 @@ async function loadMapData() {
     const rows = await response.json();
     const bounds = [];
 
-    kirstiesLayer.clearLayers();
-    supportersLayer.clearLayers();
+    markersLayer.clearLayers();
     searchableMarkers = [];
     currentMatches = [];
     currentMatchIndex = 0;
@@ -584,25 +583,17 @@ async function loadMapData() {
         const layer = (row.Layer || '').trim().toLowerCase();
         const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
 
-        let marker;
-        let markerGroup;
+        const marker = L.marker(coords, {
+          icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
+        });
 
-        if (layer === 'kirsties') {
-          marker = L.marker(coords, { icon: kirstyIcon });
-          kirstiesLayer.addLayer(marker);
-          markerGroup = kirstiesLayer;
-        } else {
-          marker = L.marker(coords, { icon: supporterIcon });
-          supportersLayer.addLayer(marker);
-          markerGroup = supportersLayer;
-        }
-
+        markersLayer.addLayer(marker);
         marker.bindPopup(buildPopup(row));
 
         searchableMarkers.push({
           row: row,
           marker: marker,
-          group: markerGroup
+          group: markersLayer
         });
 
         bounds.push(coords);
@@ -628,7 +619,6 @@ async function loadMapData() {
 window.addEventListener('load', () => {
   setTimeout(() => {
     map.invalidateSize();
-    addDonationLegendNote();
   }, 400);
 });
 
