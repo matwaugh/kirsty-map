@@ -241,7 +241,13 @@ const starSvg =
 fill="#EB068C" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
-const heartSvg =
+const donorHeartSvg =
+`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+<path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
+fill="#D4AF37" stroke="#ffffff" stroke-width="3"/>
+</svg>`;
+
+const wellwisherHeartSvg =
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
 <path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
 fill="#ADEBB3" stroke="#ffffff" stroke-width="3"/>
@@ -259,8 +265,15 @@ const kirstyIcon = L.divIcon({
   popupAnchor: [0, -28]
 });
 
-const supporterIcon = L.icon({
-  iconUrl: svgToUrl(heartSvg),
+const donorIcon = L.icon({
+  iconUrl: svgToUrl(donorHeartSvg),
+  iconSize:[32,32],
+  iconAnchor:[16,30],
+  popupAnchor:[0,-28]
+});
+
+const wellwisherIcon = L.icon({
+  iconUrl: svgToUrl(wellwisherHeartSvg),
   iconSize:[32,32],
   iconAnchor:[16,30],
   popupAnchor:[0,-28]
@@ -274,20 +287,28 @@ const kirstiesLayer = L.markerClusterGroup({
   maxClusterRadius: 40
 });
 
-const supportersLayer = L.markerClusterGroup({
+const donorsLayer = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom: true,
+  maxClusterRadius: 40
+});
+
+const wellwishersLayer = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   maxClusterRadius: 40
 });
 
 kirstiesLayer.addTo(map);
-supportersLayer.addTo(map);
+donorsLayer.addTo(map);
+wellwishersLayer.addTo(map);
 
 L.control.layers(
   null,
   {
     [`<span class="layer-label">${starSvg}<span>Kirsties</span></span>`]: kirstiesLayer,
-    [`<span class="layer-label">${heartSvg}<span>Supporters</span></span>`]: supportersLayer
+    [`<span class="layer-label">${donorHeartSvg}<span>Donors</span></span>`]: donorsLayer,
+    [`<span class="layer-label">${wellwisherHeartSvg}<span>Wellwishers</span></span>`]: wellwishersLayer
   },
   {collapsed:false, position:'topright'}
 ).addTo(map);
@@ -497,7 +518,8 @@ async function loadMapData() {
     const bounds = [];
 
     kirstiesLayer.clearLayers();
-    supportersLayer.clearLayers();
+    donorsLayer.clearLayers();
+    wellwishersLayer.clearLayers();
     searchableMarkers = [];
     currentMatches = [];
     currentMatchIndex = 0;
@@ -537,10 +559,14 @@ async function loadMapData() {
           marker = L.marker(coords, { icon: kirstyIcon });
           kirstiesLayer.addLayer(marker);
           markerGroup = kirstiesLayer;
+        } else if (layer === 'donors') {
+          marker = L.marker(coords, { icon: donorIcon });
+          donorsLayer.addLayer(marker);
+          markerGroup = donorsLayer;
         } else {
-          marker = L.marker(coords, { icon: supporterIcon });
-          supportersLayer.addLayer(marker);
-          markerGroup = supportersLayer;
+          marker = L.marker(coords, { icon: wellwisherIcon });
+          wellwishersLayer.addLayer(marker);
+          markerGroup = wellwishersLayer;
         }
 
         marker.bindPopup(buildPopup(row));
