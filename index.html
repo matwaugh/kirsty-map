@@ -35,6 +35,10 @@ html,body{
 .popup h3{
   margin:0 0 6px 0;
   font-size:18px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
 }
 
 .popup p{
@@ -62,6 +66,31 @@ html,body{
 .leaflet-top.leaflet-right .leaflet-control{
   margin-top:10px;
   margin-right:10px;
+}
+
+.legend-note{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+  padding-left:2px;
+}
+
+.donation-badge,
+.legend-donation-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#EB068C;
+  color:#ffffff;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  vertical-align:middle;
+  box-sizing:border-box;
 }
 
 /* search */
@@ -241,13 +270,7 @@ const starSvg =
 fill="#EB068C" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
-const donorHeartSvg =
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-<path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
-fill="#F2C94C" stroke="#ffffff" stroke-width="3"/>
-</svg>`;
-
-const wellwisherHeartSvg =
+const supporterHeartSvg =
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
 <path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
 fill="#ADEBB3" stroke="#ffffff" stroke-width="3"/>
@@ -265,15 +288,8 @@ const kirstyIcon = L.divIcon({
   popupAnchor: [0, -28]
 });
 
-const donorIcon = L.icon({
-  iconUrl: svgToUrl(donorHeartSvg),
-  iconSize:[26,26],
-  iconAnchor:[13,24],
-  popupAnchor:[0,-22]
-});
-
-const wellwisherIcon = L.icon({
-  iconUrl: svgToUrl(wellwisherHeartSvg),
+const supporterIcon = L.icon({
+  iconUrl: svgToUrl(supporterHeartSvg),
   iconSize:[26,26],
   iconAnchor:[13,24],
   popupAnchor:[0,-22]
@@ -287,31 +303,41 @@ const kirstiesLayer = L.markerClusterGroup({
   maxClusterRadius: 40
 });
 
-const donorsLayer = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40
-});
-
-const wellwishersLayer = L.markerClusterGroup({
+const supportersLayer = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   maxClusterRadius: 40
 });
 
 kirstiesLayer.addTo(map);
-donorsLayer.addTo(map);
-wellwishersLayer.addTo(map);
+supportersLayer.addTo(map);
 
-L.control.layers(
+const layerControl = L.control.layers(
   null,
   {
     [`<span class="layer-label">${starSvg}<span>Kirsties</span></span>`]: kirstiesLayer,
-    [`<span class="layer-label">${donorHeartSvg}<span>Donors</span></span>`]: donorsLayer,
-    [`<span class="layer-label">${wellwisherHeartSvg}<span>Wellwishers</span></span>`]: wellwishersLayer
+    [`<span class="layer-label">${supporterHeartSvg}<span>Supporters</span></span>`]: supportersLayer
   },
   {collapsed:false, position:'topright'}
 ).addTo(map);
+
+function addDonationLegendNote() {
+  const overlaysList = document.querySelector('.leaflet-control-layers-overlays');
+  if (!overlaysList || overlaysList.querySelector('.legend-note-entry')) return;
+
+  const donationRow = document.createElement('div');
+  donationRow.className = 'legend-note-entry';
+  donationRow.innerHTML = `
+    <div class="legend-note">
+      <span class="legend-donation-badge">✓</span>
+      <span>Donated</span>
+    </div>
+  `;
+
+  overlaysList.appendChild(donationRow);
+}
+
+setTimeout(addDonationLegendNote, 0);
 
 function escapeHtml(str){
   return String(str||'')
@@ -322,10 +348,17 @@ function escapeHtml(str){
     .replace(/'/g,'&#39;');
 }
 
+function donatedBadgeHtml(donated) {
+  return String(donated || '').trim() === 'Yes'
+    ? '<span class="donation-badge" aria-label="Donated" title="Donated">✓</span>'
+    : '';
+}
+
 function buildPopup(row) {
   const name = escapeHtml(row.Name || '');
   const location = escapeHtml(row.Location || '');
   const description = escapeHtml(row.Description || '');
+  const donatedBadge = donatedBadgeHtml(row['Donated?']);
   let image = row["Cloudinary URL"] || row.Image || '';
 
   if (image && image.includes('res.cloudinary.com')) {
@@ -335,7 +368,7 @@ function buildPopup(row) {
   return `
     <div class="popup">
       ${image ? `<img src="${image}" alt="${name}" loading="lazy">` : ''}
-      <h3>${name}</h3>
+      <h3>${name}${donatedBadge ? ` ${donatedBadge}` : ''}</h3>
       ${location ? `<p><strong>${location}</strong></p>` : ''}
       ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
     </div>
@@ -518,8 +551,7 @@ async function loadMapData() {
     const bounds = [];
 
     kirstiesLayer.clearLayers();
-    donorsLayer.clearLayers();
-    wellwishersLayer.clearLayers();
+    supportersLayer.clearLayers();
     searchableMarkers = [];
     currentMatches = [];
     currentMatchIndex = 0;
@@ -559,14 +591,10 @@ async function loadMapData() {
           marker = L.marker(coords, { icon: kirstyIcon });
           kirstiesLayer.addLayer(marker);
           markerGroup = kirstiesLayer;
-        } else if (layer === 'donors') {
-          marker = L.marker(coords, { icon: donorIcon });
-          donorsLayer.addLayer(marker);
-          markerGroup = donorsLayer;
         } else {
-          marker = L.marker(coords, { icon: wellwisherIcon });
-          wellwishersLayer.addLayer(marker);
-          markerGroup = wellwishersLayer;
+          marker = L.marker(coords, { icon: supporterIcon });
+          supportersLayer.addLayer(marker);
+          markerGroup = supportersLayer;
         }
 
         marker.bindPopup(buildPopup(row));
@@ -600,6 +628,7 @@ async function loadMapData() {
 window.addEventListener('load', () => {
   setTimeout(() => {
     map.invalidateSize();
+    addDonationLegendNote();
   }, 400);
 });
 
