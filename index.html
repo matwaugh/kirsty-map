@@ -590,6 +590,15 @@ async function loadMapData() {
         markersLayer.addLayer(marker);
         marker.bindPopup(buildPopup(row));
 
+        marker.on('popupopen', function() {
+  if (typeof gtag === 'function') {
+    gtag('event', 'marker_opened', {
+      event_category: 'map',
+      event_label: row.Name || 'unknown'
+    });
+  }
+});
+
         searchableMarkers.push({
           row: row,
           marker: marker,
