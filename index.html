@@ -76,12 +76,12 @@ html,body{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:16px;
-  height:16px;
+  width:12px;
+  height:12px;
   border-radius:50%;
-  background:#EB068C;
+  background:#FF8847;
   color:#ffffff;
-  font-size:11px;
+  font-size:9px;
   font-weight:700;
   line-height:1;
   vertical-align:middle;
@@ -267,7 +267,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 const starSvg =
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
 <path d="M36 8l7.2 14.6 16.1 2.3-11.7 11.4 2.8 16L36 44.9 21.6 52.3l2.8-16L12.7 24.9l16.1-2.3L36 8z"
-fill="#EB068C" stroke="#ffffff" stroke-width="3"/>
+fill="#FF8847" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
 const supporterHeartSvg =
@@ -324,10 +324,10 @@ const LegendControl = L.Control.extend({
         ${supporterHeartSvg}
         <span>Supporters</span>
       </div>
-      <div class="legend-item">
-        <span class="legend-donation-badge">✓</span>
-        <span>Donated</span>
-      </div>
+     <div class="legend-item">
+  <span>Donated?</span>
+  <span class="legend-donation-badge">✓</span>
+</div>
     `;
 
     L.DomEvent.disableClickPropagation(container);
