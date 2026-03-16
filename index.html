@@ -591,11 +591,11 @@ async function loadMapData() {
         marker.bindPopup(buildPopup(row));
 
         marker.on('popupopen', function() {
-  if (typeof gtag === 'function') {
-    gtag('event', 'marker_opened', {
-      event_category: 'map',
-      event_label: row.Name || 'unknown'
-    });
+  if (window.parent) {
+    window.parent.postMessage({
+      type: 'marker_opened',
+      name: row.Name || 'unknown'
+    }, '*');
   }
 });
 
