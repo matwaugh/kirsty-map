@@ -362,7 +362,7 @@ function buildPopup(row) {
   let image = row["Cloudinary URL"] || row.Image || '';
 
   if (image && image.includes('res.cloudinary.com')) {
-    image = image.replace('/image/upload/', '/image/upload/w_600,f_auto,q_auto/');
+image = image.replace('/image/upload/', '/image/upload/w_auto,dpr_auto,f_auto,q_auto/');
   }
 
   return `
