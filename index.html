@@ -318,7 +318,7 @@ const LegendControl = L.Control.extend({
     container.innerHTML = `
       <div class="legend-item">
         ${starSvg}
-        <span>Kirsties</span>
+        <span>Kirstys</span>
       </div>
       <div class="legend-item">
         ${supporterHeartSvg}
@@ -584,7 +584,7 @@ async function loadMapData() {
         const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
 
         const marker = L.marker(coords, {
-          icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
+          icon: layer === 'kirstys' ? kirstyIcon : supporterIcon
         });
 
         markersLayer.addLayer(marker);
