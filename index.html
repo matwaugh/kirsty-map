@@ -315,20 +315,20 @@ const LegendControl = L.Control.extend({
   onAdd: function() {
     const container = L.DomUtil.create('div', 'custom-legend');
 
-    container.innerHTML = `
-      <div class="legend-item">
-        ${starSvg}
-        <span>Kirstys</span>
-      </div>
-      <div class="legend-item">
-        ${supporterHeartSvg}
-        <span>Supporters</span>
-      </div>
-     <div class="legend-item">
-  <span>Donated?</span>
-  <span class="legend-donation-badge">✓</span>
-</div>
-    `;
+  container.innerHTML = `
+  <div class="legend-item">
+    ${starSvg}
+    <span id="legend-kirstys-label">Kirstys</span>
+  </div>
+  <div class="legend-item">
+    ${supporterHeartSvg}
+    <span id="legend-supporters-label">Supporters</span>
+  </div>
+  <div class="legend-item">
+    <span>Donated?</span>
+    <span class="legend-donation-badge">✓</span>
+  </div>
+`;
 
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
