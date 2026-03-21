@@ -387,6 +387,37 @@ function getOffsetCoords(lat, lng, index, total) {
   return [lat + latOffset, lng + lngOffset];
 }
 
+function updateLegendCounts(rows) {
+  let kirstysCount = 0;
+  let supportersCount = 0;
+
+  for (const row of rows) {
+    const lat = parseFloat(row.Lat);
+    const lng = parseFloat(row.Lng);
+
+    if (isNaN(lat) || isNaN(lng)) continue;
+
+    const layer = String(row.Layer || '').trim().toLowerCase();
+
+    if (layer === 'kirsties') {
+      kirstysCount++;
+    } else {
+      supportersCount++;
+    }
+  }
+
+  const kirstysLabel = document.getElementById('legend-kirstys-label');
+  const supportersLabel = document.getElementById('legend-supporters-label');
+
+  if (kirstysLabel) {
+    kirstysLabel.textContent = `Kirstys (${kirstysCount})`;
+  }
+
+  if (supportersLabel) {
+    supportersLabel.textContent = `Supporters (${supportersCount})`;
+  }
+}
+  
 /* SEARCH UI */
 
 let searchableMarkers = [];
@@ -555,6 +586,7 @@ async function loadMapData() {
     currentMatches = [];
     currentMatchIndex = 0;
     setSearchStatus('');
+    updateLegendCounts(rows);
 
     const groupedByCoords = {};
 
