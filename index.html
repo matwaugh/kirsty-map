@@ -23,11 +23,14 @@ html,body{
 }
 
 .popup{
-  max-width:260px;
+  width:240px;
+  max-width:calc(100vw - 100px);
 }
 
 .popup img{
   width:100%;
+  height:auto;
+  display:block;
   border-radius:8px;
   margin-bottom:8px;
 }
@@ -46,6 +49,14 @@ html,body{
   font-size:14px;
 }
 
+  .leaflet-popup-content{
+  margin:12px 14px;
+}
+
+.leaflet-popup-content-wrapper{
+  border-radius:12px;
+}
+  
 .custom-legend{
   background:#fff;
   padding:10px 12px;
