@@ -22,6 +22,24 @@ html,body{
   height:100vh;
 }
 
+.fit-all-btn{
+  width:42px;
+  height:42px;
+  border:none;
+  background:#fff;
+  border-radius:8px;
+  box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  cursor:pointer;
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.fit-all-btn:hover{
+  background:#f6f6f6;
+}
+  
 .popup{
   width:240px;
   max-width:calc(100vw - 100px);
@@ -350,6 +368,34 @@ const LegendControl = L.Control.extend({
 
 map.addControl(new LegendControl());
 
+const FitAllControl = L.Control.extend({
+  options: {
+    position: 'topright'
+  },
+
+  onAdd: function() {
+    const button = L.DomUtil.create('button', 'fit-all-btn');
+    button.innerHTML = 'Show all';
+    button.title = 'Show all map entries';
+
+    L.DomEvent.disableClickPropagation(button);
+    L.DomEvent.on(button, 'click', function() {
+      if (markersLayer.getLayers().length === 0) return;
+
+      const bounds = markersLayer.getBounds();
+      map.fitBounds(bounds, {
+        padding: [30, 30],
+        maxZoom: 6
+      });
+    });
+
+    return button;
+  }
+});
+
+map.addControl(new FitAllControl());
+
+  
 function escapeHtml(str){
   return String(str||'')
     .replace(/&/g,'&amp;')
