@@ -34,6 +34,8 @@ html,body{
   display:flex;
   align-items:center;
   justify-content:center;
+  color:#333;              /* ← ADD THIS */
+  -webkit-appearance:none; /* ← AND THIS */
 }
 
 .fit-all-btn:hover{
@@ -370,7 +372,7 @@ map.addControl(new LegendControl());
 
 const FitAllControl = L.Control.extend({
   options: {
-    position: 'topright'
+    position: 'bottomright'
   },
 
   onAdd: function() {
