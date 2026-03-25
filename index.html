@@ -810,15 +810,17 @@ async function loadMapData() {
 
         markersLayer.addLayer(marker);
 
-        marker.bindPopup(popupHtml);
+       if (!isMobileView()) {
+  marker.bindPopup(popupHtml);
+}
 
-        marker.on('click', function() {
-          if (isMobileView()) {
-            closeSearchPanel();
-            openBottomSheet(popupHtml);
-            notifyMarkerOpened(row.Name || 'unknown');
-          }
-        });
+marker.on('click', function() {
+  if (isMobileView()) {
+    closeSearchPanel();
+    openBottomSheet(popupHtml);
+    notifyMarkerOpened(row.Name || 'unknown');
+  }
+});
 
         marker.on('popupopen', function() {
           if (!isMobileView()) {
