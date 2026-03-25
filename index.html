@@ -652,17 +652,11 @@ async function loadMapData() {
       }
     }
 
-    if (bounds.length) {
-      const latLngBounds = L.latLngBounds(bounds);
-
-      setTimeout(() => {
-        map.invalidateSize();
-        map.fitBounds(latLngBounds, {
-          padding: [30, 30],
-          maxZoom: 6
-        });
-      }, 300);
-    }
+ if (bounds.length) {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 300);
+}
   } catch (error) {
     console.error('Error loading map data:', error);
   }
