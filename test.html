@@ -674,7 +674,7 @@ for (const row of rows.slice(1)) {
         const layer = (row.Layer || '').trim().toLowerCase();
         const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
 
-        const marker = L.marker(coords, {
+       const marker = L.marker(coords, {
   icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
 });
 
@@ -684,6 +684,7 @@ marker.on('click', function() {
   if (!marker.getPopup()) {
     marker.bindPopup(buildPopup(row));
   }
+  marker.openPopup();
 });
 
 marker.on('popupopen', function() {
