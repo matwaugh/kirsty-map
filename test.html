@@ -724,19 +724,16 @@ function renderVisibleMarkers() {
 
       markersLayer.addLayer(marker);
 
-      marker.on('click', function() {
-        ensurePopup(marker, row);
-        marker.openPopup();
-      });
+     marker.bindPopup(buildPopup(row));
 
-      marker.on('popupopen', function() {
-        if (window.parent) {
-          window.parent.postMessage({
-            type: 'marker_opened',
-            name: row.Name || 'unknown'
-          }, '*');
-        }
-      });
+marker.on('popupopen', function() {
+  if (window.parent) {
+    window.parent.postMessage({
+      type: 'marker_opened',
+      name: row.Name || 'unknown'
+    }, '*');
+  }
+});
 
       searchableMarkers.push({
         row: row,
