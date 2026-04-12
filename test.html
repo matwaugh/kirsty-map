@@ -585,15 +585,23 @@ function showMatch(index) {
 
   map.setView([lat, lng], Math.max(map.getZoom(), 8));
 
-  setTimeout(() => {
+  const tryOpenMatch = (attemptsLeft = 12) => {
     const marker = visibleMarkerMap.get(row);
-    if (!marker) return;
 
-    markersLayer.zoomToShowLayer(marker, function() {
-      ensurePopup(marker, row);
-      marker.openPopup();
-    });
-  }, 180);
+    if (marker) {
+      markersLayer.zoomToShowLayer(marker, function() {
+        ensurePopup(marker, row);
+        marker.openPopup();
+      });
+      return;
+    }
+
+    if (attemptsLeft > 0) {
+      setTimeout(() => tryOpenMatch(attemptsLeft - 1), 120);
+    }
+  };
+
+  setTimeout(() => tryOpenMatch(), 140);
 }
 
 function runSearch() {
