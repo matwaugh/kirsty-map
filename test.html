@@ -423,8 +423,8 @@ function buildPopup(row) {
 
   return `
     <div class="popup">
-${image ? `<img src="${image}" alt="${name}" loading="lazy" onerror="this.onerror=null;this.style.display='none'">` : ''}
-<h3>${name}${donatedBadge ? ` ${donatedBadge}` : ''}</h3>
+      ${image ? `<img src="${image}" alt="${name}" loading="lazy" onerror="this.onerror=null;this.style.display='none'">` : ''}
+      <h3>${name}${donatedBadge ? ` ${donatedBadge}` : ''}</h3>
       ${location ? `<p><strong>${location}</strong></p>` : ''}
       ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
     </div>
@@ -476,7 +476,6 @@ function updateLegendCounts(rows) {
 
 /* SEARCH + DATA STATE */
 
-let searchableMarkers = [];
 let currentMatches = [];
 let currentMatchIndex = 0;
 
@@ -498,7 +497,7 @@ const SearchControl = L.Control.extend({
     container.innerHTML = `
       <div id="map-search-panel" class="search-panel">
         <div class="search-row">
-          <input id="map-search-input" type="text" placeholder="Search name or location">
+          <input id="map-search-input" type="text" placeholder="Search submitted name">
           <button id="map-search-button" type="button">Go</button>
         </div>
         <div id="map-search-status" class="search-status"></div>
@@ -560,12 +559,6 @@ function toggleSearchPanel() {
   }
 }
 
-function ensurePopup(marker, row) {
-  if (!marker.getPopup()) {
-    marker.bindPopup(buildPopup(row));
-  }
-}
-
 function showMatch(index) {
   if (!currentMatches.length) return;
 
@@ -573,24 +566,23 @@ function showMatch(index) {
   if (index >= currentMatches.length) index = 0;
 
   currentMatchIndex = index;
-  const match = currentMatches[currentMatchIndex];
-  const row = match.row;
+  const row = currentMatches[currentMatchIndex].row;
 
-  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || row.Location || 'match'}`);
+  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || 'match'}`);
 
   const lat = parseFloat(row.Lat);
   const lng = parseFloat(row.Lng);
 
   if (isNaN(lat) || isNaN(lng)) return;
 
-  map.setView([lat, lng], Math.max(map.getZoom(), 8));
+  const targetZoom = Math.max(map.getZoom(), 8);
+  map.setView([lat, lng], targetZoom);
 
-  const tryOpenMatch = (attemptsLeft = 12) => {
+  const tryOpenMatch = (attemptsLeft = 20) => {
     const marker = visibleMarkerMap.get(row);
 
     if (marker) {
       markersLayer.zoomToShowLayer(marker, function() {
-        ensurePopup(marker, row);
         marker.openPopup();
       });
       return;
@@ -598,10 +590,12 @@ function showMatch(index) {
 
     if (attemptsLeft > 0) {
       setTimeout(() => tryOpenMatch(attemptsLeft - 1), 120);
+    } else {
+      setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || 'match'} (could not open card)`);
     }
   };
 
-  setTimeout(() => tryOpenMatch(), 140);
+  setTimeout(() => tryOpenMatch(), 180);
 }
 
 function runSearch() {
@@ -619,7 +613,6 @@ function runSearch() {
 
   currentMatches = allRows
     .filter(row => {
-      // STRICT: only search the submitted Name field
       const name = (row.Name || '').toString().trim().toLowerCase();
       return name.includes(query);
     })
@@ -630,10 +623,6 @@ function runSearch() {
     setSearchStatus('No name match found.');
     return;
   }
-
-  setSearchStatus(
-    `${currentMatches.length} match${currentMatches.length === 1 ? '' : 'es'}`
-  );
 
   showMatch(0);
 }
@@ -709,7 +698,6 @@ function renderVisibleMarkers() {
   const groupedByCoords = buildGroupedVisibleRows(visibleRows);
 
   markersLayer.clearLayers();
-  searchableMarkers = [];
   visibleMarkerMap = new Map();
 
   for (const key of Object.keys(groupedByCoords)) {
@@ -726,25 +714,18 @@ function renderVisibleMarkers() {
         icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
       });
 
-      markersLayer.addLayer(marker);
+      marker.bindPopup(buildPopup(row));
 
-     marker.bindPopup(buildPopup(row));
-
-marker.on('popupopen', function() {
-  if (window.parent) {
-    window.parent.postMessage({
-      type: 'marker_opened',
-      name: row.Name || 'unknown'
-    }, '*');
-  }
-});
-
-      searchableMarkers.push({
-        row: row,
-        marker: marker,
-        group: markersLayer
+      marker.on('popupopen', function() {
+        if (window.parent) {
+          window.parent.postMessage({
+            type: 'marker_opened',
+            name: row.Name || 'unknown'
+          }, '*');
+        }
       });
 
+      markersLayer.addLayer(marker);
       visibleMarkerMap.set(row, marker);
     }
   }
