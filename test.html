@@ -767,8 +767,8 @@ async function loadMapData() {
   }
 }
 
-map.on('moveend zoomend', scheduleVisibleRender);
-
+map.on('moveend', scheduleVisibleRender);
+  
 window.addEventListener('load', () => {
   setTimeout(() => {
     map.invalidateSize();
