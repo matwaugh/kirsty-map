@@ -649,7 +649,7 @@ async function loadMapData() {
 
     const groupedByCoords = {};
 
-    for (const row of rows) {
+for (const row of rows.slice(1)) {
       const lat = parseFloat(row.Lat);
       const lng = parseFloat(row.Lng);
 
