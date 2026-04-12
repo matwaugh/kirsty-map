@@ -382,7 +382,7 @@ const FitAllControl = L.Control.extend({
 
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
-      if (!allRows.length) return;
+      if (!allRows.length || !allDataBounds) return;
       map.fitBounds(allDataBounds, {
         padding: [30, 30],
         maxZoom: 6
@@ -483,6 +483,7 @@ let currentMatchIndex = 0;
 let allRows = [];
 let allDataBounds = null;
 let renderTimer = null;
+let visibleMarkerMap = new Map();
 
 /* SEARCH UI */
 
@@ -573,14 +574,26 @@ function showMatch(index) {
 
   currentMatchIndex = index;
   const match = currentMatches[currentMatchIndex];
+  const row = match.row;
 
-  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${match.row.Name || match.row.Location || 'match'}`);
+  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || row.Location || 'match'}`);
 
-  match.group.zoomToShowLayer(match.marker, function() {
-    map.setView(match.marker.getLatLng(), Math.max(map.getZoom(), 8));
-    ensurePopup(match.marker, match.row);
-    match.marker.openPopup();
-  });
+  const lat = parseFloat(row.Lat);
+  const lng = parseFloat(row.Lng);
+
+  if (isNaN(lat) || isNaN(lng)) return;
+
+  map.setView([lat, lng], Math.max(map.getZoom(), 8));
+
+  setTimeout(() => {
+    const marker = visibleMarkerMap.get(row);
+    if (!marker) return;
+
+    markersLayer.zoomToShowLayer(marker, function() {
+      ensurePopup(marker, row);
+      marker.openPopup();
+    });
+  }, 180);
 }
 
 function runSearch() {
@@ -596,11 +609,13 @@ function runSearch() {
     return;
   }
 
-  currentMatches = searchableMarkers.filter(item => {
-    const name = String(item.row.Name || '').toLowerCase();
-    const location = String(item.row.Location || '').toLowerCase();
-    return name.includes(query) || location.includes(query);
-  });
+  currentMatches = allRows
+    .filter(row => {
+      const name = String(row.Name || '').toLowerCase();
+      const location = String(row.Location || '').toLowerCase();
+      return name.includes(query) || location.includes(query);
+    })
+    .map(row => ({ row }));
 
   if (!currentMatches.length) {
     currentMatchIndex = 0;
@@ -683,6 +698,7 @@ function renderVisibleMarkers() {
 
   markersLayer.clearLayers();
   searchableMarkers = [];
+  visibleMarkerMap = new Map();
 
   for (const key of Object.keys(groupedByCoords)) {
     const group = groupedByCoords[key];
@@ -719,6 +735,8 @@ function renderVisibleMarkers() {
         marker: marker,
         group: markersLayer
       });
+
+      visibleMarkerMap.set(row, marker);
     }
   }
 }
@@ -768,7 +786,7 @@ async function loadMapData() {
 }
 
 map.on('moveend', scheduleVisibleRender);
-  
+
 window.addEventListener('load', () => {
   setTimeout(() => {
     map.invalidateSize();
