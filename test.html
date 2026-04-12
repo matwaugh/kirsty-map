@@ -613,23 +613,27 @@ function runSearch() {
   if (!query) {
     currentMatches = [];
     currentMatchIndex = 0;
-    setSearchStatus('Enter a name or location.');
+    setSearchStatus('Enter a name.');
     return;
   }
 
   currentMatches = allRows
     .filter(row => {
-      const name = String(row.Name || '').toLowerCase();
-      const location = String(row.Location || '').toLowerCase();
-      return name.includes(query) || location.includes(query);
+      // STRICT: only search the submitted Name field
+      const name = (row.Name || '').toString().trim().toLowerCase();
+      return name.includes(query);
     })
     .map(row => ({ row }));
 
   if (!currentMatches.length) {
     currentMatchIndex = 0;
-    setSearchStatus('No match found.');
+    setSearchStatus('No name match found.');
     return;
   }
+
+  setSearchStatus(
+    `${currentMatches.length} match${currentMatches.length === 1 ? '' : 'es'}`
+  );
 
   showMatch(0);
 }
