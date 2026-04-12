@@ -576,26 +576,33 @@ function showMatch(index) {
   if (isNaN(lat) || isNaN(lng)) return;
 
   const targetZoom = Math.max(map.getZoom(), 8);
-  map.setView([lat, lng], targetZoom);
 
-  const tryOpenMatch = (attemptsLeft = 20) => {
+  map.stop();
+  map.setView([lat, lng], targetZoom, { animate: false });
+
+  // Force Leaflet to refresh map sizing/tiles
+  map.invalidateSize(false);
+  map.eachLayer(layer => {
+    if (layer instanceof L.TileLayer) {
+      layer.redraw();
+    }
+  });
+
+  // Rebuild visible markers for the new viewport
+  renderVisibleMarkers();
+
+  setTimeout(() => {
     const marker = visibleMarkerMap.get(row);
 
-    if (marker) {
-      markersLayer.zoomToShowLayer(marker, function() {
-        marker.openPopup();
-      });
+    if (!marker) {
+      setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || 'match'} (could not open card)`);
       return;
     }
 
-    if (attemptsLeft > 0) {
-      setTimeout(() => tryOpenMatch(attemptsLeft - 1), 120);
-    } else {
-      setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || 'match'} (could not open card)`);
-    }
-  };
-
-  setTimeout(() => tryOpenMatch(), 180);
+    markersLayer.zoomToShowLayer(marker, function() {
+      marker.openPopup();
+    });
+  }, 100);
 }
 
 function runSearch() {
