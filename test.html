@@ -675,13 +675,18 @@ for (const row of rows.slice(1)) {
         const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
 
         const marker = L.marker(coords, {
-          icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
-        });
+  icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
+});
 
-        markersLayer.addLayer(marker);
-       // marker.bindPopup(buildPopup(row));
+markersLayer.addLayer(marker);
 
-        marker.on('popupopen', function() {
+marker.on('click', function() {
+  if (!marker.getPopup()) {
+    marker.bindPopup(buildPopup(row));
+  }
+});
+
+marker.on('popupopen', function() {
   if (window.parent) {
     window.parent.postMessage({
       type: 'marker_opened',
