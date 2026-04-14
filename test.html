@@ -190,8 +190,13 @@ html,body{
   font-size:14px;
 }
 
-.search-panel button:hover{
+.search-panel button:hover:not(:disabled){
   background:#f5f5f5;
+}
+
+.search-panel button:disabled{
+  opacity:0.45;
+  cursor:default;
 }
 
 .search-status{
@@ -286,7 +291,7 @@ html,body{
 const sheetUrl =
   "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Public%20Map";
 
-const map = L.map('map').setView([54.5,-3],5);
+const map = L.map('map').setView([54.5, -3], 5);
 
 const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -321,12 +326,12 @@ const kirstyIcon = L.divIcon({
 
 const supporterIcon = L.icon({
   iconUrl: svgToUrl(supporterHeartSvg),
-  iconSize:[26,26],
-  iconAnchor:[13,24],
-  popupAnchor:[0,-22]
+  iconSize: [26, 26],
+  iconAnchor: [13, 24],
+  popupAnchor: [0, -22]
 });
 
-/* SINGLE SHARED CLUSTER LAYER */
+/* SHARED CLUSTER LAYER */
 
 const markersLayer = L.markerClusterGroup({
   showCoverageOnHover: false,
@@ -336,7 +341,7 @@ const markersLayer = L.markerClusterGroup({
 
 markersLayer.addTo(map);
 
-/* SIMPLE LEGEND */
+/* LEGEND */
 
 const LegendControl = L.Control.extend({
   options: {
@@ -383,6 +388,7 @@ const FitAllControl = L.Control.extend({
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
       if (!allRows.length || !allDataBounds) return;
+      clearSearchFocusMarker();
       map.fitBounds(allDataBounds, {
         padding: [30, 30],
         maxZoom: 6
@@ -396,7 +402,7 @@ const FitAllControl = L.Control.extend({
 map.addControl(new FitAllControl());
 
 function escapeHtml(str){
-  return String(str||'')
+  return String(str || '')
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
@@ -659,8 +665,8 @@ const SearchControl = L.Control.extend({
         </div>
         <div id="map-search-status" class="search-status"></div>
         <div class="search-nav">
-          <button id="map-search-prev" type="button">Prev</button>
-          <button id="map-search-next" type="button">Next</button>
+          <button id="map-search-prev" type="button" disabled>Prev</button>
+          <button id="map-search-next" type="button" disabled>Next</button>
         </div>
       </div>
       <button id="map-search-toggle" class="search-toggle" type="button" aria-label="Open search">🔍</button>
@@ -681,6 +687,23 @@ function getSearchPanel() {
 
 function getSearchInput() {
   return document.getElementById('map-search-input');
+}
+
+function getPrevButton() {
+  return document.getElementById('map-search-prev');
+}
+
+function getNextButton() {
+  return document.getElementById('map-search-next');
+}
+
+function setSearchButtonsState() {
+  const prevBtn = getPrevButton();
+  const nextBtn = getNextButton();
+  const disabled = currentMatches.length <= 1;
+
+  if (prevBtn) prevBtn.disabled = disabled;
+  if (nextBtn) nextBtn.disabled = disabled;
 }
 
 function setSearchStatus(text) {
@@ -754,7 +777,8 @@ function showMatch(index) {
 
   searchFocusMarker = L.marker([lat, lng], {
     icon: getRowIcon(row),
-    keyboard: false
+    keyboard: false,
+    interactive: false
   });
 
   searchFocusMarker.bindPopup(buildPopup(row), {
@@ -788,6 +812,7 @@ function runSearch() {
     currentMatchIndex = 0;
     lastSearchQuery = '';
     clearSearchFocusMarker();
+    setSearchButtonsState();
     setSearchStatus('Enter a submitted name or location.');
     return;
   }
@@ -805,6 +830,7 @@ function runSearch() {
     currentMatchIndex = 0;
     lastSearchQuery = query;
     clearSearchFocusMarker();
+    setSearchButtonsState();
     setSearchStatus('No match found.');
     return;
   }
@@ -815,6 +841,7 @@ function runSearch() {
     currentMatches.every((match, i) => match.row === newMatches[i].row);
 
   currentMatches = newMatches;
+  setSearchButtonsState();
 
   if (sameQuery) {
     showMatch(currentMatchIndex + 1);
@@ -852,7 +879,8 @@ function bindSearchUiEvents() {
     prevBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      if (currentMatches.length) showMatch(currentMatchIndex - 1);
+      if (!currentMatches.length || currentMatches.length === 1) return;
+      showMatch(currentMatchIndex - 1);
     });
   }
 
@@ -860,7 +888,8 @@ function bindSearchUiEvents() {
     nextBtn.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      if (currentMatches.length) showMatch(currentMatchIndex + 1);
+      if (!currentMatches.length || currentMatches.length === 1) return;
+      showMatch(currentMatchIndex + 1);
     });
   }
 
@@ -993,6 +1022,7 @@ async function loadMapData() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
+    setSearchButtonsState();
     setSearchStatus('');
 
     updateLegendCounts(allRows);
