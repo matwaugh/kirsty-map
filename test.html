@@ -489,65 +489,130 @@ let currentlyOpeningMarker = null;
 /* POPUP PAN SETTINGS */
 
 const popupComfortSettings = {
-  popupWidth: 240,
   sidePadding: 24,
+  topPadding: 16,
   bottomMarkerPadding: 86,
-  animationDuration: 0.25,
-  minMovePixels: 6
+  popupWidth: 240,
+  minMovePixels: 6,
+  animationDuration: 0.25
 };
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function getDesiredPointForMarker(currentPoint) {
+function getPopupMetrics(marker) {
+  map.closePopup();
+  marker.openPopup();
+
+  const popup = marker.getPopup();
+  const popupEl = popup && popup.getElement();
+
+  if (!popupEl) {
+    return null;
+  }
+
+  popupEl.style.visibility = 'hidden';
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+  const popupRect = popupEl.getBoundingClientRect();
+  const point = map.latLngToContainerPoint(marker.getLatLng());
+
+  const rect = {
+    left: popupRect.left - mapRect.left,
+    top: popupRect.top - mapRect.top,
+    right: popupRect.right - mapRect.left,
+    bottom: popupRect.bottom - mapRect.top,
+    width: popupRect.width,
+    height: popupRect.height
+  };
+
+  const leftGap = point.x - rect.left;
+  const rightGap = rect.right - point.x;
+  const topGap = point.y - rect.top;
+  const pointToBottom = point.y - rect.bottom;
+
+  return {
+    popup,
+    popupEl,
+    point,
+    rect,
+    leftGap,
+    rightGap,
+    topGap,
+    pointToBottom
+  };
+}
+
+function popupFitsComfortably(metrics) {
   const size = map.getSize();
-  const popupWidth = Math.min(
-    popupComfortSettings.popupWidth,
-    Math.max(180, size.x - 100)
-  );
-  const halfPopupWidth = popupWidth / 2;
 
-  const minX = halfPopupWidth + popupComfortSettings.sidePadding;
-  const maxX = size.x - halfPopupWidth - popupComfortSettings.sidePadding;
+  const fitsHorizontally =
+    metrics.rect.left >= popupComfortSettings.sidePadding &&
+    metrics.rect.right <= size.x - popupComfortSettings.sidePadding;
 
-  return L.point(
-    clamp(currentPoint.x, minX, maxX),
-    size.y - popupComfortSettings.bottomMarkerPadding
-  );
+  const fitsTop =
+    metrics.rect.top >= popupComfortSettings.topPadding;
+
+  const hasBottomRoom =
+    metrics.point.y <= size.y - popupComfortSettings.bottomMarkerPadding;
+
+  return fitsHorizontally && fitsTop && hasBottomRoom;
+}
+
+function getDesiredMarkerPoint(metrics) {
+  const size = map.getSize();
+
+  const minX = metrics.leftGap + popupComfortSettings.sidePadding;
+  const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
+
+  const desiredX = clamp(metrics.point.x, minX, maxX);
+
+  const minY = popupComfortSettings.topPadding + metrics.topGap;
+  const idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+
+  const desiredY = Math.max(minY, idealY);
+
+  return L.point(desiredX, desiredY);
 }
 
 function openMarkerPopupComfortably(marker) {
-  if (currentlyOpeningMarker === marker && marker.isPopupOpen()) {
+  if (currentlyOpeningMarker === marker) {
     return;
   }
 
   currentlyOpeningMarker = marker;
-  map.closePopup();
 
-  const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
-  const desiredPoint = getDesiredPointForMarker(currentPoint);
+  const metrics = getPopupMetrics(marker);
 
-  const panX = currentPoint.x - desiredPoint.x;
-  const panY = currentPoint.y - desiredPoint.y;
-
-  const needsMove =
-    Math.abs(panX) > popupComfortSettings.minMovePixels ||
-    Math.abs(panY) > popupComfortSettings.minMovePixels;
-
-  if (!needsMove) {
+  if (!metrics) {
+    currentlyOpeningMarker = null;
     marker.openPopup();
+    return;
+  }
+
+  if (popupFitsComfortably(metrics)) {
+    metrics.popupEl.style.visibility = '';
     currentlyOpeningMarker = null;
     return;
   }
 
+  const desiredPoint = getDesiredMarkerPoint(metrics);
+  const targetLatLng = map.containerPointToLatLng(desiredPoint);
+
+  map.closePopup();
+
   map.once('moveend', function() {
     marker.openPopup();
+    const popupEl = marker.getPopup() && marker.getPopup().getElement();
+    if (popupEl) {
+      popupEl.style.visibility = '';
+    }
     currentlyOpeningMarker = null;
   });
 
   suppressNextMoveendRender = true;
-  map.panBy([panX, panY], {
+  map.panTo(targetLatLng, {
     animate: true,
     duration: popupComfortSettings.animationDuration
   });
@@ -732,6 +797,10 @@ document.addEventListener('keydown', function(e) {
 
 map.on('click', function() {
   closeSearchPanel();
+});
+
+map.on('popupclose', function() {
+  currentlyOpeningMarker = null;
 });
 
 function buildGroupedVisibleRows(visibleRows) {
