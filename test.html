@@ -653,8 +653,8 @@ const SearchControl = L.Control.extend({
     container.innerHTML = `
       <div id="map-search-panel" class="search-panel">
         <div class="search-row">
-          <input id="map-search-input" type="text" placeholder="Search submitted name">
-          <button id="map-search-button" type="button">Go</button>
+        <input id="map-search-input" type="text" placeholder="Search submitted name or location">
+        <button id="map-search-button" type="button">Go</button>
         </div>
         <div id="map-search-status" class="search-status"></div>
         <div class="search-nav">
@@ -672,7 +672,7 @@ const SearchControl = L.Control.extend({
   }
 });
 
-// map.addControl(new SearchControl());
+map.addControl(new SearchControl());
 
 function getSearchPanel() {
   return document.getElementById('map-search-panel');
@@ -724,7 +724,7 @@ function showMatch(index) {
   currentMatchIndex = index;
   const row = currentMatches[currentMatchIndex].row;
 
-  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || 'match'}`);
+  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || row.Location || 'match'}`);
 
   const lat = parseFloat(row.Lat);
   const lng = parseFloat(row.Lng);
@@ -736,27 +736,26 @@ function showMatch(index) {
   map.stop();
   map.setView([lat, lng], targetZoom, { animate: false });
 
-  map.invalidateSize(false);
-  map.eachLayer(layer => {
-    if (layer instanceof L.TileLayer) {
-      layer.redraw();
-    }
-  });
-
   renderVisibleMarkers();
 
-  setTimeout(() => {
+  const tryOpenMatch = (attemptsLeft = 20) => {
     const marker = visibleMarkerMap.get(row);
 
-    if (!marker) {
-      setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || 'match'} (could not open card)`);
+    if (marker) {
+      markersLayer.zoomToShowLayer(marker, function() {
+        marker.openPopup();
+      });
       return;
     }
 
-    markersLayer.zoomToShowLayer(marker, function() {
-      openMarkerPopupComfortably(marker);
-    });
-  }, 100);
+    if (attemptsLeft > 0) {
+      setTimeout(() => tryOpenMatch(attemptsLeft - 1), 100);
+    } else {
+      setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || row.Location || 'match'} (could not open card)`);
+    }
+  };
+
+  setTimeout(() => tryOpenMatch(), 120);
 }
 
 function runSearch() {
@@ -768,20 +767,21 @@ function runSearch() {
   if (!query) {
     currentMatches = [];
     currentMatchIndex = 0;
-    setSearchStatus('Enter a name.');
+    setSearchStatus('Enter a submitted name or location.');
     return;
   }
 
   currentMatches = allRows
     .filter(row => {
       const name = (row.Name || '').toString().trim().toLowerCase();
-      return name.includes(query);
+      const location = (row.Location || '').toString().trim().toLowerCase();
+      return name.includes(query) || location.includes(query);
     })
     .map(row => ({ row }));
 
   if (!currentMatches.length) {
     currentMatchIndex = 0;
-    setSearchStatus('No name match found.');
+    setSearchStatus('No match found.');
     return;
   }
 
