@@ -492,7 +492,6 @@ const popupComfortSettings = {
   sidePadding: 24,
   topPadding: 16,
   bottomMarkerPadding: 86,
-  popupWidth: 240,
   minMovePixels: 6,
   animationDuration: 0.25
 };
@@ -530,7 +529,6 @@ function getPopupMetrics(marker) {
   const leftGap = point.x - rect.left;
   const rightGap = rect.right - point.x;
   const topGap = point.y - rect.top;
-  const pointToBottom = point.y - rect.bottom;
 
   return {
     popup,
@@ -539,8 +537,7 @@ function getPopupMetrics(marker) {
     rect,
     leftGap,
     rightGap,
-    topGap,
-    pointToBottom
+    topGap
   };
 }
 
@@ -554,10 +551,10 @@ function popupFitsComfortably(metrics) {
   const fitsTop =
     metrics.rect.top >= popupComfortSettings.topPadding;
 
-  const hasBottomRoom =
+  const markerLowEnough =
     metrics.point.y <= size.y - popupComfortSettings.bottomMarkerPadding;
 
-  return fitsHorizontally && fitsTop && hasBottomRoom;
+  return fitsHorizontally && fitsTop && markerLowEnough;
 }
 
 function getDesiredMarkerPoint(metrics) {
@@ -565,15 +562,30 @@ function getDesiredMarkerPoint(metrics) {
 
   const minX = metrics.leftGap + popupComfortSettings.sidePadding;
   const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
-
   const desiredX = clamp(metrics.point.x, minX, maxX);
 
   const minY = popupComfortSettings.topPadding + metrics.topGap;
   const idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+  const maxY = size.y - 24;
 
-  const desiredY = Math.max(minY, idealY);
+  const desiredY = clamp(idealY, minY, maxY);
 
   return L.point(desiredX, desiredY);
+}
+
+function getTargetCenterForMarker(marker, desiredPoint) {
+  const zoom = map.getZoom();
+  const currentCenterProjected = map.project(map.getCenter(), zoom);
+  const currentMarkerPoint = map.latLngToContainerPoint(marker.getLatLng());
+  const pixelDelta = desiredPoint.subtract(currentMarkerPoint);
+
+  const newCenterProjected = currentCenterProjected.subtract(pixelDelta);
+  const newCenterLatLng = map.unproject(newCenterProjected, zoom);
+
+  return {
+    center: newCenterLatLng,
+    pixelDelta
+  };
 }
 
 function openMarkerPopupComfortably(marker) {
@@ -598,9 +610,19 @@ function openMarkerPopupComfortably(marker) {
   }
 
   const desiredPoint = getDesiredMarkerPoint(metrics);
-  const targetLatLng = map.containerPointToLatLng(desiredPoint);
+  const target = getTargetCenterForMarker(marker, desiredPoint);
 
+  metrics.popupEl.style.visibility = '';
   map.closePopup();
+
+  if (
+    Math.abs(target.pixelDelta.x) < popupComfortSettings.minMovePixels &&
+    Math.abs(target.pixelDelta.y) < popupComfortSettings.minMovePixels
+  ) {
+    marker.openPopup();
+    currentlyOpeningMarker = null;
+    return;
+  }
 
   map.once('moveend', function() {
     marker.openPopup();
@@ -612,7 +634,7 @@ function openMarkerPopupComfortably(marker) {
   });
 
   suppressNextMoveendRender = true;
-  map.panTo(targetLatLng, {
+  map.panTo(target.center, {
     animate: true,
     duration: popupComfortSettings.animationDuration
   });
