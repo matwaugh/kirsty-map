@@ -387,8 +387,11 @@ const FitAllControl = L.Control.extend({
 
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
+      focusedSearchRowKey = null;
+      clearSearchFocusMarker(false);
+
       if (!allRows.length || !allDataBounds) return;
-      clearSearchFocusMarker();
+
       map.fitBounds(allDataBounds, {
         padding: [30, 30],
         maxZoom: 6
@@ -492,7 +495,7 @@ let renderTimer = null;
 let suppressNextMoveendRender = false;
 let currentlyOpeningMarker = null;
 let searchFocusMarker = null;
-let renderedMarkersByRowKey = new Map();
+let focusedSearchRowKey = null;
 
 /* POPUP PAN SETTINGS */
 
@@ -795,10 +798,14 @@ function getRowIcon(row) {
   return layer === 'kirsties' ? kirstyIcon : supporterIcon;
 }
 
-function clearSearchFocusMarker() {
+function clearSearchFocusMarker(shouldRerender = true) {
   if (searchFocusMarker) {
     map.removeLayer(searchFocusMarker);
     searchFocusMarker = null;
+  }
+
+  if (shouldRerender) {
+    scheduleVisibleRender();
   }
 }
 
@@ -821,42 +828,38 @@ function showMatch(index) {
   const targetZoom = Math.max(map.getZoom(), 8);
 
   map.stop();
-  clearSearchFocusMarker();
 
-  suppressNextMoveendRender = false;
+  focusedSearchRowKey = getRowKey(row);
+  clearSearchFocusMarker(false);
+  scheduleVisibleRender();
+
   map.setView([lat, lng], targetZoom, { animate: false });
   tileLayer.redraw();
 
-  setTimeout(() => {
-    const realMarker = renderedMarkersByRowKey.get(getRowKey(row));
+  searchFocusMarker = L.marker([lat, lng], {
+    icon: getRowIcon(row),
+    keyboard: false,
+    interactive: false
+  });
 
-    if (realMarker) {
-      openMarkerPopupComfortably(realMarker);
-      return;
+  searchFocusMarker.bindPopup(buildPopup(row), {
+    autoPan: false
+  });
+
+  searchFocusMarker.on('popupopen', function() {
+    if (window.parent) {
+      window.parent.postMessage({
+        type: 'marker_opened',
+        name: row.Name || 'unknown'
+      }, '*');
     }
+  });
 
-    searchFocusMarker = L.marker([lat, lng], {
-      icon: getRowIcon(row),
-      keyboard: false,
-      interactive: false
-    });
+  searchFocusMarker.addTo(map);
 
-    searchFocusMarker.bindPopup(buildPopup(row), {
-      autoPan: false
-    });
-
-    searchFocusMarker.on('popupopen', function() {
-      if (window.parent) {
-        window.parent.postMessage({
-          type: 'marker_opened',
-          name: row.Name || 'unknown'
-        }, '*');
-      }
-    });
-
-    searchFocusMarker.addTo(map);
+  setTimeout(() => {
     openMarkerPopupComfortably(searchFocusMarker);
-  }, 180);
+  }, 40);
 }
 
 function runSearch() {
@@ -869,6 +872,7 @@ function runSearch() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
+    focusedSearchRowKey = null;
     clearSearchFocusMarker();
     setSearchButtonsState();
     setSearchStatus('Enter a submitted name or location.');
@@ -887,6 +891,7 @@ function runSearch() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = query;
+    focusedSearchRowKey = null;
     clearSearchFocusMarker();
     setSearchButtonsState();
     setSearchStatus('No match found.');
@@ -1015,17 +1020,19 @@ function renderVisibleMarkers() {
   const groupedByCoords = buildGroupedVisibleRows(visibleRows);
 
   markersLayer.clearLayers();
-  renderedMarkersByRowKey.clear();
 
   for (const key of Object.keys(groupedByCoords)) {
     const group = groupedByCoords[key];
     const baseLat = parseFloat(group[0].Lat);
     const baseLng = parseFloat(group[0].Lng);
 
-    for (let i = 0; i < group.length; i++) {
-      const row = group[i];
+    let renderIndex = 0;
+    const renderableRows = group.filter(row => getRowKey(row) !== focusedSearchRowKey);
+
+    for (const row of renderableRows) {
       const layer = String(row.Layer || '').trim().toLowerCase();
-      const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
+      const coords = getOffsetCoords(baseLat, baseLng, renderIndex, renderableRows.length);
+      renderIndex++;
 
       const marker = L.marker(coords, {
         icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
@@ -1038,7 +1045,8 @@ function renderVisibleMarkers() {
       marker.off('click', marker._openPopup, marker);
 
       marker.on('click', function() {
-        clearSearchFocusMarker();
+        focusedSearchRowKey = null;
+        clearSearchFocusMarker(false);
         openMarkerPopupComfortably(marker);
       });
 
@@ -1052,7 +1060,6 @@ function renderVisibleMarkers() {
       });
 
       markersLayer.addLayer(marker);
-      renderedMarkersByRowKey.set(getRowKey(row), marker);
     }
   }
 }
@@ -1082,6 +1089,7 @@ async function loadMapData() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
+    focusedSearchRowKey = null;
     setSearchButtonsState();
     setSearchStatus('');
 
