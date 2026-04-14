@@ -484,6 +484,64 @@ let allDataBounds = null;
 let renderTimer = null;
 let visibleMarkerMap = new Map();
 
+/* POPUP PAN SETTINGS */
+
+const popupComfortSettings = {
+  targetYRatio: 0.78,
+  minTopPadding: 90,
+  minBottomPadding: 42,
+  sidePadding: 24,
+  animationDuration: 0.25,
+  minPanPixels: 8
+};
+
+function getDesiredMarkerScreenPoint(currentPoint) {
+  const size = map.getSize();
+  const popupWidth = Math.min(240, Math.max(180, size.x - 100));
+  const halfPopupWidth = popupWidth / 2;
+
+  const minX = halfPopupWidth + popupComfortSettings.sidePadding;
+  const maxX = size.x - halfPopupWidth - popupComfortSettings.sidePadding;
+
+  const desiredX = Math.max(minX, Math.min(maxX, currentPoint.x));
+
+  const preferredY = Math.round(size.y * popupComfortSettings.targetYRatio);
+  const maxY = size.y - popupComfortSettings.minBottomPadding;
+  const minY = popupComfortSettings.minTopPadding;
+
+  const desiredY = Math.max(minY, Math.min(maxY, preferredY));
+
+  return L.point(desiredX, desiredY);
+}
+
+function openMarkerPopupComfortably(marker) {
+  const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
+  const desiredPoint = getDesiredMarkerScreenPoint(currentPoint);
+  const panOffset = currentPoint.subtract(desiredPoint);
+
+  const needsPan =
+    Math.abs(panOffset.x) > popupComfortSettings.minPanPixels ||
+    Math.abs(panOffset.y) > popupComfortSettings.minPanPixels;
+
+  map.closePopup();
+
+  if (!needsPan) {
+    marker.openPopup();
+    return;
+  }
+
+  const openAfterPan = () => {
+    map.off('moveend', openAfterPan);
+    marker.openPopup();
+  };
+
+  map.once('moveend', openAfterPan);
+  map.panBy([panOffset.x, panOffset.y], {
+    animate: true,
+    duration: popupComfortSettings.animationDuration
+  });
+}
+
 /* SEARCH UI */
 
 const SearchControl = L.Control.extend({
@@ -580,7 +638,6 @@ function showMatch(index) {
   map.stop();
   map.setView([lat, lng], targetZoom, { animate: false });
 
-  // Force Leaflet to refresh map sizing/tiles
   map.invalidateSize(false);
   map.eachLayer(layer => {
     if (layer instanceof L.TileLayer) {
@@ -588,7 +645,6 @@ function showMatch(index) {
     }
   });
 
-  // Rebuild visible markers for the new viewport
   renderVisibleMarkers();
 
   setTimeout(() => {
@@ -600,7 +656,7 @@ function showMatch(index) {
     }
 
     markersLayer.zoomToShowLayer(marker, function() {
-      marker.openPopup();
+      openMarkerPopupComfortably(marker);
     });
   }, 100);
 }
@@ -721,7 +777,15 @@ function renderVisibleMarkers() {
         icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
       });
 
-      marker.bindPopup(buildPopup(row));
+      marker.bindPopup(buildPopup(row), {
+        autoPan: false
+      });
+
+      marker.off('click', marker._openPopup, marker);
+
+      marker.on('click', function() {
+        openMarkerPopupComfortably(marker);
+      });
 
       marker.on('popupopen', function() {
         if (window.parent) {
