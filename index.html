@@ -492,6 +492,7 @@ let renderTimer = null;
 let suppressNextMoveendRender = false;
 let currentlyOpeningMarker = null;
 let searchFocusMarker = null;
+let renderedMarkersByRowKey = new Map();
 
 /* POPUP PAN SETTINGS */
 
@@ -505,6 +506,15 @@ const popupComfortSettings = {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function getRowKey(row) {
+  return String(
+    row['Submission ID'] ||
+    row['SubmissionID'] ||
+    row['Respondent ID'] ||
+    `${row.Name || ''}|${row.Location || ''}|${row.Lat || ''}|${row.Lng || ''}`
+  );
 }
 
 function getPopupMetrics(marker) {
@@ -564,7 +574,7 @@ function getOpenSearchPanelRect() {
     height: panelRect.height
   };
 }
-  
+
 function popupFitsComfortably(metrics) {
   const size = map.getSize();
 
@@ -589,7 +599,7 @@ function popupFitsComfortably(metrics) {
 
   return fitsHorizontally && fitsTop && markerLowEnough && avoidsSearchPanel;
 }
-  
+
 function getDesiredMarkerPoint(metrics) {
   const size = map.getSize();
 
@@ -604,21 +614,18 @@ function getDesiredMarkerPoint(metrics) {
     minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
   }
 
-// Force popups lower when search panel is open
+  let idealY;
 
-let idealY;
+  if (searchPanelRect) {
+    idealY = Math.max(
+      searchPanelRect.bottom + 20,
+      size.y - popupComfortSettings.bottomMarkerPadding
+    );
+  } else {
+    idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+  }
 
-if (searchPanelRect) {
-  // push clearly below the search panel
-  idealY = Math.max(
-    searchPanelRect.bottom + 20,
-    size.y - popupComfortSettings.bottomMarkerPadding
-  );
-} else {
-  idealY = size.y - popupComfortSettings.bottomMarkerPadding;
-}
   const maxY = size.y - 24;
-
   const desiredY = clamp(idealY, minY, maxY);
 
   return L.point(desiredX, desiredY);
@@ -816,33 +823,40 @@ function showMatch(index) {
   map.stop();
   clearSearchFocusMarker();
 
+  suppressNextMoveendRender = false;
   map.setView([lat, lng], targetZoom, { animate: false });
   tileLayer.redraw();
 
-  searchFocusMarker = L.marker([lat, lng], {
-    icon: getRowIcon(row),
-    keyboard: false,
-    interactive: false
-  });
-
-  searchFocusMarker.bindPopup(buildPopup(row), {
-    autoPan: false
-  });
-
-  searchFocusMarker.on('popupopen', function() {
-    if (window.parent) {
-      window.parent.postMessage({
-        type: 'marker_opened',
-        name: row.Name || 'unknown'
-      }, '*');
-    }
-  });
-
-  searchFocusMarker.addTo(map);
-
   setTimeout(() => {
+    const realMarker = renderedMarkersByRowKey.get(getRowKey(row));
+
+    if (realMarker) {
+      openMarkerPopupComfortably(realMarker);
+      return;
+    }
+
+    searchFocusMarker = L.marker([lat, lng], {
+      icon: getRowIcon(row),
+      keyboard: false,
+      interactive: false
+    });
+
+    searchFocusMarker.bindPopup(buildPopup(row), {
+      autoPan: false
+    });
+
+    searchFocusMarker.on('popupopen', function() {
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'marker_opened',
+          name: row.Name || 'unknown'
+        }, '*');
+      }
+    });
+
+    searchFocusMarker.addTo(map);
     openMarkerPopupComfortably(searchFocusMarker);
-  }, 40);
+  }, 180);
 }
 
 function runSearch() {
@@ -1001,6 +1015,7 @@ function renderVisibleMarkers() {
   const groupedByCoords = buildGroupedVisibleRows(visibleRows);
 
   markersLayer.clearLayers();
+  renderedMarkersByRowKey.clear();
 
   for (const key of Object.keys(groupedByCoords)) {
     const group = groupedByCoords[key];
@@ -1037,6 +1052,7 @@ function renderVisibleMarkers() {
       });
 
       markersLayer.addLayer(marker);
+      renderedMarkersByRowKey.set(getRowKey(row), marker);
     }
   }
 }
