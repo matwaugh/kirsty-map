@@ -483,6 +483,7 @@ let allRows = [];
 let allDataBounds = null;
 let renderTimer = null;
 let visibleMarkerMap = new Map();
+let suppressNextMoveendRender = false;
 
 /* POPUP PAN SETTINGS */
 
@@ -502,13 +503,11 @@ function getDesiredMarkerScreenPoint(currentPoint) {
 
   const minX = halfPopupWidth + popupComfortSettings.sidePadding;
   const maxX = size.x - halfPopupWidth - popupComfortSettings.sidePadding;
-
   const desiredX = Math.max(minX, Math.min(maxX, currentPoint.x));
 
   const preferredY = Math.round(size.y * popupComfortSettings.targetYRatio);
   const maxY = size.y - popupComfortSettings.minBottomPadding;
   const minY = popupComfortSettings.minTopPadding;
-
   const desiredY = Math.max(minY, Math.min(maxY, preferredY));
 
   return L.point(desiredX, desiredY);
@@ -536,6 +535,7 @@ function openMarkerPopupComfortably(marker) {
   };
 
   map.once('moveend', openAfterPan);
+  suppressNextMoveendRender = true;
   map.panBy([panOffset.x, panOffset.y], {
     animate: true,
     duration: popupComfortSettings.animationDuration
@@ -846,7 +846,13 @@ async function loadMapData() {
   }
 }
 
-map.on('moveend', scheduleVisibleRender);
+map.on('moveend', function() {
+  if (suppressNextMoveendRender) {
+    suppressNextMoveendRender = false;
+    return;
+  }
+  scheduleVisibleRender();
+});
 
 window.addEventListener('load', () => {
   setTimeout(() => {
