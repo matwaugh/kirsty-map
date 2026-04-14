@@ -484,12 +484,14 @@ let allDataBounds = null;
 let renderTimer = null;
 let visibleMarkerMap = new Map();
 let suppressNextMoveendRender = false;
+let currentlyOpeningMarker = null;
 
 /* POPUP PAN SETTINGS */
 
 const popupComfortSettings = {
-  bottomMarkerPadding: 78,   // marker sits this far above bottom
-  sidePadding: 24,           // card padding left/right
+  popupWidth: 240,
+  sidePadding: 24,
+  bottomMarkerPadding: 86,
   animationDuration: 0.25,
   minMovePixels: 6
 };
@@ -498,75 +500,54 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function getDesiredMarkerScreenPoint(currentPoint) {
+function getDesiredPointForMarker(currentPoint) {
   const size = map.getSize();
-  const popupWidth = Math.min(240, Math.max(180, size.x - 100));
+  const popupWidth = Math.min(
+    popupComfortSettings.popupWidth,
+    Math.max(180, size.x - 100)
+  );
   const halfPopupWidth = popupWidth / 2;
 
   const minX = halfPopupWidth + popupComfortSettings.sidePadding;
   const maxX = size.x - halfPopupWidth - popupComfortSettings.sidePadding;
-  const desiredX = Math.max(minX, Math.min(maxX, currentPoint.x));
 
-  const preferredY = Math.round(size.y * popupComfortSettings.targetYRatio);
-  const maxY = size.y - popupComfortSettings.minBottomPadding;
-  const minY = popupComfortSettings.minTopPadding;
-  const desiredY = Math.max(minY, Math.min(maxY, preferredY));
-
-  return L.point(desiredX, desiredY);
-}
-
-function openMarkerPopupComfortably(marker) {
-  map.closePopup();
-
-  // Open once so Leaflet builds the popup DOM and we can measure it.
-  marker.openPopup();
-
-  const popup = marker.getPopup();
-  const popupEl = popup && popup.getElement();
-
-  if (!popupEl) {
-    marker.openPopup();
-    return;
-  }
-
-  const popupRect = popupEl.getBoundingClientRect();
-  const popupWidth = popupRect.width || 240;
-
-  // Close it again before panning.
-  map.closePopup();
-
-  const size = map.getSize();
-  const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
-
-  const halfPopupWidth = popupWidth / 2;
-  const minX = halfPopupWidth + popupComfortSettings.sidePadding;
-  const maxX = size.x - halfPopupWidth - popupComfortSettings.sidePadding;
-
-  const desiredPoint = L.point(
+  return L.point(
     clamp(currentPoint.x, minX, maxX),
     size.y - popupComfortSettings.bottomMarkerPadding
   );
+}
 
-  const dx = desiredPoint.x - currentPoint.x;
-  const dy = desiredPoint.y - currentPoint.y;
-
-  const needsMove =
-    Math.abs(dx) > popupComfortSettings.minMovePixels ||
-    Math.abs(dy) > popupComfortSettings.minMovePixels;
-
-  if (!needsMove) {
-    marker.openPopup();
+function openMarkerPopupComfortably(marker) {
+  if (currentlyOpeningMarker === marker && marker.isPopupOpen()) {
     return;
   }
 
-  const targetLatLng = map.containerPointToLatLng(desiredPoint);
+  currentlyOpeningMarker = marker;
+  map.closePopup();
+
+  const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
+  const desiredPoint = getDesiredPointForMarker(currentPoint);
+
+  const panX = currentPoint.x - desiredPoint.x;
+  const panY = currentPoint.y - desiredPoint.y;
+
+  const needsMove =
+    Math.abs(panX) > popupComfortSettings.minMovePixels ||
+    Math.abs(panY) > popupComfortSettings.minMovePixels;
+
+  if (!needsMove) {
+    marker.openPopup();
+    currentlyOpeningMarker = null;
+    return;
+  }
 
   map.once('moveend', function() {
     marker.openPopup();
+    currentlyOpeningMarker = null;
   });
 
   suppressNextMoveendRender = true;
-  map.panTo(targetLatLng, {
+  map.panBy([panX, panY], {
     animate: true,
     duration: popupComfortSettings.animationDuration
   });
