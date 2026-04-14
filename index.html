@@ -548,6 +548,23 @@ function getPopupMetrics(marker) {
   };
 }
 
+function getOpenSearchPanelRect() {
+  const panel = getSearchPanel();
+  if (!panel || !panel.classList.contains('open')) return null;
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+
+  return {
+    left: panelRect.left - mapRect.left,
+    top: panelRect.top - mapRect.top,
+    right: panelRect.right - mapRect.left,
+    bottom: panelRect.bottom - mapRect.top,
+    width: panelRect.width,
+    height: panelRect.height
+  };
+}
+  
 function popupFitsComfortably(metrics) {
   const size = map.getSize();
 
@@ -561,9 +578,18 @@ function popupFitsComfortably(metrics) {
   const markerLowEnough =
     metrics.point.y <= size.y - popupComfortSettings.bottomMarkerPadding;
 
-  return fitsHorizontally && fitsTop && markerLowEnough;
-}
+  const searchPanelRect = getOpenSearchPanelRect();
 
+  const avoidsSearchPanel =
+    !searchPanelRect ||
+    metrics.rect.right <= searchPanelRect.left - 12 ||
+    metrics.rect.left >= searchPanelRect.right + 12 ||
+    metrics.rect.bottom <= searchPanelRect.top - 12 ||
+    metrics.rect.top >= searchPanelRect.bottom + 12;
+
+  return fitsHorizontally && fitsTop && markerLowEnough && avoidsSearchPanel;
+}
+  
 function getDesiredMarkerPoint(metrics) {
   const size = map.getSize();
 
@@ -571,7 +597,13 @@ function getDesiredMarkerPoint(metrics) {
   const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
   const desiredX = clamp(metrics.point.x, minX, maxX);
 
-  const minY = popupComfortSettings.topPadding + metrics.topGap;
+  let minY = popupComfortSettings.topPadding + metrics.topGap;
+
+  const searchPanelRect = getOpenSearchPanelRect();
+  if (searchPanelRect) {
+    minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
+  }
+
   const idealY = size.y - popupComfortSettings.bottomMarkerPadding;
   const maxY = size.y - 24;
 
