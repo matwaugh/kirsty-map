@@ -483,9 +483,9 @@ let lastSearchQuery = '';
 let allRows = [];
 let allDataBounds = null;
 let renderTimer = null;
-let visibleMarkerMap = new Map();
 let suppressNextMoveendRender = false;
 let currentlyOpeningMarker = null;
+let searchFocusMarker = null;
 
 /* POPUP PAN SETTINGS */
 
@@ -716,6 +716,18 @@ function toggleSearchPanel() {
   }
 }
 
+function getRowIcon(row) {
+  const layer = String(row.Layer || '').trim().toLowerCase();
+  return layer === 'kirsties' ? kirstyIcon : supporterIcon;
+}
+
+function clearSearchFocusMarker() {
+  if (searchFocusMarker) {
+    map.removeLayer(searchFocusMarker);
+    searchFocusMarker = null;
+  }
+}
+
 function showMatch(index) {
   if (!currentMatches.length) return;
 
@@ -735,29 +747,34 @@ function showMatch(index) {
   const targetZoom = Math.max(map.getZoom(), 8);
 
   map.stop();
+  clearSearchFocusMarker();
+
   map.setView([lat, lng], targetZoom, { animate: false });
-
   tileLayer.redraw();
-  renderVisibleMarkers();
 
-  const tryOpenMatch = (attemptsLeft = 20) => {
-    const marker = visibleMarkerMap.get(row);
+  searchFocusMarker = L.marker([lat, lng], {
+    icon: getRowIcon(row),
+    keyboard: false
+  });
 
-    if (marker) {
-      markersLayer.zoomToShowLayer(marker, function() {
-        openMarkerPopupComfortably(marker);
-      });
-      return;
+  searchFocusMarker.bindPopup(buildPopup(row), {
+    autoPan: false
+  });
+
+  searchFocusMarker.on('popupopen', function() {
+    if (window.parent) {
+      window.parent.postMessage({
+        type: 'marker_opened',
+        name: row.Name || 'unknown'
+      }, '*');
     }
+  });
 
-    if (attemptsLeft > 0) {
-      setTimeout(() => tryOpenMatch(attemptsLeft - 1), 100);
-    } else {
-      setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || row.Location || 'match'} (could not open card)`);
-    }
-  };
+  searchFocusMarker.addTo(map);
 
-  setTimeout(() => tryOpenMatch(), 120);
+  setTimeout(() => {
+    openMarkerPopupComfortably(searchFocusMarker);
+  }, 40);
 }
 
 function runSearch() {
@@ -770,6 +787,7 @@ function runSearch() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
+    clearSearchFocusMarker();
     setSearchStatus('Enter a submitted name or location.');
     return;
   }
@@ -786,6 +804,7 @@ function runSearch() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = query;
+    clearSearchFocusMarker();
     setSearchStatus('No match found.');
     return;
   }
@@ -909,7 +928,6 @@ function renderVisibleMarkers() {
   const groupedByCoords = buildGroupedVisibleRows(visibleRows);
 
   markersLayer.clearLayers();
-  visibleMarkerMap = new Map();
 
   for (const key of Object.keys(groupedByCoords)) {
     const group = groupedByCoords[key];
@@ -932,6 +950,7 @@ function renderVisibleMarkers() {
       marker.off('click', marker._openPopup, marker);
 
       marker.on('click', function() {
+        clearSearchFocusMarker();
         openMarkerPopupComfortably(marker);
       });
 
@@ -945,7 +964,6 @@ function renderVisibleMarkers() {
       });
 
       markersLayer.addLayer(marker);
-      visibleMarkerMap.set(row, marker);
     }
   }
 }
