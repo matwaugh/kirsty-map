@@ -488,13 +488,15 @@ let suppressNextMoveendRender = false;
 /* POPUP PAN SETTINGS */
 
 const popupComfortSettings = {
-  targetYRatio: 0.78,
-  minTopPadding: 90,
-  minBottomPadding: 42,
-  sidePadding: 24,
+  bottomMarkerPadding: 78,   // marker sits this far above bottom
+  sidePadding: 24,           // card padding left/right
   animationDuration: 0.25,
-  minPanPixels: 8
+  minMovePixels: 6
 };
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
 function getDesiredMarkerScreenPoint(currentPoint) {
   const size = map.getSize();
@@ -514,29 +516,57 @@ function getDesiredMarkerScreenPoint(currentPoint) {
 }
 
 function openMarkerPopupComfortably(marker) {
-  const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
-  const desiredPoint = getDesiredMarkerScreenPoint(currentPoint);
-  const panOffset = currentPoint.subtract(desiredPoint);
-
-  const needsPan =
-    Math.abs(panOffset.x) > popupComfortSettings.minPanPixels ||
-    Math.abs(panOffset.y) > popupComfortSettings.minPanPixels;
-
   map.closePopup();
 
-  if (!needsPan) {
+  // Open once so Leaflet builds the popup DOM and we can measure it.
+  marker.openPopup();
+
+  const popup = marker.getPopup();
+  const popupEl = popup && popup.getElement();
+
+  if (!popupEl) {
     marker.openPopup();
     return;
   }
 
-  const openAfterPan = () => {
-    map.off('moveend', openAfterPan);
-    marker.openPopup();
-  };
+  const popupRect = popupEl.getBoundingClientRect();
+  const popupWidth = popupRect.width || 240;
 
-  map.once('moveend', openAfterPan);
+  // Close it again before panning.
+  map.closePopup();
+
+  const size = map.getSize();
+  const currentPoint = map.latLngToContainerPoint(marker.getLatLng());
+
+  const halfPopupWidth = popupWidth / 2;
+  const minX = halfPopupWidth + popupComfortSettings.sidePadding;
+  const maxX = size.x - halfPopupWidth - popupComfortSettings.sidePadding;
+
+  const desiredPoint = L.point(
+    clamp(currentPoint.x, minX, maxX),
+    size.y - popupComfortSettings.bottomMarkerPadding
+  );
+
+  const dx = desiredPoint.x - currentPoint.x;
+  const dy = desiredPoint.y - currentPoint.y;
+
+  const needsMove =
+    Math.abs(dx) > popupComfortSettings.minMovePixels ||
+    Math.abs(dy) > popupComfortSettings.minMovePixels;
+
+  if (!needsMove) {
+    marker.openPopup();
+    return;
+  }
+
+  const targetLatLng = map.containerPointToLatLng(desiredPoint);
+
+  map.once('moveend', function() {
+    marker.openPopup();
+  });
+
   suppressNextMoveendRender = true;
-  map.panBy([panOffset.x, panOffset.y], {
+  map.panTo(targetLatLng, {
     animate: true,
     duration: popupComfortSettings.animationDuration
   });
