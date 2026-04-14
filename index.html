@@ -604,7 +604,19 @@ function getDesiredMarkerPoint(metrics) {
     minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
   }
 
-  const idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+// Force popups lower when search panel is open
+
+let idealY;
+
+if (searchPanelRect) {
+  // push clearly below the search panel
+  idealY = Math.max(
+    searchPanelRect.bottom + 20,
+    size.y - popupComfortSettings.bottomMarkerPadding
+  );
+} else {
+  idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+}
   const maxY = size.y - 24;
 
   const desiredY = clamp(idealY, minY, maxY);
