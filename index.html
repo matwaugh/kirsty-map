@@ -721,7 +721,9 @@ function renderVisibleMarkers() {
         icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
       });
 
-      marker.bindPopup(buildPopup(row));
+      marker.bindPopup(buildPopup(row), {
+  autoPan: false
+});
 
       marker.on('popupopen', function() {
         if (window.parent) {
