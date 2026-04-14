@@ -288,7 +288,7 @@ const sheetUrl =
 
 const map = L.map('map').setView([54.5,-3],5);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   maxZoom: 19
 }).addTo(map);
@@ -478,6 +478,7 @@ function updateLegendCounts(rows) {
 
 let currentMatches = [];
 let currentMatchIndex = 0;
+let lastSearchQuery = '';
 
 let allRows = [];
 let allDataBounds = null;
@@ -653,8 +654,8 @@ const SearchControl = L.Control.extend({
     container.innerHTML = `
       <div id="map-search-panel" class="search-panel">
         <div class="search-row">
-        <input id="map-search-input" type="text" placeholder="Search submitted name or location">
-        <button id="map-search-button" type="button">Go</button>
+          <input id="map-search-input" type="text" placeholder="Search submitted name or location">
+          <button id="map-search-button" type="button">Go</button>
         </div>
         <div id="map-search-status" class="search-status"></div>
         <div class="search-nav">
@@ -736,6 +737,7 @@ function showMatch(index) {
   map.stop();
   map.setView([lat, lng], targetZoom, { animate: false });
 
+  tileLayer.redraw();
   renderVisibleMarkers();
 
   const tryOpenMatch = (attemptsLeft = 20) => {
@@ -743,7 +745,7 @@ function showMatch(index) {
 
     if (marker) {
       markersLayer.zoomToShowLayer(marker, function() {
-        marker.openPopup();
+        openMarkerPopupComfortably(marker);
       });
       return;
     }
@@ -767,11 +769,12 @@ function runSearch() {
   if (!query) {
     currentMatches = [];
     currentMatchIndex = 0;
+    lastSearchQuery = '';
     setSearchStatus('Enter a submitted name or location.');
     return;
   }
 
-  currentMatches = allRows
+  const newMatches = allRows
     .filter(row => {
       const name = (row.Name || '').toString().trim().toLowerCase();
       const location = (row.Location || '').toString().trim().toLowerCase();
@@ -779,41 +782,84 @@ function runSearch() {
     })
     .map(row => ({ row }));
 
-  if (!currentMatches.length) {
+  if (!newMatches.length) {
+    currentMatches = [];
     currentMatchIndex = 0;
+    lastSearchQuery = query;
     setSearchStatus('No match found.');
     return;
   }
 
-  showMatch(0);
+  const sameQuery =
+    query === lastSearchQuery &&
+    currentMatches.length === newMatches.length &&
+    currentMatches.every((match, i) => match.row === newMatches[i].row);
+
+  currentMatches = newMatches;
+
+  if (sameQuery) {
+    showMatch(currentMatchIndex + 1);
+  } else {
+    currentMatchIndex = 0;
+    lastSearchQuery = query;
+    showMatch(0);
+  }
 }
 
-document.addEventListener('click', function(e) {
-  if (e.target && e.target.id === 'map-search-toggle') {
-    toggleSearchPanel();
+function bindSearchUiEvents() {
+  const toggleBtn = document.getElementById('map-search-toggle');
+  const goBtn = document.getElementById('map-search-button');
+  const prevBtn = document.getElementById('map-search-prev');
+  const nextBtn = document.getElementById('map-search-next');
+  const input = document.getElementById('map-search-input');
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSearchPanel();
+    });
   }
 
-  if (e.target && e.target.id === 'map-search-button') {
-    runSearch();
+  if (goBtn) {
+    goBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      runSearch();
+    });
   }
 
-  if (e.target && e.target.id === 'map-search-prev') {
-    if (currentMatches.length) showMatch(currentMatchIndex - 1);
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentMatches.length) showMatch(currentMatchIndex - 1);
+    });
   }
 
-  if (e.target && e.target.id === 'map-search-next') {
-    if (currentMatches.length) showMatch(currentMatchIndex + 1);
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentMatches.length) showMatch(currentMatchIndex + 1);
+    });
   }
-});
+
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runSearch();
+      }
+    });
+  }
+}
+
+setTimeout(bindSearchUiEvents, 0);
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeSearchPanel();
-  }
-
-  if (e.target && e.target.id === 'map-search-input' && e.key === 'Enter') {
-    e.preventDefault();
-    runSearch();
   }
 });
 
@@ -928,6 +974,7 @@ async function loadMapData() {
     allRows = cleanedRows;
     currentMatches = [];
     currentMatchIndex = 0;
+    lastSearchQuery = '';
     setSearchStatus('');
 
     updateLegendCounts(allRows);
