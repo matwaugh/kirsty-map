@@ -77,8 +77,7 @@ html,body{
   border-radius:12px;
 }
 
-.custom-legend,
-.layer-toggle-control{
+.custom-legend{
   background:#fff;
   padding:10px 12px;
   border-radius:8px;
@@ -86,39 +85,38 @@ html,body{
   line-height:1.2;
 }
 
-.custom-legend .legend-item,
-.layer-toggle-control .toggle-item{
+.custom-legend .legend-item{
   display:flex;
   align-items:center;
   gap:8px;
   white-space:nowrap;
 }
 
-.custom-legend .legend-item + .legend-item,
-.layer-toggle-control .toggle-item + .toggle-item{
+.custom-legend .legend-item + .legend-item{
   margin-top:8px;
 }
 
-.custom-legend svg,
-.layer-toggle-control svg{
+.custom-legend svg{
   width:18px;
   height:18px;
   flex:0 0 auto;
 }
 
-.layer-toggle-control label{
+.custom-legend label{
   display:flex;
   align-items:center;
   gap:8px;
   cursor:pointer;
+  margin:0;
   font-size:14px;
 }
 
-.layer-toggle-control input[type="checkbox"]{
+.custom-legend input[type="checkbox"]{
   margin:0;
   width:16px;
   height:16px;
   cursor:pointer;
+  flex:0 0 auto;
 }
 
 .legend-donation-badge,
@@ -296,6 +294,70 @@ html,body{
     opacity:0;
   }
 }
+
+/* custom cluster colours */
+
+.marker-cluster{
+  background:transparent;
+}
+
+.marker-cluster div{
+  width:40px;
+  height:40px;
+  margin-left:0;
+  margin-top:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:700 14px/1 Arial,sans-serif;
+  color:#fff;
+  border:2px solid rgba(255,255,255,0.95);
+  box-sizing:border-box;
+  box-shadow:0 1px 6px rgba(0,0,0,0.22);
+}
+
+.marker-cluster.kirsty-cluster-small{
+  background:rgba(255,136,71,0.22);
+}
+.marker-cluster.kirsty-cluster-small div{
+  background:rgba(255,136,71,0.78);
+}
+
+.marker-cluster.kirsty-cluster-medium{
+  background:rgba(255,136,71,0.28);
+}
+.marker-cluster.kirsty-cluster-medium div{
+  background:rgba(255,136,71,0.88);
+}
+
+.marker-cluster.kirsty-cluster-large{
+  background:rgba(255,136,71,0.34);
+}
+.marker-cluster.kirsty-cluster-large div{
+  background:#FF8847;
+}
+
+.marker-cluster.friend-cluster-small{
+  background:rgba(0,120,124,0.20);
+}
+.marker-cluster.friend-cluster-small div{
+  background:rgba(0,120,124,0.76);
+}
+
+.marker-cluster.friend-cluster-medium{
+  background:rgba(0,120,124,0.26);
+}
+.marker-cluster.friend-cluster-medium div{
+  background:rgba(0,120,124,0.88);
+}
+
+.marker-cluster.friend-cluster-large{
+  background:rgba(0,120,124,0.32);
+}
+.marker-cluster.friend-cluster-large div{
+  background:#00787C;
+}
 </style>
 </head>
 
@@ -350,18 +412,38 @@ const supporterIcon = L.icon({
   popupAnchor: [0, -22]
 });
 
+function clusterClassName(prefix, count) {
+  if (count < 10) return `${prefix}-small`;
+  if (count < 100) return `${prefix}-medium`;
+  return `${prefix}-large`;
+}
+
+function makeClusterIcon(prefix, count) {
+  return L.divIcon({
+    html: `<div><span>${count}</span></div>`,
+    className: `marker-cluster ${clusterClassName(prefix, count)}`,
+    iconSize: L.point(40, 40)
+  });
+}
+
 /* SEPARATE CLUSTER LAYERS */
 
 const kirstysCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40
+  maxClusterRadius: 40,
+  iconCreateFunction: function(cluster) {
+    return makeClusterIcon('kirsty-cluster', cluster.getChildCount());
+  }
 });
 
 const friendsCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40
+  maxClusterRadius: 40,
+  iconCreateFunction: function(cluster) {
+    return makeClusterIcon('friend-cluster', cluster.getChildCount());
+  }
 });
 
 const layerVisibility = {
@@ -372,7 +454,7 @@ const layerVisibility = {
 map.addLayer(kirstysCluster);
 map.addLayer(friendsCluster);
 
-/* LEGEND */
+/* LEGEND WITH INTEGRATED TOGGLES */
 
 const LegendControl = L.Control.extend({
   options: {
@@ -384,12 +466,18 @@ const LegendControl = L.Control.extend({
 
     container.innerHTML = `
       <div class="legend-item">
-        ${starSvg}
-        <span id="legend-kirstys-label">Kirstys</span>
+        <label for="toggle-kirstys">
+          <input id="toggle-kirstys" type="checkbox" checked>
+          ${starSvg}
+          <span id="legend-kirstys-label">Kirstys</span>
+        </label>
       </div>
       <div class="legend-item">
-        ${supporterHeartSvg}
-        <span id="legend-friends-label">Friends</span>
+        <label for="toggle-friends">
+          <input id="toggle-friends" type="checkbox" checked>
+          ${supporterHeartSvg}
+          <span id="legend-friends-label">Friends</span>
+        </label>
       </div>
       <div class="legend-item">
         <span>Donated?</span>
@@ -405,42 +493,6 @@ const LegendControl = L.Control.extend({
 });
 
 map.addControl(new LegendControl());
-
-/* LAYER TOGGLES */
-
-const LayerToggleControl = L.Control.extend({
-  options: {
-    position: 'topright'
-  },
-
-  onAdd: function() {
-    const container = L.DomUtil.create('div', 'layer-toggle-control');
-
-    container.innerHTML = `
-      <div class="toggle-item">
-        <label for="toggle-kirstys">
-          <input id="toggle-kirstys" type="checkbox" checked>
-          ${starSvg}
-          <span id="toggle-kirstys-label">Kirstys</span>
-        </label>
-      </div>
-      <div class="toggle-item">
-        <label for="toggle-friends">
-          <input id="toggle-friends" type="checkbox" checked>
-          ${supporterHeartSvg}
-          <span id="toggle-friends-label">Friends</span>
-        </label>
-      </div>
-    `;
-
-    L.DomEvent.disableClickPropagation(container);
-    L.DomEvent.disableScrollPropagation(container);
-
-    return container;
-  }
-});
-
-map.addControl(new LayerToggleControl());
 
 const FitAllControl = L.Control.extend({
   options: {
@@ -560,25 +612,15 @@ function updateLegendCounts(rows) {
     }
   }
 
-  const kirstysLegend = document.getElementById('legend-kirstys-label');
-  const friendsLegend = document.getElementById('legend-friends-label');
-  const kirstysToggle = document.getElementById('toggle-kirstys-label');
-  const friendsToggle = document.getElementById('toggle-friends-label');
+  const kirstysLabel = document.getElementById('legend-kirstys-label');
+  const friendsLabel = document.getElementById('legend-friends-label');
 
-  if (kirstysLegend) {
-    kirstysLegend.textContent = `Kirstys (${kirstysCount})`;
+  if (kirstysLabel) {
+    kirstysLabel.textContent = `Kirstys (${kirstysCount})`;
   }
 
-  if (friendsLegend) {
-    friendsLegend.textContent = `Friends (${friendsCount})`;
-  }
-
-  if (kirstysToggle) {
-    kirstysToggle.textContent = `Kirstys (${kirstysCount})`;
-  }
-
-  if (friendsToggle) {
-    friendsToggle.textContent = `Friends (${friendsCount})`;
+  if (friendsLabel) {
+    friendsLabel.textContent = `Friends (${friendsCount})`;
   }
 }
 
@@ -641,7 +683,7 @@ function getPopupMetrics(marker) {
     right: popupRect.right - mapRect.left,
     bottom: popupRect.bottom - mapRect.top,
     width: popupRect.width,
-    height: popupRect.height
+    height:popupRect.height
   };
 
   const leftGap = point.x - rect.left;
@@ -1063,6 +1105,34 @@ function bindSearchUiEvents() {
   }
 }
 
+function refreshLayerVisibility() {
+  if (layerVisibility.kirsties) {
+    if (!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
+  } else {
+    if (map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
+  }
+
+  if (layerVisibility.friends) {
+    if (!map.hasLayer(friendsCluster)) map.addLayer(friendsCluster);
+  } else {
+    if (map.hasLayer(friendsCluster)) map.removeLayer(friendsCluster);
+  }
+}
+
+function validateSearchAfterLayerChange() {
+  if (!lastSearchQuery) return;
+
+  const stillExists = currentMatches.some(match => isRowInActiveLayer(match.row));
+  if (!stillExists) {
+    currentMatches = [];
+    currentMatchIndex = 0;
+    focusedSearchRowKey = null;
+    clearSearchFocusMarker();
+    setSearchButtonsState();
+    setSearchStatus('Current search match is hidden by layer filters.');
+  }
+}
+
 function bindLayerToggleEvents() {
   const kirstysToggle = document.getElementById('toggle-kirstys');
   const friendsToggle = document.getElementById('toggle-friends');
@@ -1087,20 +1157,6 @@ function bindLayerToggleEvents() {
       scheduleVisibleRender();
       validateSearchAfterLayerChange();
     });
-  }
-}
-
-function validateSearchAfterLayerChange() {
-  if (!lastSearchQuery) return;
-
-  const stillExists = currentMatches.some(match => isRowInActiveLayer(match.row));
-  if (!stillExists) {
-    currentMatches = [];
-    currentMatchIndex = 0;
-    focusedSearchRowKey = null;
-    clearSearchFocusMarker();
-    setSearchButtonsState();
-    setSearchStatus('Current search match is hidden by layer filters.');
   }
 }
 
@@ -1153,20 +1209,6 @@ function rowIsVisible(row, bounds) {
   if (isNaN(lat) || isNaN(lng)) return false;
 
   return bounds.pad(0.15).contains([lat, lng]);
-}
-
-function refreshLayerVisibility() {
-  if (layerVisibility.kirsties) {
-    if (!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
-  } else {
-    if (map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
-  }
-
-  if (layerVisibility.friends) {
-    if (!map.hasLayer(friendsCluster)) map.addLayer(friendsCluster);
-  } else {
-    if (map.hasLayer(friendsCluster)) map.removeLayer(friendsCluster);
-  }
 }
 
 function renderVisibleMarkers() {
