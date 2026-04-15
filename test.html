@@ -25,10 +25,10 @@ html,body{
 .fit-all-btn{
   height:42px;
   padding:0 14px;
-  border:none;
-  background:#fff;
+  border:1px solid rgba(0,0,0,0.08); /* subtle edge to separate from browser UI */
+  background:#f2f2f2; /* light grey tint */
   border-radius:999px;
-  box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  box-shadow:0 1px 5px rgba(0,0,0,0.18);
   cursor:pointer;
   font-size:13px;
   font-weight:600;
@@ -40,8 +40,9 @@ html,body{
   white-space:nowrap;
 }
 
-.fit-all-btn:hover{
-  background:#f6f6f6;
+/* tap feedback */
+.fit-all-btn:active{
+  background:#e6e6e6;
 }
 
 .popup{
