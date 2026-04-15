@@ -77,7 +77,8 @@ html,body{
   border-radius:12px;
 }
 
-.custom-legend{
+.custom-legend,
+.layer-toggle-control{
   background:#fff;
   padding:10px 12px;
   border-radius:8px;
@@ -85,21 +86,39 @@ html,body{
   line-height:1.2;
 }
 
-.custom-legend .legend-item{
+.custom-legend .legend-item,
+.layer-toggle-control .toggle-item{
   display:flex;
   align-items:center;
   gap:8px;
   white-space:nowrap;
 }
 
-.custom-legend .legend-item + .legend-item{
+.custom-legend .legend-item + .legend-item,
+.layer-toggle-control .toggle-item + .toggle-item{
   margin-top:8px;
 }
 
-.custom-legend svg{
+.custom-legend svg,
+.layer-toggle-control svg{
   width:18px;
   height:18px;
   flex:0 0 auto;
+}
+
+.layer-toggle-control label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  font-size:14px;
+}
+
+.layer-toggle-control input[type="checkbox"]{
+  margin:0;
+  width:16px;
+  height:16px;
+  cursor:pointer;
 }
 
 .legend-donation-badge,
@@ -331,15 +350,27 @@ const supporterIcon = L.icon({
   popupAnchor: [0, -22]
 });
 
-/* SHARED CLUSTER LAYER */
+/* SEPARATE CLUSTER LAYERS */
 
-const markersLayer = L.markerClusterGroup({
+const kirstysCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   maxClusterRadius: 40
 });
 
-markersLayer.addTo(map);
+const friendsCluster = L.markerClusterGroup({
+  showCoverageOnHover: false,
+  spiderfyOnMaxZoom: true,
+  maxClusterRadius: 40
+});
+
+const layerVisibility = {
+  kirsties: true,
+  friends: true
+};
+
+map.addLayer(kirstysCluster);
+map.addLayer(friendsCluster);
 
 /* LEGEND */
 
@@ -358,7 +389,7 @@ const LegendControl = L.Control.extend({
       </div>
       <div class="legend-item">
         ${supporterHeartSvg}
-        <span id="legend-supporters-label">Supporters</span>
+        <span id="legend-friends-label">Friends</span>
       </div>
       <div class="legend-item">
         <span>Donated?</span>
@@ -375,6 +406,42 @@ const LegendControl = L.Control.extend({
 
 map.addControl(new LegendControl());
 
+/* LAYER TOGGLES */
+
+const LayerToggleControl = L.Control.extend({
+  options: {
+    position: 'topright'
+  },
+
+  onAdd: function() {
+    const container = L.DomUtil.create('div', 'layer-toggle-control');
+
+    container.innerHTML = `
+      <div class="toggle-item">
+        <label for="toggle-kirstys">
+          <input id="toggle-kirstys" type="checkbox" checked>
+          ${starSvg}
+          <span id="toggle-kirstys-label">Kirstys</span>
+        </label>
+      </div>
+      <div class="toggle-item">
+        <label for="toggle-friends">
+          <input id="toggle-friends" type="checkbox" checked>
+          ${supporterHeartSvg}
+          <span id="toggle-friends-label">Friends</span>
+        </label>
+      </div>
+    `;
+
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+
+    return container;
+  }
+});
+
+map.addControl(new LayerToggleControl());
+
 const FitAllControl = L.Control.extend({
   options: {
     position: 'bottomright'
@@ -383,13 +450,17 @@ const FitAllControl = L.Control.extend({
   onAdd: function() {
     const button = L.DomUtil.create('button', 'fit-all-btn');
     button.innerHTML = 'Show all';
-    button.title = 'Show all map entries';
+    button.title = 'Show all visible map entries';
 
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
-      if (!allRows.length || !allDataBounds) return;
-      clearSearchFocusMarker();
-      map.fitBounds(allDataBounds, {
+      focusedSearchRowKey = null;
+      clearSearchFocusMarker(false);
+
+      const activeBounds = getActiveDataBounds();
+      if (!activeBounds) return;
+
+      map.fitBounds(activeBounds, {
         padding: [30, 30],
         maxZoom: 6
       });
@@ -449,9 +520,32 @@ function getOffsetCoords(lat, lng, index, total) {
   return [lat + latOffset, lng + lngOffset];
 }
 
+function normalizeLayer(row) {
+  const raw = String(row.Layer || '').trim().toLowerCase();
+  return raw === 'kirsties' ? 'kirsties' : 'friends';
+}
+
+function isRowInActiveLayer(row) {
+  const layer = normalizeLayer(row);
+  return !!layerVisibility[layer];
+}
+
+function getActiveRows() {
+  return allRows.filter(isRowInActiveLayer);
+}
+
+function getActiveDataBounds() {
+  const activeRows = getActiveRows();
+  if (!activeRows.length) return null;
+
+  return L.latLngBounds(
+    activeRows.map(row => [parseFloat(row.Lat), parseFloat(row.Lng)])
+  );
+}
+
 function updateLegendCounts(rows) {
   let kirstysCount = 0;
-  let supportersCount = 0;
+  let friendsCount = 0;
 
   for (const row of rows) {
     const lat = parseFloat(row.Lat);
@@ -459,24 +553,32 @@ function updateLegendCounts(rows) {
 
     if (isNaN(lat) || isNaN(lng)) continue;
 
-    const layer = String(row.Layer || '').trim().toLowerCase();
-
-    if (layer === 'kirsties') {
+    if (normalizeLayer(row) === 'kirsties') {
       kirstysCount++;
     } else {
-      supportersCount++;
+      friendsCount++;
     }
   }
 
-  const kirstysLabel = document.getElementById('legend-kirstys-label');
-  const supportersLabel = document.getElementById('legend-supporters-label');
+  const kirstysLegend = document.getElementById('legend-kirstys-label');
+  const friendsLegend = document.getElementById('legend-friends-label');
+  const kirstysToggle = document.getElementById('toggle-kirstys-label');
+  const friendsToggle = document.getElementById('toggle-friends-label');
 
-  if (kirstysLabel) {
-    kirstysLabel.textContent = `Kirstys (${kirstysCount})`;
+  if (kirstysLegend) {
+    kirstysLegend.textContent = `Kirstys (${kirstysCount})`;
   }
 
-  if (supportersLabel) {
-    supportersLabel.textContent = `Supporters (${supportersCount})`;
+  if (friendsLegend) {
+    friendsLegend.textContent = `Friends (${friendsCount})`;
+  }
+
+  if (kirstysToggle) {
+    kirstysToggle.textContent = `Kirstys (${kirstysCount})`;
+  }
+
+  if (friendsToggle) {
+    friendsToggle.textContent = `Friends (${friendsCount})`;
   }
 }
 
@@ -487,11 +589,11 @@ let currentMatchIndex = 0;
 let lastSearchQuery = '';
 
 let allRows = [];
-let allDataBounds = null;
 let renderTimer = null;
 let suppressNextMoveendRender = false;
 let currentlyOpeningMarker = null;
 let searchFocusMarker = null;
+let focusedSearchRowKey = null;
 
 /* POPUP PAN SETTINGS */
 
@@ -505,6 +607,15 @@ const popupComfortSettings = {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function getRowKey(row) {
+  return String(
+    row['Submission ID'] ||
+    row['SubmissionID'] ||
+    row['Respondent ID'] ||
+    `${row.Name || ''}|${row.Location || ''}|${row.Lat || ''}|${row.Lng || ''}`
+  );
 }
 
 function getPopupMetrics(marker) {
@@ -548,6 +659,23 @@ function getPopupMetrics(marker) {
   };
 }
 
+function getOpenSearchPanelRect() {
+  const panel = getSearchPanel();
+  if (!panel || !panel.classList.contains('open')) return null;
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+
+  return {
+    left: panelRect.left - mapRect.left,
+    top: panelRect.top - mapRect.top,
+    right: panelRect.right - mapRect.left,
+    bottom: panelRect.bottom - mapRect.top,
+    width: panelRect.width,
+    height: panelRect.height
+  };
+}
+
 function popupFitsComfortably(metrics) {
   const size = map.getSize();
 
@@ -561,7 +689,16 @@ function popupFitsComfortably(metrics) {
   const markerLowEnough =
     metrics.point.y <= size.y - popupComfortSettings.bottomMarkerPadding;
 
-  return fitsHorizontally && fitsTop && markerLowEnough;
+  const searchPanelRect = getOpenSearchPanelRect();
+
+  const avoidsSearchPanel =
+    !searchPanelRect ||
+    metrics.rect.right <= searchPanelRect.left - 12 ||
+    metrics.rect.left >= searchPanelRect.right + 12 ||
+    metrics.rect.bottom <= searchPanelRect.top - 12 ||
+    metrics.rect.top >= searchPanelRect.bottom + 12;
+
+  return fitsHorizontally && fitsTop && markerLowEnough && avoidsSearchPanel;
 }
 
 function getDesiredMarkerPoint(metrics) {
@@ -571,10 +708,25 @@ function getDesiredMarkerPoint(metrics) {
   const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
   const desiredX = clamp(metrics.point.x, minX, maxX);
 
-  const minY = popupComfortSettings.topPadding + metrics.topGap;
-  const idealY = size.y - popupComfortSettings.bottomMarkerPadding;
-  const maxY = size.y - 24;
+  let minY = popupComfortSettings.topPadding + metrics.topGap;
 
+  const searchPanelRect = getOpenSearchPanelRect();
+  if (searchPanelRect) {
+    minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
+  }
+
+  let idealY;
+
+  if (searchPanelRect) {
+    idealY = Math.max(
+      searchPanelRect.bottom + 20,
+      size.y - popupComfortSettings.bottomMarkerPadding
+    );
+  } else {
+    idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+  }
+
+  const maxY = size.y - 24;
   const desiredY = clamp(idealY, minY, maxY);
 
   return L.point(desiredX, desiredY);
@@ -740,14 +892,17 @@ function toggleSearchPanel() {
 }
 
 function getRowIcon(row) {
-  const layer = String(row.Layer || '').trim().toLowerCase();
-  return layer === 'kirsties' ? kirstyIcon : supporterIcon;
+  return normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon;
 }
 
-function clearSearchFocusMarker() {
+function clearSearchFocusMarker(shouldRerender = true) {
   if (searchFocusMarker) {
     map.removeLayer(searchFocusMarker);
     searchFocusMarker = null;
+  }
+
+  if (shouldRerender) {
+    scheduleVisibleRender();
   }
 }
 
@@ -770,7 +925,10 @@ function showMatch(index) {
   const targetZoom = Math.max(map.getZoom(), 8);
 
   map.stop();
-  clearSearchFocusMarker();
+
+  focusedSearchRowKey = getRowKey(row);
+  clearSearchFocusMarker(false);
+  scheduleVisibleRender();
 
   map.setView([lat, lng], targetZoom, { animate: false });
   tileLayer.redraw();
@@ -811,13 +969,14 @@ function runSearch() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
+    focusedSearchRowKey = null;
     clearSearchFocusMarker();
     setSearchButtonsState();
     setSearchStatus('Enter a submitted name or location.');
     return;
   }
 
-  const newMatches = allRows
+  const newMatches = getActiveRows()
     .filter(row => {
       const name = (row.Name || '').toString().trim().toLowerCase();
       const location = (row.Location || '').toString().trim().toLowerCase();
@@ -829,6 +988,7 @@ function runSearch() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = query;
+    focusedSearchRowKey = null;
     clearSearchFocusMarker();
     setSearchButtonsState();
     setSearchStatus('No match found.');
@@ -903,7 +1063,51 @@ function bindSearchUiEvents() {
   }
 }
 
-setTimeout(bindSearchUiEvents, 0);
+function bindLayerToggleEvents() {
+  const kirstysToggle = document.getElementById('toggle-kirstys');
+  const friendsToggle = document.getElementById('toggle-friends');
+
+  if (kirstysToggle) {
+    kirstysToggle.addEventListener('change', function() {
+      layerVisibility.kirsties = !!kirstysToggle.checked;
+      focusedSearchRowKey = null;
+      clearSearchFocusMarker(false);
+      refreshLayerVisibility();
+      scheduleVisibleRender();
+      validateSearchAfterLayerChange();
+    });
+  }
+
+  if (friendsToggle) {
+    friendsToggle.addEventListener('change', function() {
+      layerVisibility.friends = !!friendsToggle.checked;
+      focusedSearchRowKey = null;
+      clearSearchFocusMarker(false);
+      refreshLayerVisibility();
+      scheduleVisibleRender();
+      validateSearchAfterLayerChange();
+    });
+  }
+}
+
+function validateSearchAfterLayerChange() {
+  if (!lastSearchQuery) return;
+
+  const stillExists = currentMatches.some(match => isRowInActiveLayer(match.row));
+  if (!stillExists) {
+    currentMatches = [];
+    currentMatchIndex = 0;
+    focusedSearchRowKey = null;
+    clearSearchFocusMarker();
+    setSearchButtonsState();
+    setSearchStatus('Current search match is hidden by layer filters.');
+  }
+}
+
+setTimeout(() => {
+  bindSearchUiEvents();
+  bindLayerToggleEvents();
+}, 0);
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
@@ -941,12 +1145,28 @@ function buildGroupedVisibleRows(visibleRows) {
 }
 
 function rowIsVisible(row, bounds) {
+  if (!isRowInActiveLayer(row)) return false;
+
   const lat = parseFloat(row.Lat);
   const lng = parseFloat(row.Lng);
 
   if (isNaN(lat) || isNaN(lng)) return false;
 
   return bounds.pad(0.15).contains([lat, lng]);
+}
+
+function refreshLayerVisibility() {
+  if (layerVisibility.kirsties) {
+    if (!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
+  } else {
+    if (map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
+  }
+
+  if (layerVisibility.friends) {
+    if (!map.hasLayer(friendsCluster)) map.addLayer(friendsCluster);
+  } else {
+    if (map.hasLayer(friendsCluster)) map.removeLayer(friendsCluster);
+  }
 }
 
 function renderVisibleMarkers() {
@@ -956,20 +1176,25 @@ function renderVisibleMarkers() {
   const visibleRows = allRows.filter(row => rowIsVisible(row, bounds));
   const groupedByCoords = buildGroupedVisibleRows(visibleRows);
 
-  markersLayer.clearLayers();
+  kirstysCluster.clearLayers();
+  friendsCluster.clearLayers();
 
   for (const key of Object.keys(groupedByCoords)) {
     const group = groupedByCoords[key];
     const baseLat = parseFloat(group[0].Lat);
     const baseLng = parseFloat(group[0].Lng);
 
-    for (let i = 0; i < group.length; i++) {
-      const row = group[i];
-      const layer = String(row.Layer || '').trim().toLowerCase();
-      const coords = getOffsetCoords(baseLat, baseLng, i, group.length);
+    const renderableRows = group.filter(row => getRowKey(row) !== focusedSearchRowKey);
+    const kirstyRows = renderableRows.filter(row => normalizeLayer(row) === 'kirsties');
+    const friendRows = renderableRows.filter(row => normalizeLayer(row) === 'friends');
+
+    let kirstyIndex = 0;
+    for (const row of kirstyRows) {
+      const coords = getOffsetCoords(baseLat, baseLng, kirstyIndex, kirstyRows.length);
+      kirstyIndex++;
 
       const marker = L.marker(coords, {
-        icon: layer === 'kirsties' ? kirstyIcon : supporterIcon
+        icon: kirstyIcon
       });
 
       marker.bindPopup(buildPopup(row), {
@@ -979,7 +1204,8 @@ function renderVisibleMarkers() {
       marker.off('click', marker._openPopup, marker);
 
       marker.on('click', function() {
-        clearSearchFocusMarker();
+        focusedSearchRowKey = null;
+        clearSearchFocusMarker(false);
         openMarkerPopupComfortably(marker);
       });
 
@@ -992,9 +1218,44 @@ function renderVisibleMarkers() {
         }
       });
 
-      markersLayer.addLayer(marker);
+      kirstysCluster.addLayer(marker);
+    }
+
+    let friendIndex = 0;
+    for (const row of friendRows) {
+      const coords = getOffsetCoords(baseLat, baseLng, friendIndex, friendRows.length);
+      friendIndex++;
+
+      const marker = L.marker(coords, {
+        icon: supporterIcon
+      });
+
+      marker.bindPopup(buildPopup(row), {
+        autoPan: false
+      });
+
+      marker.off('click', marker._openPopup, marker);
+
+      marker.on('click', function() {
+        focusedSearchRowKey = null;
+        clearSearchFocusMarker(false);
+        openMarkerPopupComfortably(marker);
+      });
+
+      marker.on('popupopen', function() {
+        if (window.parent) {
+          window.parent.postMessage({
+            type: 'marker_opened',
+            name: row.Name || 'unknown'
+          }, '*');
+        }
+      });
+
+      friendsCluster.addLayer(marker);
     }
   }
+
+  refreshLayerVisibility();
 }
 
 function scheduleVisibleRender() {
@@ -1022,16 +1283,20 @@ async function loadMapData() {
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
+    focusedSearchRowKey = null;
     setSearchButtonsState();
     setSearchStatus('');
 
     updateLegendCounts(allRows);
-
-    allDataBounds = L.latLngBounds(
-      allRows.map(row => [parseFloat(row.Lat), parseFloat(row.Lng)])
-    );
-
     scheduleVisibleRender();
+
+    const activeBounds = getActiveDataBounds();
+    if (activeBounds) {
+      map.fitBounds(activeBounds, {
+        padding: [30, 30],
+        maxZoom: 6
+      });
+    }
 
     if (allRows.length) {
       setTimeout(() => {
