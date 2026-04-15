@@ -23,19 +23,21 @@ html,body{
 }
 
 .fit-all-btn{
-  width:42px;
   height:42px;
+  padding:0 14px;
   border:none;
   background:#fff;
-  border-radius:8px;
+  border-radius:999px;
   box-shadow:0 1px 5px rgba(0,0,0,0.2);
   cursor:pointer;
-  font-size:12px;
+  font-size:13px;
+  font-weight:600;
   display:flex;
   align-items:center;
   justify-content:center;
   color:#333;
   -webkit-appearance:none;
+  white-space:nowrap;
 }
 
 .fit-all-btn:hover{
@@ -573,8 +575,8 @@ const FitAllControl = L.Control.extend({
 
   onAdd: function() {
     const button = L.DomUtil.create('button', 'fit-all-btn');
-    button.innerHTML = 'Show all';
-    button.title = 'Show all visible map entries';
+    button.innerHTML = 'View all';
+button.title = 'Zoom out to all visible map entries';
 
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
@@ -1407,14 +1409,7 @@ async function loadMapData() {
     updateLegendCounts(allRows);
     scheduleVisibleRender();
 
-    const activeBounds = getActiveDataBounds();
-    if (activeBounds) {
-      map.fitBounds(activeBounds, {
-        padding: [30, 30],
-        maxZoom: 6
-      });
-    }
-
+ 
     if (allRows.length) {
       setTimeout(() => {
         map.invalidateSize();
