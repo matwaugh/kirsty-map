@@ -109,14 +109,42 @@ html,body{
   cursor:pointer;
   margin:0;
   font-size:14px;
+  color:#333;
 }
 
 .custom-legend input[type="checkbox"]{
-  margin:0;
-  width:16px;
-  height:16px;
-  cursor:pointer;
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.legend-checkbox{
+  width:13px;
+  height:13px;
+  border:1px solid #333;
+  border-radius:3px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  background:#fff;
   flex:0 0 auto;
+  position:relative;
+}
+
+.legend-checkbox::after{
+  content:"";
+  width:4px;
+  height:7px;
+  border-right:1.6px solid #333;
+  border-bottom:1.6px solid #333;
+  transform:rotate(45deg);
+  opacity:0;
+  margin-top:-1px;
+}
+
+.custom-legend input[type="checkbox"]:checked + .legend-checkbox::after{
+  opacity:1;
 }
 
 .legend-donation-badge,
@@ -264,7 +292,7 @@ html,body{
   margin-left:-21px;
   margin-top:-21px;
   border-radius:50%;
-  background:rgba(235, 6, 140, 0.22);
+  background:rgba(0,117,120,0.18);
   animation:haloPulse 2.5s ease-out infinite;
   pointer-events:none;
   z-index:0;
@@ -318,45 +346,45 @@ html,body{
 }
 
 .marker-cluster.kirsty-cluster-small{
-  background:rgba(255,136,71,0.22);
+  background:rgba(0,117,120,0.22);
 }
 .marker-cluster.kirsty-cluster-small div{
-  background:rgba(255,136,71,0.78);
+  background:rgba(0,117,120,0.78);
 }
 
 .marker-cluster.kirsty-cluster-medium{
-  background:rgba(255,136,71,0.28);
+  background:rgba(0,117,120,0.28);
 }
 .marker-cluster.kirsty-cluster-medium div{
-  background:rgba(255,136,71,0.88);
+  background:rgba(0,117,120,0.88);
 }
 
 .marker-cluster.kirsty-cluster-large{
-  background:rgba(255,136,71,0.34);
+  background:rgba(0,117,120,0.34);
 }
 .marker-cluster.kirsty-cluster-large div{
-  background:#FF8847;
+  background:#007578;
 }
 
 .marker-cluster.friend-cluster-small{
-  background:rgba(0,120,124,0.20);
+  background:rgba(0,151,155,0.20);
 }
 .marker-cluster.friend-cluster-small div{
-  background:rgba(0,120,124,0.76);
+  background:rgba(0,151,155,0.76);
 }
 
 .marker-cluster.friend-cluster-medium{
-  background:rgba(0,120,124,0.26);
+  background:rgba(0,151,155,0.26);
 }
 .marker-cluster.friend-cluster-medium div{
-  background:rgba(0,120,124,0.88);
+  background:rgba(0,151,155,0.88);
 }
 
 .marker-cluster.friend-cluster-large{
-  background:rgba(0,120,124,0.32);
+  background:rgba(0,151,155,0.32);
 }
 .marker-cluster.friend-cluster-large div{
-  background:#00787C;
+  background:#00979B;
 }
 </style>
 </head>
@@ -374,6 +402,16 @@ const sheetUrl =
 
 const map = L.map('map').setView([54.5, -3], 5);
 
+/* panes so Kirstys always render above Friends */
+map.createPane('friendsPane');
+map.getPane('friendsPane').style.zIndex = 450;
+
+map.createPane('kirstysPane');
+map.getPane('kirstysPane').style.zIndex = 460;
+
+map.createPane('searchFocusPane');
+map.getPane('searchFocusPane').style.zIndex = 650;
+
 const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   maxZoom: 19
@@ -384,13 +422,13 @@ const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voy
 const starSvg =
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
 <path d="M36 8l7.2 14.6 16.1 2.3-11.7 11.4 2.8 16L36 44.9 21.6 52.3l2.8-16L12.7 24.9l16.1-2.3L36 8z"
-fill="#FF8847" stroke="#ffffff" stroke-width="3"/>
+fill="#007578" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
 const supporterHeartSvg =
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
 <path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
-fill="#ADEBB3" stroke="#ffffff" stroke-width="3"/>
+fill="#00979B" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
 function svgToUrl(svg){
@@ -432,6 +470,7 @@ const kirstysCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   maxClusterRadius: 40,
+  clusterPane: 'kirstysPane',
   iconCreateFunction: function(cluster) {
     return makeClusterIcon('kirsty-cluster', cluster.getChildCount());
   }
@@ -441,6 +480,7 @@ const friendsCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
   spiderfyOnMaxZoom: true,
   maxClusterRadius: 40,
+  clusterPane: 'friendsPane',
   iconCreateFunction: function(cluster) {
     return makeClusterIcon('friend-cluster', cluster.getChildCount());
   }
@@ -451,8 +491,8 @@ const layerVisibility = {
   friends: true
 };
 
-map.addLayer(kirstysCluster);
 map.addLayer(friendsCluster);
+map.addLayer(kirstysCluster);
 
 /* LEGEND WITH INTEGRATED TOGGLES */
 
@@ -468,6 +508,7 @@ const LegendControl = L.Control.extend({
       <div class="legend-item">
         <label for="toggle-kirstys">
           <input id="toggle-kirstys" type="checkbox" checked>
+          <span class="legend-checkbox" aria-hidden="true"></span>
           ${starSvg}
           <span id="legend-kirstys-label">Kirstys</span>
         </label>
@@ -475,6 +516,7 @@ const LegendControl = L.Control.extend({
       <div class="legend-item">
         <label for="toggle-friends">
           <input id="toggle-friends" type="checkbox" checked>
+          <span class="legend-checkbox" aria-hidden="true"></span>
           ${supporterHeartSvg}
           <span id="legend-friends-label">Friends</span>
         </label>
@@ -683,7 +725,7 @@ function getPopupMetrics(marker) {
     right: popupRect.right - mapRect.left,
     bottom: popupRect.bottom - mapRect.top,
     width: popupRect.width,
-    height:popupRect.height
+    height: popupRect.height
   };
 
   const leftGap = point.x - rect.left;
@@ -978,7 +1020,8 @@ function showMatch(index) {
   searchFocusMarker = L.marker([lat, lng], {
     icon: getRowIcon(row),
     keyboard: false,
-    interactive: false
+    interactive: false,
+    pane: 'searchFocusPane'
   });
 
   searchFocusMarker.bindPopup(buildPopup(row), {
@@ -1106,16 +1149,16 @@ function bindSearchUiEvents() {
 }
 
 function refreshLayerVisibility() {
-  if (layerVisibility.kirsties) {
-    if (!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
-  } else {
-    if (map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
-  }
-
   if (layerVisibility.friends) {
     if (!map.hasLayer(friendsCluster)) map.addLayer(friendsCluster);
   } else {
     if (map.hasLayer(friendsCluster)) map.removeLayer(friendsCluster);
+  }
+
+  if (layerVisibility.kirsties) {
+    if (!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
+  } else {
+    if (map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
   }
 }
 
@@ -1230,46 +1273,14 @@ function renderVisibleMarkers() {
     const kirstyRows = renderableRows.filter(row => normalizeLayer(row) === 'kirsties');
     const friendRows = renderableRows.filter(row => normalizeLayer(row) === 'friends');
 
-    let kirstyIndex = 0;
-    for (const row of kirstyRows) {
-      const coords = getOffsetCoords(baseLat, baseLng, kirstyIndex, kirstyRows.length);
-      kirstyIndex++;
-
-      const marker = L.marker(coords, {
-        icon: kirstyIcon
-      });
-
-      marker.bindPopup(buildPopup(row), {
-        autoPan: false
-      });
-
-      marker.off('click', marker._openPopup, marker);
-
-      marker.on('click', function() {
-        focusedSearchRowKey = null;
-        clearSearchFocusMarker(false);
-        openMarkerPopupComfortably(marker);
-      });
-
-      marker.on('popupopen', function() {
-        if (window.parent) {
-          window.parent.postMessage({
-            type: 'marker_opened',
-            name: row.Name || 'unknown'
-          }, '*');
-        }
-      });
-
-      kirstysCluster.addLayer(marker);
-    }
-
     let friendIndex = 0;
     for (const row of friendRows) {
       const coords = getOffsetCoords(baseLat, baseLng, friendIndex, friendRows.length);
       friendIndex++;
 
       const marker = L.marker(coords, {
-        icon: supporterIcon
+        icon: supporterIcon,
+        pane: 'friendsPane'
       });
 
       marker.bindPopup(buildPopup(row), {
@@ -1294,6 +1305,40 @@ function renderVisibleMarkers() {
       });
 
       friendsCluster.addLayer(marker);
+    }
+
+    let kirstyIndex = 0;
+    for (const row of kirstyRows) {
+      const coords = getOffsetCoords(baseLat, baseLng, kirstyIndex, kirstyRows.length);
+      kirstyIndex++;
+
+      const marker = L.marker(coords, {
+        icon: kirstyIcon,
+        pane: 'kirstysPane'
+      });
+
+      marker.bindPopup(buildPopup(row), {
+        autoPan: false
+      });
+
+      marker.off('click', marker._openPopup, marker);
+
+      marker.on('click', function() {
+        focusedSearchRowKey = null;
+        clearSearchFocusMarker(false);
+        openMarkerPopupComfortably(marker);
+      });
+
+      marker.on('popupopen', function() {
+        if (window.parent) {
+          window.parent.postMessage({
+            type: 'marker_opened',
+            name: row.Name || 'unknown'
+          }, '*');
+        }
+      });
+
+      kirstysCluster.addLayer(marker);
     }
   }
 
