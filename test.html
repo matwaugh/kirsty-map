@@ -83,6 +83,7 @@ html,body{
   border-radius:8px;
   box-shadow:0 1px 5px rgba(0,0,0,0.2);
   line-height:1.2;
+  min-width:220px;
 }
 
 .custom-legend .legend-item{
@@ -118,33 +119,59 @@ html,body{
   pointer-events:none;
 }
 
-.legend-checkbox{
-  width:13px;
-  height:13px;
-  border:1px solid #333;
-  border-radius:3px;
+.legend-toggle{
+  width:14px;
+  height:14px;
+  border-radius:4px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   box-sizing:border-box;
-  background:#fff;
   flex:0 0 auto;
   position:relative;
+  border:1px solid transparent;
+  background:#fff;
 }
 
-.legend-checkbox::after{
+.legend-toggle::after{
   content:"";
   width:4px;
   height:7px;
-  border-right:1.6px solid #333;
-  border-bottom:1.6px solid #333;
+  border-right:1.8px solid #fff;
+  border-bottom:1.8px solid #fff;
   transform:rotate(45deg);
-  opacity:0;
   margin-top:-1px;
+  opacity:0;
 }
 
-.custom-legend input[type="checkbox"]:checked + .legend-checkbox::after{
+.legend-toggle.kirstys{
+  border-color:#FF8847;
+}
+
+.legend-toggle.friends{
+  border-color:#00979B;
+}
+
+.custom-legend input[type="checkbox"]:checked + .legend-toggle.kirstys{
+  background:#FF8847;
+}
+
+.custom-legend input[type="checkbox"]:checked + .legend-toggle.friends{
+  background:#00979B;
+}
+
+.custom-legend input[type="checkbox"]:checked + .legend-toggle::after{
   opacity:1;
+}
+
+.legend-donation-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-top:10px;
+  font-size:14px;
+  color:#333;
 }
 
 .legend-donation-badge,
@@ -292,7 +319,7 @@ html,body{
   margin-left:-21px;
   margin-top:-21px;
   border-radius:50%;
-  background:rgba(0,117,120,0.18);
+  background:rgba(235, 6, 140, 0.22);
   animation:haloPulse 2.5s ease-out infinite;
   pointer-events:none;
   z-index:0;
@@ -346,24 +373,24 @@ html,body{
 }
 
 .marker-cluster.kirsty-cluster-small{
-  background:rgba(0,117,120,0.22);
+  background:rgba(255,136,71,0.22);
 }
 .marker-cluster.kirsty-cluster-small div{
-  background:rgba(0,117,120,0.78);
+  background:rgba(255,136,71,0.78);
 }
 
 .marker-cluster.kirsty-cluster-medium{
-  background:rgba(0,117,120,0.28);
+  background:rgba(255,136,71,0.28);
 }
 .marker-cluster.kirsty-cluster-medium div{
-  background:rgba(0,117,120,0.88);
+  background:rgba(255,136,71,0.88);
 }
 
 .marker-cluster.kirsty-cluster-large{
-  background:rgba(0,117,120,0.34);
+  background:rgba(255,136,71,0.34);
 }
 .marker-cluster.kirsty-cluster-large div{
-  background:#007578;
+  background:#FF8847;
 }
 
 .marker-cluster.friend-cluster-small{
@@ -422,7 +449,7 @@ const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voy
 const starSvg =
 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
 <path d="M36 8l7.2 14.6 16.1 2.3-11.7 11.4 2.8 16L36 44.9 21.6 52.3l2.8-16L12.7 24.9l16.1-2.3L36 8z"
-fill="#007578" stroke="#ffffff" stroke-width="3"/>
+fill="#FF8847" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
 const supporterHeartSvg =
@@ -508,7 +535,7 @@ const LegendControl = L.Control.extend({
       <div class="legend-item">
         <label for="toggle-kirstys">
           <input id="toggle-kirstys" type="checkbox" checked>
-          <span class="legend-checkbox" aria-hidden="true"></span>
+          <span class="legend-toggle kirstys" aria-hidden="true"></span>
           ${starSvg}
           <span id="legend-kirstys-label">Kirstys</span>
         </label>
@@ -516,12 +543,12 @@ const LegendControl = L.Control.extend({
       <div class="legend-item">
         <label for="toggle-friends">
           <input id="toggle-friends" type="checkbox" checked>
-          <span class="legend-checkbox" aria-hidden="true"></span>
+          <span class="legend-toggle friends" aria-hidden="true"></span>
           ${supporterHeartSvg}
           <span id="legend-friends-label">Friends</span>
         </label>
       </div>
-      <div class="legend-item">
+      <div class="legend-donation-row">
         <span>Donated?</span>
         <span class="legend-donation-badge">✓</span>
       </div>
