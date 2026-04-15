@@ -83,7 +83,7 @@ html,body{
   border-radius:8px;
   box-shadow:0 1px 5px rgba(0,0,0,0.2);
   line-height:1.2;
-  min-width:220px;
+  display:inline-block;
 }
 
 .custom-legend .legend-item{
@@ -120,9 +120,9 @@ html,body{
 }
 
 .legend-toggle{
-  width:14px;
-  height:14px;
-  border-radius:4px;
+  width:18px;
+  height:12px;
+  border-radius:999px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -136,9 +136,9 @@ html,body{
 .legend-toggle::after{
   content:"";
   width:4px;
-  height:7px;
-  border-right:1.8px solid #fff;
-  border-bottom:1.8px solid #fff;
+  height:6px;
+  border-right:1.6px solid #fff;
+  border-bottom:1.6px solid #fff;
   transform:rotate(45deg);
   margin-top:-1px;
   opacity:0;
@@ -170,8 +170,8 @@ html,body{
   justify-content:center;
   gap:8px;
   margin-top:10px;
-  font-size:14px;
-  color:#333;
+  font-size:12px;
+  color:#666;
 }
 
 .legend-donation-badge,
@@ -532,27 +532,27 @@ const LegendControl = L.Control.extend({
     const container = L.DomUtil.create('div', 'custom-legend');
 
     container.innerHTML = `
-      <div class="legend-item">
-        <label for="toggle-kirstys">
-          <input id="toggle-kirstys" type="checkbox" checked>
-          <span class="legend-toggle kirstys" aria-hidden="true"></span>
-          ${starSvg}
-          <span id="legend-kirstys-label">Kirstys</span>
-        </label>
-      </div>
-      <div class="legend-item">
-        <label for="toggle-friends">
-          <input id="toggle-friends" type="checkbox" checked>
-          <span class="legend-toggle friends" aria-hidden="true"></span>
-          ${supporterHeartSvg}
-          <span id="legend-friends-label">Friends</span>
-        </label>
-      </div>
-      <div class="legend-donation-row">
-        <span>Donated?</span>
-        <span class="legend-donation-badge">✓</span>
-      </div>
-    `;
+  <div class="legend-item">
+    <label for="toggle-kirstys">
+      <input id="toggle-kirstys" type="checkbox" checked>
+      <span class="legend-toggle kirstys" aria-hidden="true"></span>
+      ${starSvg}
+      <span id="legend-kirstys-label">Kirstys</span>
+    </label>
+  </div>
+  <div class="legend-item">
+    <label for="toggle-friends">
+      <input id="toggle-friends" type="checkbox" checked>
+      <span class="legend-toggle friends" aria-hidden="true"></span>
+      ${supporterHeartSvg}
+      <span id="legend-friends-label">Friends</span>
+    </label>
+  </div>
+  <div class="legend-donation-row">
+    <span>Donated?</span>
+    <span class="legend-donation-badge" aria-hidden="true">✓</span>
+  </div>
+`;
 
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
