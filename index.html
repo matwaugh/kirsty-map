@@ -671,33 +671,18 @@ function getActiveDataBounds() {
 }
 
 function updateLegendCounts(rows) {
-  let kirstysCount = 0;
-  let friendsCount = 0;
-
-  for (const row of rows) {
-    const lat = parseFloat(row.Lat);
-    const lng = parseFloat(row.Lng);
-
-    if (isNaN(lat) || isNaN(lng)) continue;
-
-    if (normalizeLayer(row) === 'kirsties') {
-      kirstysCount++;
-    } else {
-      friendsCount++;
-    }
-  }
-
   const kirstysLabel = document.getElementById('legend-kirstys-label');
   const friendsLabel = document.getElementById('legend-friends-label');
 
   if (kirstysLabel) {
-    kirstysLabel.textContent = `Kirstys (${kirstysCount})`;
+    kirstysLabel.textContent = 'Kirstys';
   }
 
   if (friendsLabel) {
-    friendsLabel.textContent = `Friends (${friendsCount})`;
+    friendsLabel.textContent = 'Friends';
   }
 }
+
 
 /* SEARCH + DATA STATE */
 
