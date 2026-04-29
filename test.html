@@ -1454,7 +1454,7 @@ async function loadMapData() {
     const response = await fetch(sheetUrl);
     const rows = await response.json();
 
-    const cleanedRows = rows.slice(1).filter(row => {
+    const cleanedRows = rows.filter(row => {
       const lat = parseFloat(row.Lat);
       const lng = parseFloat(row.Lng);
       return !isNaN(lat) && !isNaN(lng);
