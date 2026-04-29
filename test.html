@@ -433,6 +433,11 @@ html,body{
 const sheetUrl =
   "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Public%20Map";
 
+  const params = new URLSearchParams(window.location.search);
+const REEL_ID = params.get('reel');
+
+let targetReelRow = null;
+
 const map = L.map('map').setView([54.5, -3], 5);
 
 /* panes so Kirstys always render above Friends */
@@ -1388,6 +1393,62 @@ function scheduleVisibleRender() {
   }, 120);
 }
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+  async function playReel() {
+  if (!targetReelRow) {
+    console.warn('Reel target not found');
+    return;
+  }
+
+  const lat = parseFloat(targetReelRow.Lat);
+  const lng = parseFloat(targetReelRow.Lng);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    console.warn('Invalid coordinates for reel target');
+    return;
+  }
+
+  // Start from world view
+  map.closePopup();
+  map.setView([20, 0], 2, { animate: false });
+
+  await wait(1200);
+
+  // Main zoom-in
+  map.flyTo([lat, lng], 10, {
+    duration: 5,
+    easeLinearity: 0.2
+  });
+
+  await wait(5200);
+
+  // Final zoom
+  map.flyTo([lat, lng], 12, {
+    duration: 2
+  });
+
+  await wait(2200);
+
+  // Reuse your existing search-style popup (cleanest way)
+  const row = targetReelRow;
+
+  const marker = L.marker([lat, lng], {
+    icon: normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon,
+    pane: 'searchFocusPane'
+  });
+
+  marker.bindPopup(buildPopup(row), { autoPan: false });
+
+  marker.addTo(map);
+
+  setTimeout(() => {
+    openMarkerPopupComfortably(marker);
+  }, 50);
+}
+  
 async function loadMapData() {
   try {
     const response = await fetch(sheetUrl);
@@ -1400,7 +1461,11 @@ async function loadMapData() {
     });
 
     allRows = cleanedRows;
-    currentMatches = [];
+targetReelRow = REEL_ID
+  ? allRows.find(row => String(row['Submission ID']).trim() === String(REEL_ID).trim())
+  : null;
+
+currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
     focusedSearchRowKey = null;
@@ -1408,10 +1473,13 @@ async function loadMapData() {
     setSearchStatus('');
 
     updateLegendCounts(allRows);
-    scheduleVisibleRender();
+scheduleVisibleRender();
 
- 
-    if (allRows.length) {
+if (REEL_ID) {
+  setTimeout(playReel, 800);
+}
+
+if (allRows.length) {
       setTimeout(() => {
         map.invalidateSize();
       }, 300);
