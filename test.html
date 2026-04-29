@@ -1461,6 +1461,9 @@ async function loadMapData() {
     });
 
     allRows = cleanedRows;
+    console.log('REEL_ID:', REEL_ID);
+console.log('First row keys:', Object.keys(allRows[0] || {}));
+console.log('First 10 Submission IDs:', allRows.slice(0, 10).map(row => row['Submission ID']));
 targetReelRow = REEL_ID
   ? allRows.find(row => String(row['Submission ID']).trim() === String(REEL_ID).trim())
   : null;
