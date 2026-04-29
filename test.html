@@ -433,10 +433,13 @@ html,body{
 const sheetUrl =
   "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Public%20Map";
 
-  const params = new URLSearchParams(window.location.search);
-const REEL_ID = params.get('reel');
+const REEL_IDS = [
+  'M1D1NM0',
+  '4aKBK5d',
+  'LZAKxM2'
+];
 
-let targetReelRow = null;
+let targetReelRows = [];
 
 const map = L.map('map').setView([54.5, -3], 5);
 
@@ -582,7 +585,7 @@ const FitAllControl = L.Control.extend({
   onAdd: function() {
     const button = L.DomUtil.create('button', 'fit-all-btn');
     button.innerHTML = 'View all';
-button.title = 'Zoom out to all visible map entries';
+    button.title = 'Zoom out to all visible map entries';
 
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
@@ -1397,58 +1400,71 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-  async function playReel() {
-  if (!targetReelRow) {
-    console.warn('Reel target not found');
-    return;
-  }
-
-  const lat = parseFloat(targetReelRow.Lat);
-  const lng = parseFloat(targetReelRow.Lng);
+async function flyToReelRow(row, index, isFinal) {
+  const lat = parseFloat(row.Lat);
+  const lng = parseFloat(row.Lng);
 
   if (isNaN(lat) || isNaN(lng)) {
-    console.warn('Invalid coordinates for reel target');
+    console.warn('Skipping invalid reel row:', row);
     return;
   }
 
-  // Start from world view
-  map.closePopup();
-  map.setView([20, 0], 2, { animate: false });
+  const targetZoom = isFinal ? 12 : 8;
 
-  await wait(1200);
-
-  // Main zoom-in
-  map.flyTo([lat, lng], 10, {
-    duration: 5,
+  map.flyTo([lat, lng], targetZoom, {
+    duration: isFinal ? 5.5 : 6.5,
     easeLinearity: 0.2
   });
 
-  await wait(5200);
+  await wait(isFinal ? 6200 : 7300);
 
-  // Final zoom
-  map.flyTo([lat, lng], 12, {
-    duration: 2
-  });
-
-  await wait(2200);
-
-  // Reuse your existing search-style popup (cleanest way)
-  const row = targetReelRow;
-
-  const marker = L.marker([lat, lng], {
-    icon: normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon,
-    pane: 'searchFocusPane'
-  });
-
-  marker.bindPopup(buildPopup(row), { autoPan: false });
-
-  marker.addTo(map);
-
-  setTimeout(() => {
-    openMarkerPopupComfortably(marker);
-  }, 50);
+  scheduleVisibleRender();
+  await wait(isFinal ? 1800 : 2600);
 }
-  
+
+async function playReel() {
+  if (!targetReelRows.length) {
+    console.warn('No reel targets found');
+    return;
+  }
+
+  map.closePopup();
+  closeSearchPanel();
+
+  // Start wide and give the first layer build time.
+  map.setView([20, 0], 2, { animate: false });
+  scheduleVisibleRender();
+  await wait(3200);
+
+  for (let i = 0; i < targetReelRows.length; i++) {
+    const row = targetReelRows[i];
+    const isFinal = i === targetReelRows.length - 1;
+
+    await flyToReelRow(row, i, isFinal);
+
+    if (!isFinal) {
+      continue;
+    }
+
+    const lat = parseFloat(row.Lat);
+    const lng = parseFloat(row.Lng);
+
+    const marker = L.marker([lat, lng], {
+      icon: normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon,
+      pane: 'searchFocusPane'
+    });
+
+    marker.bindPopup(buildPopup(row), {
+      autoPan: false
+    });
+
+    marker.addTo(map);
+
+    await wait(700);
+    openMarkerPopupComfortably(marker);
+  }
+}
+
 async function loadMapData() {
   try {
     const response = await fetch(sheetUrl);
@@ -1461,14 +1477,16 @@ async function loadMapData() {
     });
 
     allRows = cleanedRows;
-    console.log('REEL_ID:', REEL_ID);
-console.log('First row keys:', Object.keys(allRows[0] || {}));
-console.log('First 10 Submission IDs:', allRows.slice(0, 10).map(row => row['Submission ID']));
-targetReelRow = REEL_ID
-  ? allRows.find(row => String(row['Submission ID']).trim() === String(REEL_ID).trim())
-  : null;
 
-currentMatches = [];
+    targetReelRows = REEL_IDS
+      .map(id => allRows.find(row =>
+        String(row['Submission ID']).trim().toLowerCase() === String(id).trim().toLowerCase()
+      ))
+      .filter(Boolean);
+
+    console.log('Matched reel rows:', targetReelRows);
+
+    currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
     focusedSearchRowKey = null;
@@ -1476,13 +1494,13 @@ currentMatches = [];
     setSearchStatus('');
 
     updateLegendCounts(allRows);
-scheduleVisibleRender();
+    scheduleVisibleRender();
 
-if (REEL_ID) {
-  setTimeout(playReel, 800);
-}
+    if (targetReelRows.length) {
+      setTimeout(playReel, 1800);
+    }
 
-if (allRows.length) {
+    if (allRows.length) {
       setTimeout(() => {
         map.invalidateSize();
       }, 300);
