@@ -303,6 +303,15 @@ html,body{
     width:240px;
     max-width:68vw;
   }
+
+/* Reel mode: hide UI */
+body.reel-mode .custom-legend,
+body.reel-mode .fit-all-btn,
+body.reel-mode .search-wrap,
+body.reel-mode .leaflet-control-container {
+  display: none !important;
+}
+  
 }
 
 /* Kirsty marker with halo behind the star */
@@ -439,6 +448,12 @@ const REEL_IDS = [
   'LZAKxM2'
 ];
 
+const REEL_MODE = true;
+
+if (REEL_MODE) {
+  document.body.classList.add('reel-mode');
+}
+  
 let targetReelRows = [];
 
 const map = L.map('map').setView([54.5, -3], 5);
