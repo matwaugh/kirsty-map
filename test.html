@@ -846,9 +846,9 @@ function getDesiredMarkerPoint(metrics) {
 
   const desiredX = size.x / 2;
 
-  // Larger number = marker lower, popup/card usually higher.
-  // Smaller number = marker higher, popup/card lower.
-  const desiredY = size.y * 0.25;
+  // Lower value = card lower on screen.
+  // Higher value = card higher on screen.
+  const desiredY = size.y * 0.38;
 
   return L.point(desiredX, desiredY);
 }
