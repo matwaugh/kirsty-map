@@ -1409,17 +1409,38 @@ async function flyToReelRow(row, index, isFinal) {
     return;
   }
 
-  const targetZoom = isFinal ? 12 : 8;
+  const targetZoom = isFinal ? 12 : 9;
 
+  // Fly in
   map.flyTo([lat, lng], targetZoom, {
-    duration: isFinal ? 5.5 : 6.5,
+    duration: isFinal ? 5.5 : 6,
     easeLinearity: 0.2
   });
 
-  await wait(isFinal ? 6200 : 7300);
+  await wait(isFinal ? 6200 : 6500);
 
+  // Let clusters render
   scheduleVisibleRender();
-  await wait(isFinal ? 1800 : 2600);
+  await wait(800);
+
+  // Create focus marker for popup (same method as final)
+  const marker = L.marker([lat, lng], {
+    icon: normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon,
+    pane: 'searchFocusPane'
+  });
+
+  marker.bindPopup(buildPopup(row), {
+    autoPan: false
+  });
+
+  marker.addTo(map);
+
+  await wait(500);
+
+  openMarkerPopupComfortably(marker);
+
+  // HOLD on each card
+  await wait(3000);
 }
 
 async function playReel() {
@@ -1446,22 +1467,7 @@ async function playReel() {
       continue;
     }
 
-    const lat = parseFloat(row.Lat);
-    const lng = parseFloat(row.Lng);
-
-    const marker = L.marker([lat, lng], {
-      icon: normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon,
-      pane: 'searchFocusPane'
-    });
-
-    marker.bindPopup(buildPopup(row), {
-      autoPan: false
-    });
-
-    marker.addTo(map);
-
-    await wait(700);
-    openMarkerPopupComfortably(marker);
+    
   }
 }
 
