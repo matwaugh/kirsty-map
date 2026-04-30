@@ -846,25 +846,9 @@ function getDesiredMarkerPoint(metrics) {
 
   const desiredX = size.x / 2;
 
-  // Larger number = card lower on screen
-  const desiredY = size.y * 0.62;
-
-  return L.point(desiredX, desiredY);
-}
-
-  let idealY;
-
-  if (searchPanelRect) {
-    idealY = Math.max(
-      searchPanelRect.bottom + 20,
-      size.y - popupComfortSettings.bottomMarkerPadding
-    );
-  } else {
-    idealY = size.y - popupComfortSettings.bottomMarkerPadding;
-  }
-
-  const maxY = size.y - 24;
-  const desiredY = clamp(idealY, minY, maxY);
+  // Larger number = marker lower, popup/card usually higher.
+  // Smaller number = marker higher, popup/card lower.
+  const desiredY = size.y * 0.42;
 
   return L.point(desiredX, desiredY);
 }
