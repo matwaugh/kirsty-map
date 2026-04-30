@@ -844,16 +844,13 @@ function popupFitsComfortably(metrics) {
 function getDesiredMarkerPoint(metrics) {
   const size = map.getSize();
 
-  const minX = metrics.leftGap + popupComfortSettings.sidePadding;
-  const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
-  const desiredX = clamp(metrics.point.x, minX, maxX);
+  const desiredX = size.x / 2;
 
-  let minY = popupComfortSettings.topPadding + metrics.topGap;
+  // Larger number = card lower on screen
+  const desiredY = size.y * 0.62;
 
-  const searchPanelRect = getOpenSearchPanelRect();
-  if (searchPanelRect) {
-    minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
-  }
+  return L.point(desiredX, desiredY);
+}
 
   let idealY;
 
