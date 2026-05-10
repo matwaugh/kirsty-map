@@ -435,10 +435,14 @@ const sheetUrl =
 
 const isMobile = window.innerWidth < 768;
 
-const startZoom = isMobile ? 1 : 1;
-const startLat = isMobile ? 15 : 20;
+const startLat = isMobile ? 12 : 20;
+const startLng = isMobile ? -20 : 0;
+const startZoom = 1;
 
-const map = L.map('map').setView([startLat, 0], startZoom);
+const map = L.map('map').setView(
+  [startLat, startLng],
+  startZoom
+);
 
 /* panes so Kirstys always render above Friends */
 map.createPane('friendsPane');
