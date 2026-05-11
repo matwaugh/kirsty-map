@@ -10,467 +10,155 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 
 <style>
-html,body{
-  margin:0;
-  padding:0;
-  height:100%;
-  font-family:Arial,sans-serif;
-}
-
-#map{
-  width:100%;
-  height:100vh;
-}
+html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;}
+#map{width:100%;height:100vh;}
 
 .fit-all-btn{
-  height:42px;
-  padding:0 14px;
-  border:1px solid rgba(0,0,0,0.08); /* subtle edge to separate from browser UI */
-  background:#f2f2f2; /* light grey tint */
-  border-radius:999px;
-  box-shadow:0 1px 5px rgba(0,0,0,0.18);
-  cursor:pointer;
-  font-size:13px;
-  font-weight:600;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#333;
-  -webkit-appearance:none;
-  white-space:nowrap;
+  height:42px;padding:0 14px;border:1px solid rgba(0,0,0,0.08);
+  background:#f2f2f2;border-radius:999px;box-shadow:0 1px 5px rgba(0,0,0,0.18);
+  cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;
+  justify-content:center;color:#333;-webkit-appearance:none;white-space:nowrap;
 }
+.fit-all-btn:active{background:#e6e6e6;}
 
-/* tap feedback */
-.fit-all-btn:active{
-  background:#e6e6e6;
-}
-
-.popup{
-  width:240px;
-  max-width:calc(100vw - 100px);
-}
-
-.popup img{
-  width:100%;
-  height:auto;
-  display:block;
-  border-radius:8px;
-  margin-bottom:8px;
-}
-
-.popup h3{
-  margin:0 0 6px 0;
-  font-size:18px;
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.popup p{
-  margin:0 0 6px 0;
-  font-size:14px;
-}
-
-.leaflet-popup-content{
-  margin:12px 14px;
-}
-
-.leaflet-popup-content-wrapper{
-  border-radius:12px;
-}
+.popup{width:240px;max-width:calc(100vw - 100px);}
+.popup img{width:100%;height:auto;display:block;border-radius:8px;margin-bottom:8px;}
+.popup h3{margin:0 0 6px 0;font-size:18px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.popup p{margin:0 0 6px 0;font-size:14px;}
+.leaflet-popup-content{margin:12px 14px;}
+.leaflet-popup-content-wrapper{border-radius:12px;}
 
 .custom-legend{
-  background:#fff;
-  padding:10px 12px;
-  border-radius:8px;
-  box-shadow:0 1px 5px rgba(0,0,0,0.2);
-  line-height:1.2;
-  display:inline-block;
+  background:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  line-height:1.2;display:inline-block;
 }
-
-.custom-legend .legend-item{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  white-space:nowrap;
-}
-
-.custom-legend .legend-item + .legend-item{
-  margin-top:8px;
-}
-
-.custom-legend svg{
-  width:18px;
-  height:18px;
-  flex:0 0 auto;
-}
-
-.custom-legend label{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  cursor:pointer;
-  margin:0;
-  font-size:14px;
-  color:#333;
-  user-select:none;
-}
-
-.custom-legend input[type="checkbox"]{
-  position:absolute;
-  opacity:0;
-  pointer-events:none;
-}
+.custom-legend .legend-item{display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.custom-legend .legend-item + .legend-item{margin-top:8px;}
+.custom-legend svg{width:18px;height:18px;flex:0 0 auto;}
+.custom-legend label{display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-size:14px;color:#333;user-select:none;}
+.custom-legend input[type="checkbox"]{position:absolute;opacity:0;pointer-events:none;}
 
 .legend-checkbox{
-  width:14px;
-  height:14px;
-  border-radius:3px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  box-sizing:border-box;
-  flex:0 0 auto;
-  position:relative;
-  background:#fff;
-  border:1.5px solid #999;
+  width:14px;height:14px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;
+  box-sizing:border-box;flex:0 0 auto;position:relative;background:#fff;border:1.5px solid #999;
 }
-
 .legend-checkbox::after{
-  content:"";
-  width:4px;
-  height:7px;
-  border-right:1.8px solid #fff;
-  border-bottom:1.8px solid #fff;
-  transform:rotate(45deg);
-  margin-top:-1px;
-  opacity:0;
+  content:"";width:4px;height:7px;border-right:1.8px solid #fff;border-bottom:1.8px solid #fff;
+  transform:rotate(45deg);margin-top:-1px;opacity:0;
 }
+.legend-checkbox.kirstys{border-color:#FF8847;}
+.legend-checkbox.friends{border-color:#00979B;}
+.custom-legend input[type="checkbox"]:checked + .legend-checkbox.kirstys{background:#FF8847;border-color:#FF8847;}
+.custom-legend input[type="checkbox"]:checked + .legend-checkbox.friends{background:#00979B;border-color:#00979B;}
+.custom-legend input[type="checkbox"]:checked + .legend-checkbox::after{opacity:1;}
 
-.legend-checkbox.kirstys{
-  border-color:#FF8847;
+.legend-donation-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:12px;color:#666;}
+.legend-donation-badge,.donation-badge{
+  display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;
+  background:#FF8847;color:#ffffff;font-size:9px;font-weight:700;line-height:1;vertical-align:middle;box-sizing:border-box;
 }
+.leaflet-top.leaflet-right .leaflet-control{margin-top:10px;margin-right:10px;}
 
-.legend-checkbox.friends{
-  border-color:#00979B;
-}
-
-.custom-legend input[type="checkbox"]:checked + .legend-checkbox.kirstys{
-  background:#FF8847;
-  border-color:#FF8847;
-}
-
-.custom-legend input[type="checkbox"]:checked + .legend-checkbox.friends{
-  background:#00979B;
-  border-color:#00979B;
-}
-
-.custom-legend input[type="checkbox"]:checked + .legend-checkbox::after{
-  opacity:1;
-}
-
-.legend-donation-row{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  margin-top:10px;
-  font-size:12px;
-  color:#666;
-}
-
-.legend-donation-badge,
-.donation-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:12px;
-  height:12px;
-  border-radius:50%;
-  background:#FF8847;
-  color:#ffffff;
-  font-size:9px;
-  font-weight:700;
-  line-height:1;
-  vertical-align:middle;
-  box-sizing:border-box;
-}
-
-.leaflet-top.leaflet-right .leaflet-control{
-  margin-top:10px;
-  margin-right:10px;
-}
-
-/* search */
-
-.search-wrap{
-  display:flex;
-  align-items:flex-start;
-  gap:10px;
-}
-
+.search-wrap{display:flex;align-items:flex-start;gap:10px;}
 .search-toggle{
-  width:42px;
-  height:42px;
-  border:none;
-  background:#fff;
-  border-radius:8px;
-  box-shadow:0 1px 5px rgba(0,0,0,0.2);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  font-size:20px;
-  line-height:1;
-  flex:0 0 auto;
+  width:42px;height:42px;border:none;background:#fff;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;line-height:1;flex:0 0 auto;
 }
-
-.search-toggle:hover{
-  background:#f6f6f6;
-}
-
+.search-toggle:hover{background:#f6f6f6;}
 .search-panel{
-  background:white;
-  padding:10px;
-  border-radius:8px;
-  box-shadow:0 1px 5px rgba(0,0,0,0.2);
-  display:none;
-  width:320px;
-  max-width:min(320px,72vw);
+  background:white;padding:10px;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,0.2);
+  display:none;width:320px;max-width:min(320px,72vw);
+}
+.search-panel.open{display:block;}
+.search-row{display:flex;gap:8px;align-items:center;}
+.search-panel input{flex:1;min-width:0;padding:8px 10px;border:1px solid #ccc;border-radius:6px;font-size:14px;}
+.search-panel button{padding:8px 10px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer;font-size:14px;}
+.search-panel button:hover:not(:disabled){background:#f5f5f5;}
+.search-panel button:disabled{opacity:0.45;cursor:default;}
+.search-status{margin-top:8px;font-size:12px;color:#666;min-height:16px;}
+.search-nav{display:flex;gap:8px;margin-top:8px;}
+.search-nav button{flex:1;}
+
+@media (max-width:640px){
+  .search-wrap{gap:8px;}
+  .search-panel{width:240px;max-width:68vw;}
 }
 
-.search-panel.open{
-  display:block;
-}
+/* Reel mode */
+body.reel-mode .kirsty-marker{transform:scale(1.25);transform-origin:center bottom;}
+body.reel-mode .leaflet-marker-icon:not(.marker-cluster){transform:scale(1.25);transform-origin:center bottom;}
+body.reel-mode .marker-cluster div{width:48px;height:48px;font-size:18px;}
+body.reel-mode .marker-cluster{width:48px !important;height:48px !important;margin-left:-4px !important;margin-top:-4px !important;}
+body.reel-mode .custom-legend,
+body.reel-mode .fit-all-btn,
+body.reel-mode .search-wrap,
+body.reel-mode .leaflet-control-container{display:none !important;}
 
-.search-row{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-
-.search-panel input{
-  flex:1;
-  min-width:0;
-  padding:8px 10px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  font-size:14px;
-}
-
-.search-panel button{
-  padding:8px 10px;
-  border:1px solid #ccc;
-  background:#fff;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:14px;
-}
-
-.search-panel button:hover:not(:disabled){
-  background:#f5f5f5;
-}
-
-.search-panel button:disabled{
-  opacity:0.45;
-  cursor:default;
-}
-
-.search-status{
-  margin-top:8px;
-  font-size:12px;
-  color:#666;
-  min-height:16px;
-}
-
-.search-nav{
-  display:flex;
-  gap:8px;
-  margin-top:8px;
-}
-
-.search-nav button{
-  flex:1;
-}
-
-@media (max-width: 640px){
-  .search-wrap{
-    gap:8px;
-  }
-
-  .search-panel{
-    width:240px;
-    max-width:68vw;
-  }
-}
-
-/* Kirsty marker with halo behind the star */
-
-.kirsty-marker{
-  position:relative;
-  width:32px;
-  height:32px;
-  background:transparent !important;
-  border:none !important;
-}
-
+.kirsty-marker{position:relative;width:32px;height:32px;background:transparent !important;border:none !important;}
 .kirsty-marker::before{
-  content:"";
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:42px;
-  height:42px;
-  margin-left:-21px;
-  margin-top:-21px;
-  border-radius:50%;
-  background:rgba(235, 6, 140, 0.22);
-  animation:haloPulse 2.5s ease-out infinite;
-  pointer-events:none;
-  z-index:0;
+  content:"";position:absolute;left:50%;top:50%;width:42px;height:42px;margin-left:-21px;margin-top:-21px;
+  border-radius:50%;background:rgba(235,6,140,0.22);animation:haloPulse 2.5s ease-out infinite;pointer-events:none;z-index:0;
 }
-
-.kirsty-marker svg{
-  position:relative;
-  display:block;
-  width:32px;
-  height:32px;
-  z-index:1;
-}
-
+.kirsty-marker svg{position:relative;display:block;width:32px;height:32px;z-index:1;}
 @keyframes haloPulse{
-  0%{
-    transform:scale(0.6);
-    opacity:0.75;
-  }
-
-  70%{
-    transform:scale(1.8);
-    opacity:0;
-  }
-
-  100%{
-    transform:scale(1.8);
-    opacity:0;
-  }
+  0%{transform:scale(0.6);opacity:0.75;}
+  70%{transform:scale(1.8);opacity:0;}
+  100%{transform:scale(1.8);opacity:0;}
 }
 
-/* custom cluster colours */
-
-.marker-cluster{
-  background:transparent;
-}
-
+.marker-cluster{background:transparent;}
 .marker-cluster div{
-  width:40px;
-  height:40px;
-  margin-left:0;
-  margin-top:0;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font:700 14px/1 Arial,sans-serif;
-  color:#fff;
-  border:2px solid rgba(255,255,255,0.95);
-  box-sizing:border-box;
-  box-shadow:0 1px 6px rgba(0,0,0,0.22);
+  width:40px;height:40px;margin-left:0;margin-top:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font:700 14px/1 Arial,sans-serif;color:#fff;border:2px solid rgba(255,255,255,0.95);
+  box-sizing:border-box;box-shadow:0 1px 6px rgba(0,0,0,0.22);
 }
-
-.marker-cluster.kirsty-cluster-small{
-  background:rgba(255,136,71,0.22);
-}
-.marker-cluster.kirsty-cluster-small div{
-  background:rgba(255,136,71,0.78);
-}
-
-.marker-cluster.kirsty-cluster-medium{
-  background:rgba(255,136,71,0.28);
-}
-.marker-cluster.kirsty-cluster-medium div{
-  background:rgba(255,136,71,0.88);
-}
-
-.marker-cluster.kirsty-cluster-large{
-  background:rgba(255,136,71,0.34);
-}
-.marker-cluster.kirsty-cluster-large div{
-  background:#FF8847;
-}
-
-.marker-cluster.friend-cluster-small{
-  background:rgba(0,151,155,0.20);
-}
-.marker-cluster.friend-cluster-small div{
-  background:rgba(0,151,155,0.76);
-}
-
-.marker-cluster.friend-cluster-medium{
-  background:rgba(0,151,155,0.26);
-}
-.marker-cluster.friend-cluster-medium div{
-  background:rgba(0,151,155,0.88);
-}
-
-.marker-cluster.friend-cluster-large{
-  background:rgba(0,151,155,0.32);
-}
-.marker-cluster.friend-cluster-large div{
-  background:#00979B;
-}
+.marker-cluster.kirsty-cluster-small{background:rgba(255,136,71,0.22);}
+.marker-cluster.kirsty-cluster-small div{background:rgba(255,136,71,0.78);}
+.marker-cluster.kirsty-cluster-medium{background:rgba(255,136,71,0.28);}
+.marker-cluster.kirsty-cluster-medium div{background:rgba(255,136,71,0.88);}
+.marker-cluster.kirsty-cluster-large{background:rgba(255,136,71,0.34);}
+.marker-cluster.kirsty-cluster-large div{background:#FF8847;}
+.marker-cluster.friend-cluster-small{background:rgba(0,151,155,0.20);}
+.marker-cluster.friend-cluster-small div{background:rgba(0,151,155,0.76);}
+.marker-cluster.friend-cluster-medium{background:rgba(0,151,155,0.26);}
+.marker-cluster.friend-cluster-medium div{background:rgba(0,151,155,0.88);}
+.marker-cluster.friend-cluster-large{background:rgba(0,151,155,0.32);}
+.marker-cluster.friend-cluster-large div{background:#00979B;}
 </style>
 </head>
 
 <body>
-
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script>
-const sheetUrl =
-  "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Public%20Map";
+const sheetUrl = "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Public%20Map";
+const REEL_MODE = true;
 
-const isMobile = window.innerWidth < 768;
+if (REEL_MODE) document.body.classList.add('reel-mode');
 
-const startLat = isMobile ? 12 : 20;
-const startLng = isMobile ? -20 : 0;
-const startZoom = 1;
+const map = L.map('map').setView([20, 0], 2);
 
-const map = L.map('map').setView(
-  [startLat, startLng],
-  startZoom
-);
-
-/* panes so Kirstys always render above Friends */
 map.createPane('friendsPane');
 map.getPane('friendsPane').style.zIndex = 450;
-
 map.createPane('kirstysPane');
 map.getPane('kirstysPane').style.zIndex = 460;
-
 map.createPane('searchFocusPane');
 map.getPane('searchFocusPane').style.zIndex = 650;
 
 const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-  maxZoom: 19
+  attribution:'&copy; OpenStreetMap contributors &copy; CARTO',
+  maxZoom:19
 }).addTo(map);
 
-/* ICON SVGs */
-
-const starSvg =
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-<path d="M36 8l7.2 14.6 16.1 2.3-11.7 11.4 2.8 16L36 44.9 21.6 52.3l2.8-16L12.7 24.9l16.1-2.3L36 8z"
-fill="#FF8847" stroke="#ffffff" stroke-width="3"/>
+const starSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+<path d="M36 8l7.2 14.6 16.1 2.3-11.7 11.4 2.8 16L36 44.9 21.6 52.3l2.8-16L12.7 24.9l16.1-2.3L36 8z" fill="#FF8847" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
-const supporterHeartSvg =
-`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-<path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z"
-fill="#00979B" stroke="#ffffff" stroke-width="3"/>
+const supporterHeartSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+<path d="M36 58s-19-11.8-25.4-22.2C4.5 26.2 10 14 21 14c6 0 10.5 3 15 8.5C40.5 17 45 14 51 14c11 0 16.5 12.2 10.4 21.8C55 46.2 36 58 36 58z" fill="#00979B" stroke="#ffffff" stroke-width="3"/>
 </svg>`;
 
 function svgToUrl(svg){
@@ -478,135 +166,55 @@ function svgToUrl(svg){
 }
 
 const kirstyIcon = L.divIcon({
-  className: 'kirsty-marker',
-  html: starSvg,
-  iconSize: [32, 32],
-  iconAnchor: [16, 30],
-  popupAnchor: [0, -28]
+  className:'kirsty-marker',
+  html:starSvg,
+  iconSize:[32,32],
+  iconAnchor:[16,30],
+  popupAnchor:[0,-28]
 });
 
 const supporterIcon = L.icon({
-  iconUrl: svgToUrl(supporterHeartSvg),
-  iconSize: [26, 26],
-  iconAnchor: [13, 24],
-  popupAnchor: [0, -22]
+  iconUrl:svgToUrl(supporterHeartSvg),
+  iconSize:[26,26],
+  iconAnchor:[13,24],
+  popupAnchor:[0,-22]
 });
 
-function clusterClassName(prefix, count) {
-  if (count < 10) return `${prefix}-small`;
-  if (count < 100) return `${prefix}-medium`;
+function clusterClassName(prefix,count){
+  if(count < 10) return `${prefix}-small`;
+  if(count < 100) return `${prefix}-medium`;
   return `${prefix}-large`;
 }
 
-function makeClusterIcon(prefix, count) {
+function makeClusterIcon(prefix,count){
   return L.divIcon({
-    html: `<div><span>${count}</span></div>`,
-    className: `marker-cluster ${clusterClassName(prefix, count)}`,
-    iconSize: L.point(40, 40)
+    html:`<div><span>${count}</span></div>`,
+    className:`marker-cluster ${clusterClassName(prefix,count)}`,
+    iconSize:L.point(40,40)
   });
 }
 
-/* SEPARATE CLUSTER LAYERS */
-
 const kirstysCluster = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40,
-  clusterPane: 'kirstysPane',
-  iconCreateFunction: function(cluster) {
-    return makeClusterIcon('kirsty-cluster', cluster.getChildCount());
-  }
+  showCoverageOnHover:false,
+  spiderfyOnMaxZoom:true,
+  maxClusterRadius:40,
+  clusterPane:'kirstysPane',
+  iconCreateFunction:function(cluster){return makeClusterIcon('kirsty-cluster',cluster.getChildCount());}
 });
 
 const friendsCluster = L.markerClusterGroup({
-  showCoverageOnHover: false,
-  spiderfyOnMaxZoom: true,
-  maxClusterRadius: 40,
-  clusterPane: 'friendsPane',
-  iconCreateFunction: function(cluster) {
-    return makeClusterIcon('friend-cluster', cluster.getChildCount());
-  }
+  showCoverageOnHover:false,
+  spiderfyOnMaxZoom:true,
+  maxClusterRadius:40,
+  clusterPane:'friendsPane',
+  iconCreateFunction:function(cluster){return makeClusterIcon('friend-cluster',cluster.getChildCount());}
 });
 
-const layerVisibility = {
-  kirsties: true,
-  friends: true
-};
-
+const layerVisibility = { kirsties:true, friends:true };
 map.addLayer(friendsCluster);
 map.addLayer(kirstysCluster);
 
-/* LEGEND WITH INTEGRATED TOGGLES */
-
-const LegendControl = L.Control.extend({
-  options: {
-    position: 'topright'
-  },
-
-  onAdd: function() {
-    const container = L.DomUtil.create('div', 'custom-legend');
-
-    container.innerHTML = `
-      <div class="legend-item">
-        <label for="toggle-kirstys" title="Show or hide Kirstys">
-          <input id="toggle-kirstys" type="checkbox" checked>
-          <span class="legend-checkbox kirstys" aria-hidden="true"></span>
-          ${starSvg}
-          <span id="legend-kirstys-label">Kirstys</span>
-        </label>
-      </div>
-      <div class="legend-item">
-        <label for="toggle-friends" title="Show or hide Friends">
-          <input id="toggle-friends" type="checkbox" checked>
-          <span class="legend-checkbox friends" aria-hidden="true"></span>
-          ${supporterHeartSvg}
-          <span id="legend-friends-label">Friends</span>
-        </label>
-      </div>
-      <div class="legend-donation-row">
-        <span>Donated?</span>
-        <span class="legend-donation-badge" aria-hidden="true">✓</span>
-      </div>
-    `;
-
-    L.DomEvent.disableClickPropagation(container);
-    L.DomEvent.disableScrollPropagation(container);
-
-    return container;
-  }
-});
-
-map.addControl(new LegendControl());
-
-const FitAllControl = L.Control.extend({
-  options: {
-    position: 'bottomright'
-  },
-
-  onAdd: function() {
-    const button = L.DomUtil.create('button', 'fit-all-btn');
-    button.innerHTML = 'View all';
-button.title = 'Zoom out to all visible map entries';
-
-    L.DomEvent.disableClickPropagation(button);
-    L.DomEvent.on(button, 'click', function() {
-      focusedSearchRowKey = null;
-      clearSearchFocusMarker(false);
-
-      const activeBounds = getActiveDataBounds();
-      if (!activeBounds) return;
-
-      map.fitBounds(activeBounds, {
-        padding: [30, 30],
-        maxZoom: 6
-      });
-    });
-
-    return button;
-  }
-});
-
-map.addControl(new FitAllControl());
+function wait(ms){return new Promise(resolve => setTimeout(resolve, ms));}
 
 function escapeHtml(str){
   return String(str || '')
@@ -617,21 +225,21 @@ function escapeHtml(str){
     .replace(/'/g,'&#39;');
 }
 
-function donatedBadgeHtml(donated) {
+function donatedBadgeHtml(donated){
   return String(donated || '').trim() === 'Yes'
     ? '<span class="donation-badge" aria-label="Donated" title="Donated">✓</span>'
     : '';
 }
 
-function buildPopup(row) {
+function buildPopup(row){
   const name = escapeHtml(row.Name || '');
   const location = escapeHtml(row.Location || '');
   const description = escapeHtml(row.Description || '');
   const donatedBadge = donatedBadgeHtml(row['Donated?']);
   let image = row["Cloudinary URL"] || row.Image || '';
 
-  if (image && image.includes('res.cloudinary.com')) {
-    image = image.replace('/image/upload/', '/image/upload/w_auto,dpr_auto,f_auto,q_auto/');
+  if(image && image.includes('res.cloudinary.com')){
+    image = image.replace('/image/upload/','/image/upload/w_auto,dpr_auto,f_auto,q_auto/');
   }
 
   return `
@@ -639,106 +247,158 @@ function buildPopup(row) {
       ${image ? `<img src="${image}" alt="${name}" loading="lazy" onerror="this.onerror=null;this.style.display='none'">` : ''}
       <h3>${name}${donatedBadge ? ` ${donatedBadge}` : ''}</h3>
       ${location ? `<p><strong>${location}</strong></p>` : ''}
-      ${description ? `<p>${description.replace(/\n/g, '<br>')}</p>` : ''}
+      ${description ? `<p>${description.replace(/\n/g,'<br>')}</p>` : ''}
     </div>
   `;
 }
 
-function getOffsetCoords(lat, lng, index, total) {
-  if (total <= 1) return [lat, lng];
-
-  const angle = (2 * Math.PI * index) / total;
-  const radius = 0.003;
-
-  const latOffset = Math.sin(angle) * radius;
-  const lngOffset = Math.cos(angle) * radius / Math.max(Math.cos(lat * Math.PI / 180), 0.2);
-
-  return [lat + latOffset, lng + lngOffset];
-}
-
-function normalizeLayer(row) {
+function normalizeLayer(row){
   const raw = String(row.Layer || '').trim().toLowerCase();
   return raw === 'kirsties' ? 'kirsties' : 'friends';
 }
 
-function isRowInActiveLayer(row) {
-  const layer = normalizeLayer(row);
-  return !!layerVisibility[layer];
+function isRowInActiveLayer(row){
+  return !!layerVisibility[normalizeLayer(row)];
 }
 
-function getActiveRows() {
-  return allRows.filter(isRowInActiveLayer);
+function getRowKey(row){
+  return String(row['Submission ID'] || row['SubmissionID'] || row['Respondent ID'] || `${row.Name || ''}|${row.Location || ''}|${row.Lat || ''}|${row.Lng || ''}`);
 }
-
-function getActiveDataBounds() {
-  const activeRows = getActiveRows();
-  if (!activeRows.length) return null;
-
-  return L.latLngBounds(
-    activeRows.map(row => [parseFloat(row.Lat), parseFloat(row.Lng)])
-  );
-}
-
-function updateLegendCounts(rows) {
-  const kirstysLabel = document.getElementById('legend-kirstys-label');
-  const friendsLabel = document.getElementById('legend-friends-label');
-
-  if (kirstysLabel) {
-    kirstysLabel.textContent = 'Kirstys';
-  }
-
-  if (friendsLabel) {
-    friendsLabel.textContent = 'Friends';
-  }
-}
-
-
-/* SEARCH + DATA STATE */
-
-let currentMatches = [];
-let currentMatchIndex = 0;
-let lastSearchQuery = '';
 
 let allRows = [];
 let renderTimer = null;
 let suppressNextMoveendRender = false;
-let currentlyOpeningMarker = null;
-let searchFocusMarker = null;
 let focusedSearchRowKey = null;
+let searchFocusMarker = null;
+let currentlyOpeningMarker = null;
+let currentMatches = [];
+let currentMatchIndex = 0;
+let lastSearchQuery = '';
 
-/* POPUP PAN SETTINGS */
+function getOffsetCoords(lat,lng,index,total){
+  if(total <= 1) return [lat,lng];
+  const angle = (2 * Math.PI * index) / total;
+  const radius = 0.003;
+  const latOffset = Math.sin(angle) * radius;
+  const lngOffset = Math.cos(angle) * radius / Math.max(Math.cos(lat * Math.PI / 180), 0.2);
+  return [lat + latOffset, lng + lngOffset];
+}
+
+function rowIsVisible(row,bounds){
+  if(!isRowInActiveLayer(row)) return false;
+  const lat = parseFloat(row.Lat);
+  const lng = parseFloat(row.Lng);
+  if(isNaN(lat) || isNaN(lng)) return false;
+  return bounds.pad(0.15).contains([lat,lng]);
+}
+
+function buildGroupedVisibleRows(visibleRows){
+  const groupedByCoords = {};
+  for(const row of visibleRows){
+    const lat = parseFloat(row.Lat);
+    const lng = parseFloat(row.Lng);
+    if(isNaN(lat) || isNaN(lng)) continue;
+    const key = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+    if(!groupedByCoords[key]) groupedByCoords[key] = [];
+    groupedByCoords[key].push(row);
+  }
+  return groupedByCoords;
+}
+
+function refreshLayerVisibility(){
+  if(layerVisibility.friends){
+    if(!map.hasLayer(friendsCluster)) map.addLayer(friendsCluster);
+  } else {
+    if(map.hasLayer(friendsCluster)) map.removeLayer(friendsCluster);
+  }
+
+  if(layerVisibility.kirsties){
+    if(!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
+  } else {
+    if(map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
+  }
+}
+
+function renderVisibleMarkers(){
+  if(!allRows.length) return;
+
+  const bounds = map.getBounds();
+  const visibleRows = allRows.filter(row => rowIsVisible(row,bounds));
+  const groupedByCoords = buildGroupedVisibleRows(visibleRows);
+
+  kirstysCluster.clearLayers();
+  friendsCluster.clearLayers();
+
+  for(const key of Object.keys(groupedByCoords)){
+    const group = groupedByCoords[key];
+    const baseLat = parseFloat(group[0].Lat);
+    const baseLng = parseFloat(group[0].Lng);
+
+    const renderableRows = group.filter(row => getRowKey(row) !== focusedSearchRowKey);
+    const kirstyRows = renderableRows.filter(row => normalizeLayer(row) === 'kirsties');
+    const friendRows = renderableRows.filter(row => normalizeLayer(row) === 'friends');
+
+    let friendIndex = 0;
+    for(const row of friendRows){
+      const coords = getOffsetCoords(baseLat,baseLng,friendIndex,friendRows.length);
+      friendIndex++;
+
+      const marker = L.marker(coords,{icon:supporterIcon,pane:'friendsPane'});
+      marker.bindPopup(buildPopup(row),{autoPan:false});
+      marker.off('click',marker._openPopup,marker);
+      marker.on('click',function(){
+        focusedSearchRowKey = null;
+        clearSearchFocusMarker(false);
+        openMarkerPopupComfortably(marker);
+      });
+      friendsCluster.addLayer(marker);
+    }
+
+    let kirstyIndex = 0;
+    for(const row of kirstyRows){
+      const coords = getOffsetCoords(baseLat,baseLng,kirstyIndex,kirstyRows.length);
+      kirstyIndex++;
+
+      const marker = L.marker(coords,{icon:kirstyIcon,pane:'kirstysPane'});
+      marker.bindPopup(buildPopup(row),{autoPan:false});
+      marker.off('click',marker._openPopup,marker);
+      marker.on('click',function(){
+        focusedSearchRowKey = null;
+        clearSearchFocusMarker(false);
+        openMarkerPopupComfortably(marker);
+      });
+      kirstysCluster.addLayer(marker);
+    }
+  }
+
+  refreshLayerVisibility();
+}
+
+function scheduleVisibleRender(){
+  if(renderTimer) clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => renderVisibleMarkers(),120);
+}
+
+function getSearchPanel(){return document.getElementById('map-search-panel');}
+function closeSearchPanel(){
+  const panel = getSearchPanel();
+  if(panel) panel.classList.remove('open');
+}
 
 const popupComfortSettings = {
-  sidePadding: 24,
-  topPadding: 16,
-  bottomMarkerPadding: 86,
-  minMovePixels: 6,
-  animationDuration: 0.25
+  sidePadding:24,
+  topPadding:140,
+  bottomMarkerPadding:230,
+  minMovePixels:6,
+  animationDuration:0.25
 };
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function getRowKey(row) {
-  return String(
-    row['Submission ID'] ||
-    row['SubmissionID'] ||
-    row['Respondent ID'] ||
-    `${row.Name || ''}|${row.Location || ''}|${row.Lat || ''}|${row.Lng || ''}`
-  );
-}
-
-function getPopupMetrics(marker) {
+function getPopupMetrics(marker){
   map.closePopup();
   marker.openPopup();
-
   const popup = marker.getPopup();
   const popupEl = popup && popup.getElement();
-
-  if (!popupEl) {
-    return null;
-  }
+  if(!popupEl) return null;
 
   popupEl.style.visibility = 'hidden';
 
@@ -747,179 +407,110 @@ function getPopupMetrics(marker) {
   const point = map.latLngToContainerPoint(marker.getLatLng());
 
   const rect = {
-    left: popupRect.left - mapRect.left,
-    top: popupRect.top - mapRect.top,
-    right: popupRect.right - mapRect.left,
-    bottom: popupRect.bottom - mapRect.top,
-    width: popupRect.width,
-    height: popupRect.height
+    left:popupRect.left - mapRect.left,
+    top:popupRect.top - mapRect.top,
+    right:popupRect.right - mapRect.left,
+    bottom:popupRect.bottom - mapRect.top,
+    width:popupRect.width,
+    height:popupRect.height
   };
 
-  const leftGap = point.x - rect.left;
-  const rightGap = rect.right - point.x;
-  const topGap = point.y - rect.top;
-
-  return {
-    popup,
-    popupEl,
-    point,
-    rect,
-    leftGap,
-    rightGap,
-    topGap
-  };
+  return {popup,popupEl,point,rect};
 }
 
-function getOpenSearchPanelRect() {
-  const panel = getSearchPanel();
-  if (!panel || !panel.classList.contains('open')) return null;
-
-  const mapRect = map.getContainer().getBoundingClientRect();
-  const panelRect = panel.getBoundingClientRect();
-
-  return {
-    left: panelRect.left - mapRect.left,
-    top: panelRect.top - mapRect.top,
-    right: panelRect.right - mapRect.left,
-    bottom: panelRect.bottom - mapRect.top,
-    width: panelRect.width,
-    height: panelRect.height
-  };
-}
-
-function popupFitsComfortably(metrics) {
+function getDesiredMarkerPoint(){
   const size = map.getSize();
-
-  const fitsHorizontally =
-    metrics.rect.left >= popupComfortSettings.sidePadding &&
-    metrics.rect.right <= size.x - popupComfortSettings.sidePadding;
-
-  const fitsTop =
-    metrics.rect.top >= popupComfortSettings.topPadding;
-
-  const markerLowEnough =
-    metrics.point.y <= size.y - popupComfortSettings.bottomMarkerPadding;
-
-  const searchPanelRect = getOpenSearchPanelRect();
-
-  const avoidsSearchPanel =
-    !searchPanelRect ||
-    metrics.rect.right <= searchPanelRect.left - 12 ||
-    metrics.rect.left >= searchPanelRect.right + 12 ||
-    metrics.rect.bottom <= searchPanelRect.top - 12 ||
-    metrics.rect.top >= searchPanelRect.bottom + 12;
-
-  return fitsHorizontally && fitsTop && markerLowEnough && avoidsSearchPanel;
+  return L.point(size.x / 2, size.y * 0.38);
 }
 
-function getDesiredMarkerPoint(metrics) {
-  const size = map.getSize();
-
-  const minX = metrics.leftGap + popupComfortSettings.sidePadding;
-  const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
-  const desiredX = clamp(metrics.point.x, minX, maxX);
-
-  let minY = popupComfortSettings.topPadding + metrics.topGap;
-
-  const searchPanelRect = getOpenSearchPanelRect();
-  if (searchPanelRect) {
-    minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
-  }
-
-  let idealY;
-
-  if (searchPanelRect) {
-    idealY = Math.max(
-      searchPanelRect.bottom + 20,
-      size.y - popupComfortSettings.bottomMarkerPadding
-    );
-  } else {
-    idealY = size.y - popupComfortSettings.bottomMarkerPadding;
-  }
-
-  const maxY = size.y - 24;
-  const desiredY = clamp(idealY, minY, maxY);
-
-  return L.point(desiredX, desiredY);
-}
-
-function getTargetCenterForMarker(marker, desiredPoint) {
+function getTargetCenterForMarker(marker,desiredPoint){
   const zoom = map.getZoom();
-  const currentCenterProjected = map.project(map.getCenter(), zoom);
+  const currentCenterProjected = map.project(map.getCenter(),zoom);
   const currentMarkerPoint = map.latLngToContainerPoint(marker.getLatLng());
   const pixelDelta = desiredPoint.subtract(currentMarkerPoint);
-
   const newCenterProjected = currentCenterProjected.subtract(pixelDelta);
-  const newCenterLatLng = map.unproject(newCenterProjected, zoom);
-
-  return {
-    center: newCenterLatLng,
-    pixelDelta
-  };
+  return {center:map.unproject(newCenterProjected,zoom), pixelDelta};
 }
 
-function openMarkerPopupComfortably(marker) {
-  if (currentlyOpeningMarker === marker) {
-    return;
-  }
-
+function openMarkerPopupComfortably(marker){
+  if(currentlyOpeningMarker === marker) return;
   currentlyOpeningMarker = marker;
 
   const metrics = getPopupMetrics(marker);
-
-  if (!metrics) {
+  if(!metrics){
     currentlyOpeningMarker = null;
     marker.openPopup();
     return;
   }
 
-  if (popupFitsComfortably(metrics)) {
-    metrics.popupEl.style.visibility = '';
-    currentlyOpeningMarker = null;
-    return;
-  }
-
-  const desiredPoint = getDesiredMarkerPoint(metrics);
-  const target = getTargetCenterForMarker(marker, desiredPoint);
+  const desiredPoint = getDesiredMarkerPoint();
+  const target = getTargetCenterForMarker(marker,desiredPoint);
 
   metrics.popupEl.style.visibility = '';
   map.closePopup();
 
-  if (
-    Math.abs(target.pixelDelta.x) < popupComfortSettings.minMovePixels &&
-    Math.abs(target.pixelDelta.y) < popupComfortSettings.minMovePixels
-  ) {
+  if(Math.abs(target.pixelDelta.x) < popupComfortSettings.minMovePixels && Math.abs(target.pixelDelta.y) < popupComfortSettings.minMovePixels){
     marker.openPopup();
     currentlyOpeningMarker = null;
     return;
   }
 
-  map.once('moveend', function() {
+  map.once('moveend',function(){
     marker.openPopup();
     const popupEl = marker.getPopup() && marker.getPopup().getElement();
-    if (popupEl) {
-      popupEl.style.visibility = '';
-    }
+    if(popupEl) popupEl.style.visibility = '';
     currentlyOpeningMarker = null;
   });
 
   suppressNextMoveendRender = true;
-  map.panTo(target.center, {
-    animate: true,
-    duration: popupComfortSettings.animationDuration
-  });
+  map.panTo(target.center,{animate:true,duration:popupComfortSettings.animationDuration});
 }
 
-/* SEARCH UI */
+function clearSearchFocusMarker(shouldRerender = true){
+  if(searchFocusMarker){
+    map.removeLayer(searchFocusMarker);
+    searchFocusMarker = null;
+  }
+  if(shouldRerender) scheduleVisibleRender();
+}
+
+const LegendControl = L.Control.extend({
+  options:{position:'topright'},
+  onAdd:function(){
+    const container = L.DomUtil.create('div','custom-legend');
+    container.innerHTML = `
+      <div class="legend-item">
+        <label for="toggle-kirstys">
+          <input id="toggle-kirstys" type="checkbox" checked>
+          <span class="legend-checkbox kirstys"></span>
+          ${starSvg}
+          <span id="legend-kirstys-label">Kirstys</span>
+        </label>
+      </div>
+      <div class="legend-item">
+        <label for="toggle-friends">
+          <input id="toggle-friends" type="checkbox" checked>
+          <span class="legend-checkbox friends"></span>
+          ${supporterHeartSvg}
+          <span id="legend-friends-label">Friends</span>
+        </label>
+      </div>
+      <div class="legend-donation-row">
+        <span>Donated?</span>
+        <span class="legend-donation-badge">✓</span>
+      </div>
+    `;
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    return container;
+  }
+});
+map.addControl(new LegendControl());
 
 const SearchControl = L.Control.extend({
-  options: {
-    position: 'topright'
-  },
-
-  onAdd: function() {
-    const container = L.DomUtil.create('div', 'search-wrap');
-
+  options:{position:'topright'},
+  onAdd:function(){
+    const container = L.DomUtil.create('div','search-wrap');
     container.innerHTML = `
       <div id="map-search-panel" class="search-panel">
         <div class="search-row">
@@ -934,503 +525,99 @@ const SearchControl = L.Control.extend({
       </div>
       <button id="map-search-toggle" class="search-toggle" type="button" aria-label="Open search">🔍</button>
     `;
-
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
-
     return container;
   }
 });
-
 map.addControl(new SearchControl());
 
-function getSearchPanel() {
-  return document.getElementById('map-search-panel');
-}
+function updateLegendCounts(rows){
+  let kirstysCount = 0;
+  let friendsCount = 0;
 
-function getSearchInput() {
-  return document.getElementById('map-search-input');
-}
-
-function getPrevButton() {
-  return document.getElementById('map-search-prev');
-}
-
-function getNextButton() {
-  return document.getElementById('map-search-next');
-}
-
-function setSearchButtonsState() {
-  const prevBtn = getPrevButton();
-  const nextBtn = getNextButton();
-  const disabled = currentMatches.length <= 1;
-
-  if (prevBtn) prevBtn.disabled = disabled;
-  if (nextBtn) nextBtn.disabled = disabled;
-}
-
-function setSearchStatus(text) {
-  const status = document.getElementById('map-search-status');
-  if (status) status.textContent = text || '';
-}
-
-function closeSearchPanel() {
-  const panel = getSearchPanel();
-  if (panel) panel.classList.remove('open');
-}
-
-function openSearchPanel() {
-  const panel = getSearchPanel();
-  const input = getSearchInput();
-  if (!panel) return;
-
-  panel.classList.add('open');
-
-  if (input) {
-    setTimeout(() => input.focus(), 50);
-  }
-}
-
-function toggleSearchPanel() {
-  const panel = getSearchPanel();
-  if (!panel) return;
-
-  if (panel.classList.contains('open')) {
-    closeSearchPanel();
-  } else {
-    openSearchPanel();
-  }
-}
-
-function getRowIcon(row) {
-  return normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon;
-}
-
-function clearSearchFocusMarker(shouldRerender = true) {
-  if (searchFocusMarker) {
-    map.removeLayer(searchFocusMarker);
-    searchFocusMarker = null;
-  }
-
-  if (shouldRerender) {
-    scheduleVisibleRender();
-  }
-}
-
-function showMatch(index) {
-  if (!currentMatches.length) return;
-
-  if (index < 0) index = currentMatches.length - 1;
-  if (index >= currentMatches.length) index = 0;
-
-  currentMatchIndex = index;
-  const row = currentMatches[currentMatchIndex].row;
-
-  setSearchStatus(`Match ${currentMatchIndex + 1} of ${currentMatches.length}: ${row.Name || row.Location || 'match'}`);
-
-  const lat = parseFloat(row.Lat);
-  const lng = parseFloat(row.Lng);
-
-  if (isNaN(lat) || isNaN(lng)) return;
-
-  const targetZoom = Math.max(map.getZoom(), 8);
-
-  map.stop();
-
-  focusedSearchRowKey = getRowKey(row);
-  clearSearchFocusMarker(false);
-  scheduleVisibleRender();
-
-  map.setView([lat, lng], targetZoom, { animate: false });
-  tileLayer.redraw();
-
-  searchFocusMarker = L.marker([lat, lng], {
-    icon: getRowIcon(row),
-    keyboard: false,
-    interactive: false,
-    pane: 'searchFocusPane'
-  });
-
-  searchFocusMarker.bindPopup(buildPopup(row), {
-    autoPan: false
-  });
-
-  searchFocusMarker.on('popupopen', function() {
-    if (window.parent) {
-      window.parent.postMessage({
-        type: 'marker_opened',
-        name: row.Name || 'unknown'
-      }, '*');
-    }
-  });
-
-  searchFocusMarker.addTo(map);
-
-  setTimeout(() => {
-    openMarkerPopupComfortably(searchFocusMarker);
-  }, 40);
-}
-
-function runSearch() {
-  const input = getSearchInput();
-  if (!input) return;
-
-  const query = String(input.value || '').trim().toLowerCase();
-
-  if (!query) {
-    currentMatches = [];
-    currentMatchIndex = 0;
-    lastSearchQuery = '';
-    focusedSearchRowKey = null;
-    clearSearchFocusMarker();
-    setSearchButtonsState();
-    setSearchStatus('Enter a submitted name or location.');
-    return;
-  }
-
-  const newMatches = getActiveRows()
-    .filter(row => {
-      const name = (row.Name || '').toString().trim().toLowerCase();
-      const location = (row.Location || '').toString().trim().toLowerCase();
-      return name.includes(query) || location.includes(query);
-    })
-    .map(row => ({ row }));
-
-  if (!newMatches.length) {
-    currentMatches = [];
-    currentMatchIndex = 0;
-    lastSearchQuery = query;
-    focusedSearchRowKey = null;
-    clearSearchFocusMarker();
-    setSearchButtonsState();
-    setSearchStatus('No match found.');
-    return;
-  }
-
-  const sameQuery =
-    query === lastSearchQuery &&
-    currentMatches.length === newMatches.length &&
-    currentMatches.every((match, i) => match.row === newMatches[i].row);
-
-  currentMatches = newMatches;
-  setSearchButtonsState();
-
-  if (sameQuery) {
-    showMatch(currentMatchIndex + 1);
-  } else {
-    currentMatchIndex = 0;
-    lastSearchQuery = query;
-    showMatch(0);
-  }
-}
-
-function bindSearchUiEvents() {
-  const toggleBtn = document.getElementById('map-search-toggle');
-  const goBtn = document.getElementById('map-search-button');
-  const prevBtn = document.getElementById('map-search-prev');
-  const nextBtn = document.getElementById('map-search-next');
-  const input = document.getElementById('map-search-input');
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleSearchPanel();
-    });
-  }
-
-  if (goBtn) {
-    goBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      runSearch();
-    });
-  }
-
-  if (prevBtn) {
-    prevBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!currentMatches.length || currentMatches.length === 1) return;
-      showMatch(currentMatchIndex - 1);
-    });
-  }
-
-  if (nextBtn) {
-    nextBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!currentMatches.length || currentMatches.length === 1) return;
-      showMatch(currentMatchIndex + 1);
-    });
-  }
-
-  if (input) {
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        runSearch();
-      }
-    });
-  }
-}
-
-function refreshLayerVisibility() {
-  if (layerVisibility.friends) {
-    if (!map.hasLayer(friendsCluster)) map.addLayer(friendsCluster);
-  } else {
-    if (map.hasLayer(friendsCluster)) map.removeLayer(friendsCluster);
-  }
-
-  if (layerVisibility.kirsties) {
-    if (!map.hasLayer(kirstysCluster)) map.addLayer(kirstysCluster);
-  } else {
-    if (map.hasLayer(kirstysCluster)) map.removeLayer(kirstysCluster);
-  }
-}
-
-function validateSearchAfterLayerChange() {
-  if (!lastSearchQuery) return;
-
-  const stillExists = currentMatches.some(match => isRowInActiveLayer(match.row));
-  if (!stillExists) {
-    currentMatches = [];
-    currentMatchIndex = 0;
-    focusedSearchRowKey = null;
-    clearSearchFocusMarker();
-    setSearchButtonsState();
-    setSearchStatus('Current search match is hidden by layer filters.');
-  }
-}
-
-function bindLayerToggleEvents() {
-  const kirstysToggle = document.getElementById('toggle-kirstys');
-  const friendsToggle = document.getElementById('toggle-friends');
-
-  if (kirstysToggle) {
-    kirstysToggle.addEventListener('change', function() {
-      layerVisibility.kirsties = !!kirstysToggle.checked;
-      focusedSearchRowKey = null;
-      clearSearchFocusMarker(false);
-      refreshLayerVisibility();
-      scheduleVisibleRender();
-      validateSearchAfterLayerChange();
-    });
-  }
-
-  if (friendsToggle) {
-    friendsToggle.addEventListener('change', function() {
-      layerVisibility.friends = !!friendsToggle.checked;
-      focusedSearchRowKey = null;
-      clearSearchFocusMarker(false);
-      refreshLayerVisibility();
-      scheduleVisibleRender();
-      validateSearchAfterLayerChange();
-    });
-  }
-}
-
-setTimeout(() => {
-  bindSearchUiEvents();
-  bindLayerToggleEvents();
-}, 0);
-
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    closeSearchPanel();
-  }
-});
-
-map.on('click', function() {
-  closeSearchPanel();
-});
-
-map.on('popupclose', function() {
-  currentlyOpeningMarker = null;
-});
-
-function buildGroupedVisibleRows(visibleRows) {
-  const groupedByCoords = {};
-
-  for (const row of visibleRows) {
+  for(const row of rows){
     const lat = parseFloat(row.Lat);
     const lng = parseFloat(row.Lng);
-
-    if (isNaN(lat) || isNaN(lng)) continue;
-
-    const key = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-
-    if (!groupedByCoords[key]) {
-      groupedByCoords[key] = [];
-    }
-
-    groupedByCoords[key].push(row);
+    if(isNaN(lat) || isNaN(lng)) continue;
+    if(normalizeLayer(row) === 'kirsties') kirstysCount++;
+    else friendsCount++;
   }
 
-  return groupedByCoords;
+  const kirstysLabel = document.getElementById('legend-kirstys-label');
+  const friendsLabel = document.getElementById('legend-friends-label');
+  if(kirstysLabel) kirstysLabel.textContent = `Kirstys (${kirstysCount})`;
+  if(friendsLabel) friendsLabel.textContent = `Friends (${friendsCount})`;
 }
 
-function rowIsVisible(row, bounds) {
-  if (!isRowInActiveLayer(row)) return false;
+async function playLondonIntro(){
+  map.closePopup();
+  closeSearchPanel();
 
-  const lat = parseFloat(row.Lat);
-  const lng = parseFloat(row.Lng);
+  map.setView([20,0],2,{animate:false});
+  scheduleVisibleRender();
 
-  if (isNaN(lat) || isNaN(lng)) return false;
+  await wait(1200);
 
-  return bounds.pad(0.15).contains([lat, lng]);
+  map.flyToBounds([
+    [51.28,-0.55],
+    [51.70,0.35]
+  ],{
+    padding:[40,40],
+    duration:7,
+    easeLinearity:0.18,
+    maxZoom:10
+  });
+
+  await wait(8500);
+  scheduleVisibleRender();
 }
 
-function renderVisibleMarkers() {
-  if (!allRows.length) return;
-
-  const bounds = map.getBounds();
-  const visibleRows = allRows.filter(row => rowIsVisible(row, bounds));
-  const groupedByCoords = buildGroupedVisibleRows(visibleRows);
-
-  kirstysCluster.clearLayers();
-  friendsCluster.clearLayers();
-
-  for (const key of Object.keys(groupedByCoords)) {
-    const group = groupedByCoords[key];
-    const baseLat = parseFloat(group[0].Lat);
-    const baseLng = parseFloat(group[0].Lng);
-
-    const renderableRows = group.filter(row => getRowKey(row) !== focusedSearchRowKey);
-    const kirstyRows = renderableRows.filter(row => normalizeLayer(row) === 'kirsties');
-    const friendRows = renderableRows.filter(row => normalizeLayer(row) === 'friends');
-
-    let friendIndex = 0;
-    for (const row of friendRows) {
-      const coords = getOffsetCoords(baseLat, baseLng, friendIndex, friendRows.length);
-      friendIndex++;
-
-      const marker = L.marker(coords, {
-        icon: supporterIcon,
-        pane: 'friendsPane'
-      });
-
-      marker.bindPopup(buildPopup(row), {
-        autoPan: false
-      });
-
-      marker.off('click', marker._openPopup, marker);
-
-      marker.on('click', function() {
-        focusedSearchRowKey = null;
-        clearSearchFocusMarker(false);
-        openMarkerPopupComfortably(marker);
-      });
-
-      marker.on('popupopen', function() {
-        if (window.parent) {
-          window.parent.postMessage({
-            type: 'marker_opened',
-            name: row.Name || 'unknown'
-          }, '*');
-        }
-      });
-
-      friendsCluster.addLayer(marker);
-    }
-
-    let kirstyIndex = 0;
-    for (const row of kirstyRows) {
-      const coords = getOffsetCoords(baseLat, baseLng, kirstyIndex, kirstyRows.length);
-      kirstyIndex++;
-
-      const marker = L.marker(coords, {
-        icon: kirstyIcon,
-        pane: 'kirstysPane'
-      });
-
-      marker.bindPopup(buildPopup(row), {
-        autoPan: false
-      });
-
-      marker.off('click', marker._openPopup, marker);
-
-      marker.on('click', function() {
-        focusedSearchRowKey = null;
-        clearSearchFocusMarker(false);
-        openMarkerPopupComfortably(marker);
-      });
-
-      marker.on('popupopen', function() {
-        if (window.parent) {
-          window.parent.postMessage({
-            type: 'marker_opened',
-            name: row.Name || 'unknown'
-          }, '*');
-        }
-      });
-
-      kirstysCluster.addLayer(marker);
-    }
-  }
-
-  refreshLayerVisibility();
-}
-
-function scheduleVisibleRender() {
-  if (renderTimer) {
-    clearTimeout(renderTimer);
-  }
-
-  renderTimer = setTimeout(() => {
-    renderVisibleMarkers();
-  }, 120);
-}
-
-async function loadMapData() {
-  try {
+async function loadMapData(){
+  try{
     const response = await fetch(sheetUrl);
     const rows = await response.json();
 
-  const cleanedRows = rows.filter(row => {
-  const lat = parseFloat(row.Lat);
-  const lng = parseFloat(row.Lng);
-  return !isNaN(lat) && !isNaN(lng);
-});
-
-    allRows = cleanedRows;
-    currentMatches = [];
-    currentMatchIndex = 0;
-    lastSearchQuery = '';
-    focusedSearchRowKey = null;
-    setSearchButtonsState();
-    setSearchStatus('');
+    allRows = rows.filter(row => {
+      const lat = parseFloat(row.Lat);
+      const lng = parseFloat(row.Lng);
+      return !isNaN(lat) && !isNaN(lng);
+    });
 
     updateLegendCounts(allRows);
     scheduleVisibleRender();
 
- 
-    if (allRows.length) {
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 300);
-    }
-  } catch (error) {
-    console.error('Error loading map data:', error);
+    setTimeout(() => {
+      map.invalidateSize();
+      playLondonIntro();
+    }, 1800);
+
+  } catch(error){
+    console.error('Error loading map data:',error);
   }
 }
 
-map.on('moveend', function() {
-  if (suppressNextMoveendRender) {
+map.on('moveend',function(){
+  if(suppressNextMoveendRender){
     suppressNextMoveendRender = false;
     return;
   }
   scheduleVisibleRender();
 });
 
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    map.invalidateSize();
-  }, 400);
+map.on('popupclose',function(){
+  currentlyOpeningMarker = null;
+});
+
+document.addEventListener('keydown',function(e){
+  if(e.key === 'Escape') closeSearchPanel();
+});
+
+window.addEventListener('load',() => {
+  setTimeout(() => map.invalidateSize(),400);
 });
 
 loadMapData();
 </script>
-
 </body>
 </html>
