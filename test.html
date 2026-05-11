@@ -551,34 +551,52 @@ function updateLegendCounts(rows){
 }
 
 async function playKingsRoadIntro(){
+
+  // Turn OFF supporters/friends layer for reel
+  layerVisibility.friends = false;
+  refreshLayerVisibility();
+
   map.closePopup();
   closeSearchPanel();
 
-  // World-level opening.
+  // WORLD VIEW
   map.setView([20,0],2,{animate:false});
   scheduleVisibleRender();
 
-  // Let tiles and first marker layer build before movement.
-  await wait(3500);
+  // Long initial build time
+  await wait(4500);
 
-  // Stage 1: slowly come down to Greater London.
+  // STAGE 1 — UK VIEW
+  map.flyTo([54.5,-2.5],6,{
+    duration:8,
+    easeLinearity:0.16
+  });
+
+  // Let UK clusters fully build
+  await wait(9500);
+  scheduleVisibleRender();
+
+  // Hold on UK view
+  await wait(4000);
+
+  // STAGE 2 — GREATER LONDON
   map.flyToBounds([
     [51.28,-0.55],
     [51.70,0.35]
   ],{
     padding:[40,40],
-    duration:10,
+    duration:8,
     easeLinearity:0.16,
     maxZoom:9
   });
 
-  await wait(11500);
+  await wait(9500);
   scheduleVisibleRender();
 
-  // Pause over London so clusters/markers settle.
-  await wait(3000);
+  // Hold on London view
+  await wait(3500);
 
-  // Stage 2: zoom into King's Road / Chelsea.
+  // STAGE 3 — KING'S ROAD / CHELSEA
   map.flyTo([51.4890,-0.1668],16,{
     duration:10,
     easeLinearity:0.16
@@ -587,7 +605,7 @@ async function playKingsRoadIntro(){
   await wait(11500);
   scheduleVisibleRender();
 
-  // Final hold.
+  // Final hold
   await wait(5000);
 }
 
