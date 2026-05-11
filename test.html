@@ -550,27 +550,45 @@ function updateLegendCounts(rows){
   if(friendsLabel) friendsLabel.textContent = `Friends (${friendsCount})`;
 }
 
-async function playLondonIntro(){
+async function playKingsRoadIntro(){
   map.closePopup();
   closeSearchPanel();
 
+  // World-level opening.
   map.setView([20,0],2,{animate:false});
   scheduleVisibleRender();
 
-  await wait(1200);
+  // Let tiles and first marker layer build before movement.
+  await wait(3500);
 
+  // Stage 1: slowly come down to Greater London.
   map.flyToBounds([
     [51.28,-0.55],
     [51.70,0.35]
   ],{
     padding:[40,40],
-    duration:7,
-    easeLinearity:0.18,
-    maxZoom:10
+    duration:10,
+    easeLinearity:0.16,
+    maxZoom:9
   });
 
-  await wait(8500);
+  await wait(11500);
   scheduleVisibleRender();
+
+  // Pause over London so clusters/markers settle.
+  await wait(3000);
+
+  // Stage 2: zoom into King's Road / Chelsea.
+  map.flyTo([51.4890,-0.1668],16,{
+    duration:10,
+    easeLinearity:0.16
+  });
+
+  await wait(11500);
+  scheduleVisibleRender();
+
+  // Final hold.
+  await wait(5000);
 }
 
 async function loadMapData(){
@@ -589,7 +607,7 @@ async function loadMapData(){
 
     setTimeout(() => {
       map.invalidateSize();
-      playLondonIntro();
+      playKingsRoadIntro();
     }, 1800);
 
   } catch(error){
