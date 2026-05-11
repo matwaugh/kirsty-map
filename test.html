@@ -303,39 +303,6 @@ html,body{
     width:240px;
     max-width:68vw;
   }
-
-/* Reel mode: enlarge map markers and clusters */
-body.reel-mode .kirsty-marker{
-  transform:scale(1.25);
-  transform-origin:center bottom;
-}
-
-body.reel-mode .leaflet-marker-icon:not(.marker-cluster){
-  transform:scale(1.25);
-  transform-origin:center bottom;
-}
-
-body.reel-mode .marker-cluster div{
-  width:48px;
-  height:48px;
-  font-size:18px;
-}
-
-body.reel-mode .marker-cluster{
-  width:48px !important;
-  height:48px !important;
-  margin-left:-4px !important;
-  margin-top:-4px !important;
-}
-  
-/* Reel mode: hide UI */
-body.reel-mode .custom-legend,
-body.reel-mode .fit-all-btn,
-body.reel-mode .search-wrap,
-body.reel-mode .leaflet-control-container {
-  display: none !important;
-}
-  
 }
 
 /* Kirsty marker with halo behind the star */
@@ -466,21 +433,16 @@ body.reel-mode .leaflet-control-container {
 const sheetUrl =
   "https://opensheet.elk.sh/1MCXldIJGYyWbbVmfqq8etjsrsGlygOtWgxMu-gGhl_E/Public%20Map";
 
-const REEL_IDS = [
-  '4aKBK5d',
-  'M1D1NM0',
-  'LZAKxM2'
-];
+const isMobile = window.innerWidth < 768;
 
-const REEL_MODE = true;
+const startLat = isMobile ? 12 : 20;
+const startLng = isMobile ? -20 : 0;
+const startZoom = 1;
 
-if (REEL_MODE) {
-  document.body.classList.add('reel-mode');
-}
-  
-let targetReelRows = [];
-
-const map = L.map('map').setView([54.5, -3], 5);
+const map = L.map('map').setView(
+  [startLat, startLng],
+  startZoom
+);
 
 /* panes so Kirstys always render above Friends */
 map.createPane('friendsPane');
@@ -624,7 +586,7 @@ const FitAllControl = L.Control.extend({
   onAdd: function() {
     const button = L.DomUtil.create('button', 'fit-all-btn');
     button.innerHTML = 'View all';
-    button.title = 'Zoom out to all visible map entries';
+button.title = 'Zoom out to all visible map entries';
 
     L.DomEvent.disableClickPropagation(button);
     L.DomEvent.on(button, 'click', function() {
@@ -718,33 +680,18 @@ function getActiveDataBounds() {
 }
 
 function updateLegendCounts(rows) {
-  let kirstysCount = 0;
-  let friendsCount = 0;
-
-  for (const row of rows) {
-    const lat = parseFloat(row.Lat);
-    const lng = parseFloat(row.Lng);
-
-    if (isNaN(lat) || isNaN(lng)) continue;
-
-    if (normalizeLayer(row) === 'kirsties') {
-      kirstysCount++;
-    } else {
-      friendsCount++;
-    }
-  }
-
   const kirstysLabel = document.getElementById('legend-kirstys-label');
   const friendsLabel = document.getElementById('legend-friends-label');
 
   if (kirstysLabel) {
-    kirstysLabel.textContent = `Kirstys (${kirstysCount})`;
+    kirstysLabel.textContent = 'Kirstys';
   }
 
   if (friendsLabel) {
-    friendsLabel.textContent = `Friends (${friendsCount})`;
+    friendsLabel.textContent = 'Friends';
   }
 }
+
 
 /* SEARCH + DATA STATE */
 
@@ -763,8 +710,8 @@ let focusedSearchRowKey = null;
 
 const popupComfortSettings = {
   sidePadding: 24,
-  topPadding: 140,
-  bottomMarkerPadding: 230,
+  topPadding: 16,
+  bottomMarkerPadding: 86,
   minMovePixels: 6,
   animationDuration: 0.25
 };
@@ -868,11 +815,30 @@ function popupFitsComfortably(metrics) {
 function getDesiredMarkerPoint(metrics) {
   const size = map.getSize();
 
-  const desiredX = size.x / 2;
+  const minX = metrics.leftGap + popupComfortSettings.sidePadding;
+  const maxX = size.x - popupComfortSettings.sidePadding - metrics.rightGap;
+  const desiredX = clamp(metrics.point.x, minX, maxX);
 
-  // Lower value = card lower on screen.
-  // Higher value = card higher on screen.
-  const desiredY = size.y * 0.38;
+  let minY = popupComfortSettings.topPadding + metrics.topGap;
+
+  const searchPanelRect = getOpenSearchPanelRect();
+  if (searchPanelRect) {
+    minY = Math.max(minY, searchPanelRect.bottom + 12 + metrics.topGap);
+  }
+
+  let idealY;
+
+  if (searchPanelRect) {
+    idealY = Math.max(
+      searchPanelRect.bottom + 20,
+      size.y - popupComfortSettings.bottomMarkerPadding
+    );
+  } else {
+    idealY = size.y - popupComfortSettings.bottomMarkerPadding;
+  }
+
+  const maxY = size.y - 24;
+  const desiredY = clamp(idealY, minY, maxY);
 
   return L.point(desiredX, desiredY);
 }
@@ -1416,102 +1382,18 @@ function scheduleVisibleRender() {
   }, 120);
 }
 
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function flyToReelRow(row, index, isFinal) {
-  const lat = parseFloat(row.Lat);
-  const lng = parseFloat(row.Lng);
-
-  if (isNaN(lat) || isNaN(lng)) {
-    console.warn('Skipping invalid reel row:', row);
-    return;
-  }
-
-  const targetZoom = isFinal ? 12 : 9;
-
-  // Fly in
-  map.flyTo([lat, lng], targetZoom, {
-    duration: isFinal ? 5.5 : 6,
-    easeLinearity: 0.2
-  });
-
-  await wait(isFinal ? 6200 : 6500);
-
-  // Let clusters render
-  scheduleVisibleRender();
-  await wait(800);
-
-  // Create focus marker for popup (same method as final)
-  const marker = L.marker([lat, lng], {
-    icon: normalizeLayer(row) === 'kirsties' ? kirstyIcon : supporterIcon,
-    pane: 'searchFocusPane'
-  });
-
-  marker.bindPopup(buildPopup(row), {
-    autoPan: false
-  });
-
-  marker.addTo(map);
-
-  await wait(500);
-
-  openMarkerPopupComfortably(marker);
-
-  // HOLD on each card
-  await wait(3000);
-}
-
-async function playReel() {
-  if (!targetReelRows.length) {
-    console.warn('No reel targets found');
-    return;
-  }
-
-  map.closePopup();
-  closeSearchPanel();
-
-  // Start wide and give the first layer build time.
-  map.setView([20, 0], 2, { animate: false });
-  scheduleVisibleRender();
-  await wait(3200);
-
-  for (let i = 0; i < targetReelRows.length; i++) {
-    const row = targetReelRows[i];
-    const isFinal = i === targetReelRows.length - 1;
-
-    await flyToReelRow(row, i, isFinal);
-
-    if (!isFinal) {
-      continue;
-    }
-
-    
-  }
-}
-
 async function loadMapData() {
   try {
     const response = await fetch(sheetUrl);
     const rows = await response.json();
 
-    const cleanedRows = rows.filter(row => {
-      const lat = parseFloat(row.Lat);
-      const lng = parseFloat(row.Lng);
-      return !isNaN(lat) && !isNaN(lng);
-    });
+  const cleanedRows = rows.filter(row => {
+  const lat = parseFloat(row.Lat);
+  const lng = parseFloat(row.Lng);
+  return !isNaN(lat) && !isNaN(lng);
+});
 
     allRows = cleanedRows;
-
-    targetReelRows = REEL_IDS
-      .map(id => allRows.find(row =>
-        String(row['Submission ID']).trim().toLowerCase() === String(id).trim().toLowerCase()
-      ))
-      .filter(Boolean);
-
-    console.log('Matched reel rows:', targetReelRows);
-
     currentMatches = [];
     currentMatchIndex = 0;
     lastSearchQuery = '';
@@ -1522,10 +1404,7 @@ async function loadMapData() {
     updateLegendCounts(allRows);
     scheduleVisibleRender();
 
-    if (targetReelRows.length) {
-      setTimeout(playReel, 1800);
-    }
-
+ 
     if (allRows.length) {
       setTimeout(() => {
         map.invalidateSize();
