@@ -454,7 +454,7 @@ map.getPane('kirstysPane').style.zIndex = 460;
 map.createPane('searchFocusPane');
 map.getPane('searchFocusPane').style.zIndex = 650;
 
-const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+const tileLayer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2b4n_1_21481756bd0ae78f1d64087d', {
   attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
   maxZoom: 19
 }).addTo(map);
