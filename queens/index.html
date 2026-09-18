@@ -31,21 +31,12 @@
     --cream: #F3EEDC;
   }
 
-
-  /* =====================================================
-     VIEWPORT
-     ===================================================== */
-
   #queensViewport {
     position: relative;
-
     width: 100%;
     height: 100vh;
-
     overflow: hidden;
-
     cursor: grab;
-
     touch-action: none;
     user-select: none;
   }
@@ -54,14 +45,8 @@
     cursor: grabbing;
   }
 
-
-  /* =====================================================
-     MOVING BOARD
-     ===================================================== */
-
   #queensBoard {
     position: absolute;
-
     left: 0;
     top: 0;
 
@@ -71,36 +56,25 @@
     grid-auto-rows: 190px;
 
     gap: 18px;
-
     padding: 40px;
 
     transform-origin: 0 0;
-
     will-change: transform;
   }
-
-
-  /* =====================================================
-     CARD
-     ===================================================== */
 
   .queen-card {
     width: 150px;
     height: 190px;
-
     perspective: 1000px;
-
     cursor: pointer;
   }
 
   .queen-card-inner {
     position: relative;
-
     width: 100%;
     height: 100%;
 
     transition: transform 0.55s ease;
-
     transform-style: preserve-3d;
   }
 
@@ -111,7 +85,6 @@
   .queen-front,
   .queen-back {
     position: absolute;
-
     inset: 0;
 
     overflow: hidden;
@@ -124,36 +97,24 @@
     box-shadow: 0 3px 12px rgba(0,0,0,0.13);
   }
 
-
-  /* =====================================================
-     PHOTO FRONT
-     ===================================================== */
-
   .queen-front.photo-card {
     display: flex;
     flex-direction: column;
-
     background: var(--yellow);
   }
 
   .queen-photo {
     flex: 1;
-
     min-height: 0;
-
     overflow: hidden;
-
     background: #ddd;
   }
 
   .queen-photo img {
     width: 100%;
     height: 100%;
-
     display: block;
-
     object-fit: cover;
-
     pointer-events: none;
   }
 
@@ -161,55 +122,37 @@
     min-height: 42px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
     padding: 7px;
 
     background: var(--yellow);
-
     color: var(--dark);
 
     font-size: 15px;
     font-weight: bold;
-
     text-align: center;
   }
 
-
-  /* =====================================================
-     CROWN FRONT
-     ===================================================== */
-
   .queen-front.crown-card {
     display: flex;
-
     align-items: center;
     justify-content: center;
-
     background: var(--salmon);
   }
 
   .crown-icon {
     width: 82px;
     height: 70px;
-
     fill: var(--cream);
-
     pointer-events: none;
   }
-
-
-  /* =====================================================
-     CARD BACK
-     ===================================================== */
 
   .queen-back {
     transform: rotateY(180deg);
 
     display: flex;
-
     flex-direction: column;
 
     align-items: center;
@@ -218,7 +161,6 @@
     padding: 16px;
 
     background: var(--teal);
-
     color: white;
 
     text-align: center;
@@ -226,35 +168,31 @@
 
   .queen-quote {
     font-size: 14px;
-
     line-height: 1.35;
+  }
+
+  .queen-quote.long {
+    font-size: 12.5px;
+    line-height: 1.3;
+  }
+
+  .queen-quote.very-long {
+    font-size: 11px;
+    line-height: 1.25;
   }
 
   .queen-back-name {
     margin-top: 12px;
-
     font-size: 13px;
     font-weight: bold;
   }
 
-
-  /* =====================================================
-     HEART BACK
-     ===================================================== */
-
   .heart-icon {
     width: 58px;
     height: 58px;
-
     fill: var(--cream);
-
     pointer-events: none;
   }
-
-
-  /* =====================================================
-     CENTRAL KIRSTY
-     ===================================================== */
 
   .queen-card.kirsty .queen-front,
   .queen-card.kirsty .queen-back {
@@ -262,11 +200,6 @@
       0 0 0 4px var(--teal),
       0 5px 18px rgba(0,0,0,0.18);
   }
-
-
-  /* =====================================================
-     UI
-     ===================================================== */
 
   #centreButton {
     position: fixed;
@@ -277,22 +210,18 @@
     z-index: 100;
 
     border: 0;
-
     border-radius: 999px;
 
     padding: 10px 16px;
 
     background: var(--dark);
-
     color: white;
 
     font-size: 14px;
-
     cursor: pointer;
 
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
-
 
   #dragHint {
     position: fixed;
@@ -309,7 +238,6 @@
     border-radius: 999px;
 
     background: rgba(243,238,220,0.92);
-
     color: var(--dark);
 
     font-size: 12px;
@@ -323,11 +251,6 @@
     opacity: 0;
   }
 
-
-  /* =====================================================
-     MOBILE
-     ===================================================== */
-
   @media (max-width: 600px) {
 
     #queensBoard {
@@ -335,7 +258,6 @@
       grid-auto-rows: 160px;
 
       gap: 14px;
-
       padding: 30px;
     }
 
@@ -346,16 +268,31 @@
 
     .queen-name {
       min-height: 36px;
-
       font-size: 13px;
     }
 
     .queen-quote {
       font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .queen-quote.long {
+      font-size: 10.5px;
+      line-height: 1.25;
+    }
+
+    .queen-quote.very-long {
+      font-size: 9.5px;
+      line-height: 1.2;
     }
 
     .queen-back {
       padding: 12px;
+    }
+
+    .queen-back-name {
+      margin-top: 8px;
+      font-size: 11px;
     }
 
     .crown-icon {
@@ -374,9 +311,7 @@
 <body>
 
 <div id="queensViewport">
-
   <div id="queensBoard"></div>
-
 </div>
 
 <div id="dragHint">
@@ -387,13 +322,7 @@
   Back to Kirsty
 </button>
 
-
 <script>
-
-
-/* =====================================================
-   ICONS
-   ===================================================== */
 
 const crownSVG = `
 <svg
@@ -427,7 +356,6 @@ const crownSVG = `
 </svg>
 `;
 
-
 const heartSVG = `
 <svg
   class="heart-icon"
@@ -447,16 +375,6 @@ const heartSVG = `
   "/>
 </svg>
 `;
-
-
-
-/* =====================================================
-   QUEEN DATA
-
-   Q001 = Kirsty in centre
-   Q002-Q014 = photographed Queens
-   Q015-Q049 = crown-only Queens
-   ===================================================== */
 
 const queens = [
 
@@ -561,32 +479,17 @@ const queens = [
 
 ];
 
-
-/* Add 35 crown-only Queens: Q015-Q049 */
-
 for (let i = 15; i <= 49; i++) {
 
   queens.push({
-
     id: `Q${String(i).padStart(3, "0")}`,
-
     name: "",
-
     image: "",
-
     quote: "",
-
     crownOnly: true
-
   });
 
 }
-
-
-
-/* =====================================================
-   BASIC SETUP
-   ===================================================== */
 
 const viewport =
   document.getElementById("queensViewport");
@@ -600,7 +503,6 @@ const centreButton =
 const dragHint =
   document.getElementById("dragHint");
 
-
 let offsetX = 0;
 let offsetY = 0;
 
@@ -611,16 +513,9 @@ let startOffsetX = 0;
 let startOffsetY = 0;
 
 let dragging = false;
-
 let movedDuringDrag = false;
 
 let centreCard = null;
-
-
-
-/* =====================================================
-   SHUFFLE
-   ===================================================== */
 
 function shuffle(array) {
 
@@ -651,25 +546,33 @@ function shuffle(array) {
   return copy;
 }
 
+function getQuoteClass(quote) {
 
+  if (!quote) {
+    return "queen-quote";
+  }
 
-/* =====================================================
-   CREATE CARD
-   ===================================================== */
+  if (quote.length > 220) {
+    return "queen-quote very-long";
+  }
+
+  if (quote.length > 150) {
+    return "queen-quote long";
+  }
+
+  return "queen-quote";
+}
 
 function createCard(queen) {
 
   const card =
     document.createElement("div");
 
-
   card.className =
     "queen-card" +
     (queen.kirsty ? " kirsty" : "");
 
-
   let frontHTML = "";
-
 
   if (queen.crownOnly) {
 
@@ -706,17 +609,18 @@ function createCard(queen) {
 
   }
 
-
   let backHTML = "";
 
-
   if (queen.quote) {
+
+    const quoteClass =
+      getQuoteClass(queen.quote);
 
     backHTML = `
 
       <div class="queen-back">
 
-        <div class="queen-quote">
+        <div class="${quoteClass}">
           “${queen.quote}”
         </div>
 
@@ -740,7 +644,6 @@ function createCard(queen) {
 
   }
 
-
   card.innerHTML = `
 
     <div class="queen-card-inner">
@@ -753,26 +656,17 @@ function createCard(queen) {
 
   `;
 
-
   return card;
 }
-
-
-
-/* =====================================================
-   BUILD WALL
-   ===================================================== */
 
 function buildWall() {
 
   board.innerHTML = "";
 
-
   const kirsty =
     queens.find(
       queen => queen.kirsty
     );
-
 
   const others =
     shuffle(
@@ -781,68 +675,54 @@ function buildWall() {
       )
     );
 
-
   let columns =
     Math.ceil(
       Math.sqrt(queens.length)
     );
 
-
   if (columns % 2 === 0) {
     columns++;
   }
-
 
   let rows =
     Math.ceil(
       queens.length / columns
     );
 
-
   if (rows % 2 === 0) {
     rows++;
   }
 
-
   columns += 2;
   rows += 2;
-
 
   if (columns % 2 === 0) {
     columns++;
   }
 
-
   if (rows % 2 === 0) {
     rows++;
   }
-
 
   board.style.setProperty(
     "--columns",
     columns
   );
 
-
   const totalSlots =
     columns * rows;
-
 
   const centreRow =
     Math.floor(rows / 2);
 
-
   const centreColumn =
     Math.floor(columns / 2);
-
 
   const centreIndex =
     centreRow * columns +
     centreColumn;
 
-
   let positions = [];
-
 
   for (
     let i = 0;
@@ -857,7 +737,6 @@ function buildWall() {
     }
 
   }
-
 
   positions.sort(
     (a, b) => {
@@ -874,20 +753,17 @@ function buildWall() {
       const colB =
         b % columns;
 
-
       const distanceA =
         Math.hypot(
           rowA - centreRow,
           colA - centreColumn
         );
 
-
       const distanceB =
         Math.hypot(
           rowB - centreRow,
           colB - centreColumn
         );
-
 
       return (
         distanceA -
@@ -898,14 +774,11 @@ function buildWall() {
     }
   );
 
-
   const slots =
     new Array(totalSlots).fill(null);
 
-
   slots[centreIndex] =
     kirsty;
-
 
   others.forEach(
     (queen, index) => {
@@ -916,7 +789,6 @@ function buildWall() {
 
     }
   );
-
 
   slots.forEach(
     queen => {
@@ -932,13 +804,10 @@ function buildWall() {
 
       }
 
-
       const card =
         createCard(queen);
 
-
       board.appendChild(card);
-
 
       if (queen.kirsty) {
 
@@ -949,18 +818,11 @@ function buildWall() {
     }
   );
 
-
   requestAnimationFrame(
     centreOnKirsty
   );
 
 }
-
-
-
-/* =====================================================
-   BOARD POSITION
-   ===================================================== */
 
 function updateBoardPosition() {
 
@@ -969,28 +831,18 @@ function updateBoardPosition() {
 
 }
 
-
-
-/* =====================================================
-   CENTRE ON KIRSTY
-   ===================================================== */
-
 function centreOnKirsty() {
 
   if (!centreCard) return;
 
-
   const viewportRect =
     viewport.getBoundingClientRect();
-
 
   board.style.transform =
     "translate(0px, 0px)";
 
-
   const cardRect =
     centreCard.getBoundingClientRect();
-
 
   offsetX =
     viewportRect.width / 2 -
@@ -999,7 +851,6 @@ function centreOnKirsty() {
       cardRect.width / 2
     );
 
-
   offsetY =
     viewportRect.height / 2 -
     (
@@ -1007,16 +858,9 @@ function centreOnKirsty() {
       cardRect.height / 2
     );
 
-
   updateBoardPosition();
 
 }
-
-
-
-/* =====================================================
-   POINTER DOWN
-   ===================================================== */
 
 viewport.addEventListener(
   "pointerdown",
@@ -1030,11 +874,8 @@ viewport.addEventListener(
       return;
     }
 
-
     dragging = true;
-
     movedDuringDrag = false;
-
 
     dragStartX =
       event.clientX;
@@ -1042,18 +883,15 @@ viewport.addEventListener(
     dragStartY =
       event.clientY;
 
-
     startOffsetX =
       offsetX;
 
     startOffsetY =
       offsetY;
 
-
     viewport.classList.add(
       "dragging"
     );
-
 
     viewport.setPointerCapture(
       event.pointerId
@@ -1062,28 +900,19 @@ viewport.addEventListener(
   }
 );
 
-
-
-/* =====================================================
-   POINTER MOVE
-   ===================================================== */
-
 viewport.addEventListener(
   "pointermove",
   function(event) {
 
     if (!dragging) return;
 
-
     const dx =
       event.clientX -
       dragStartX;
 
-
     const dy =
       event.clientY -
       dragStartY;
-
 
     if (
       Math.abs(dx) > 5 ||
@@ -1092,32 +921,22 @@ viewport.addEventListener(
 
       movedDuringDrag = true;
 
-
       dragHint.classList.add(
         "hidden"
       );
 
     }
 
-
     offsetX =
       startOffsetX + dx;
 
-
     offsetY =
       startOffsetY + dy;
-
 
     updateBoardPosition();
 
   }
 );
-
-
-
-/* =====================================================
-   POINTER UP
-   ===================================================== */
 
 viewport.addEventListener(
   "pointerup",
@@ -1125,21 +944,16 @@ viewport.addEventListener(
 
     if (!dragging) return;
 
-
     const wasDragging =
       movedDuringDrag;
 
-
     dragging = false;
-
 
     viewport.classList.remove(
       "dragging"
     );
 
-
     if (!wasDragging) {
-
 
       const elementUnderPointer =
         document.elementFromPoint(
@@ -1147,14 +961,12 @@ viewport.addEventListener(
           event.clientY
         );
 
-
       const card =
         elementUnderPointer
           ? elementUnderPointer.closest(
               ".queen-card"
             )
           : null;
-
 
       if (card) {
 
@@ -1165,7 +977,6 @@ viewport.addEventListener(
       }
 
     }
-
 
     setTimeout(
       () => {
@@ -1179,18 +990,11 @@ viewport.addEventListener(
   }
 );
 
-
-
-/* =====================================================
-   POINTER CANCEL
-   ===================================================== */
-
 viewport.addEventListener(
   "pointercancel",
   function() {
 
     dragging = false;
-
 
     viewport.classList.remove(
       "dragging"
@@ -1198,12 +1002,6 @@ viewport.addEventListener(
 
   }
 );
-
-
-
-/* =====================================================
-   CENTRE BUTTON
-   ===================================================== */
 
 centreButton.addEventListener(
   "pointerdown",
@@ -1213,7 +1011,6 @@ centreButton.addEventListener(
 
   }
 );
-
 
 centreButton.addEventListener(
   "click",
@@ -1226,22 +1023,10 @@ centreButton.addEventListener(
   }
 );
 
-
-
-/* =====================================================
-   RESIZE
-   ===================================================== */
-
 window.addEventListener(
   "resize",
   centreOnKirsty
 );
-
-
-
-/* =====================================================
-   START
-   ===================================================== */
 
 buildWall();
 
