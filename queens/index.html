@@ -17,7 +17,9 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+
     font-family: Arial, Helvetica, sans-serif;
+
     background: #F3EEDC;
   }
 
@@ -29,22 +31,38 @@
     --cream: #F3EEDC;
   }
 
+
+  /* =====================================================
+     VIEWPORT
+     ===================================================== */
+
   #queensViewport {
     position: relative;
+
     width: 100%;
     height: 100vh;
+
     overflow: hidden;
+
     cursor: grab;
+
     touch-action: none;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   #queensViewport.dragging {
     cursor: grabbing;
   }
 
+
+  /* =====================================================
+     BOARD
+     ===================================================== */
+
   #queensBoard {
     position: absolute;
+
     left: 0;
     top: 0;
 
@@ -54,24 +72,35 @@
     grid-auto-rows: 180px;
 
     gap: 16px;
+
     padding: 28px;
 
     transform-origin: 0 0;
     will-change: transform;
   }
 
+
+  /* =====================================================
+     CARDS
+     ===================================================== */
+
   .queen-card {
     width: 125px;
     height: 180px;
+
     perspective: 1000px;
+
     cursor: pointer;
   }
 
   .queen-card-inner {
     position: relative;
+
     width: 100%;
     height: 100%;
+
     transition: transform 0.55s ease;
+
     transform-style: preserve-3d;
   }
 
@@ -82,8 +111,11 @@
   .queen-front,
   .queen-back {
     position: absolute;
+
     inset: 0;
+
     overflow: hidden;
+
     border-radius: 8px;
 
     backface-visibility: hidden;
@@ -92,28 +124,36 @@
     box-shadow: 0 3px 10px rgba(0,0,0,0.12);
   }
 
+
   /* =====================================================
-     PHOTO CARDS
+     PHOTO FRONT
      ===================================================== */
 
   .queen-front.photo-card {
     display: flex;
     flex-direction: column;
+
     background: var(--yellow);
   }
 
   .queen-photo {
     flex: 1;
+
     min-height: 0;
+
     overflow: hidden;
+
     background: #ddd;
   }
 
   .queen-photo img {
+    display: block;
+
     width: 100%;
     height: 100%;
-    display: block;
+
     object-fit: cover;
+
     pointer-events: none;
   }
 
@@ -121,6 +161,7 @@
     min-height: 34px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
@@ -131,24 +172,23 @@
 
     font-size: 13px;
     font-weight: bold;
+
     text-align: center;
   }
 
+
   /* =====================================================
-     CROWN CARDS
+     CROWN FRONT
      ===================================================== */
 
   .queen-front.crown-card {
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     background: var(--salmon);
 
-    /*
-      Subtle inner detail to stop the salmon blocks
-      becoming too visually heavy.
-    */
     box-shadow:
       inset 0 0 0 3px rgba(243,238,220,0.24),
       0 3px 10px rgba(0,0,0,0.12);
@@ -157,12 +197,15 @@
   .crown-icon {
     width: 57px;
     height: 50px;
+
     fill: var(--cream);
+
     pointer-events: none;
   }
 
+
   /* =====================================================
-     BACKS
+     CARD BACK
      ===================================================== */
 
   .queen-back {
@@ -170,6 +213,7 @@
 
     display: flex;
     flex-direction: column;
+
     align-items: center;
     justify-content: center;
 
@@ -198,6 +242,7 @@
 
   .queen-back-name {
     margin-top: 9px;
+
     font-size: 11px;
     font-weight: bold;
   }
@@ -205,12 +250,15 @@
   .heart-icon {
     width: 48px;
     height: 48px;
+
     fill: var(--cream);
+
     pointer-events: none;
   }
 
+
   /* =====================================================
-     KIRSTY
+     CENTRAL KIRSTY
      ===================================================== */
 
   .queen-card.kirsty .queen-front,
@@ -220,33 +268,14 @@
       0 4px 14px rgba(0,0,0,0.18);
   }
 
+
   /* =====================================================
-     UI
+     INSTRUCTION
      ===================================================== */
-
-  #centreButton {
-    position: fixed;
-    right: 14px;
-    bottom: 14px;
-
-    z-index: 100;
-
-    border: 0;
-    border-radius: 999px;
-
-    padding: 9px 14px;
-
-    background: var(--dark);
-    color: white;
-
-    font-size: 12px;
-    cursor: pointer;
-
-    box-shadow: 0 2px 7px rgba(0,0,0,0.2);
-  }
 
   #dragHint {
     position: fixed;
+
     left: 50%;
     bottom: 14px;
 
@@ -264,9 +293,12 @@
     font-size: 11px;
 
     white-space: nowrap;
+
     pointer-events: none;
 
-    transition: opacity 0.4s ease;
+    opacity: 1;
+
+    transition: opacity 0.25s ease;
   }
 
   #dragHint.hidden {
@@ -277,6 +309,49 @@
     display: none;
   }
 
+
+  /* =====================================================
+     BACK TO KIRSTY BUTTON
+     ===================================================== */
+
+  #centreButton {
+    position: fixed;
+
+    right: 14px;
+    bottom: 14px;
+
+    z-index: 100;
+
+    border: 0;
+
+    border-radius: 999px;
+
+    padding: 9px 14px;
+
+    background: var(--dark);
+    color: white;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+
+    cursor: pointer;
+
+    box-shadow: 0 2px 7px rgba(0,0,0,0.2);
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition: opacity 0.25s ease;
+  }
+
+  #centreButton.visible {
+    opacity: 1;
+
+    pointer-events: auto;
+  }
+
+
   /* =====================================================
      MOBILE
      ===================================================== */
@@ -284,38 +359,44 @@
   @media (max-width: 600px) {
 
     /*
-      Crucial difference:
-      allow normal vertical page scrolling.
+      Permit vertical page gestures where the browser
+      allows them, while our JS only moves the wall
+      horizontally.
     */
 
     #queensViewport {
       touch-action: pan-y;
     }
 
+
     /*
-      Mobile board is always exactly three rows high
-      and extends horizontally.
+      Three-row wall extending sideways.
     */
 
     #queensBoard {
       grid-template-columns: repeat(var(--columns), 100px);
-      grid-template-rows: repeat(3, 145px);
+
+      grid-template-rows: repeat(3, 135px);
+
       grid-auto-flow: column;
       grid-auto-columns: 100px;
 
       gap: 10px;
-      padding: 8px;
+
+      padding: 12px;
     }
 
     .queen-card {
       width: 100px;
-      height: 145px;
+      height: 135px;
     }
 
     .queen-name {
-      min-height: 29px;
-      font-size: 11.5px;
+      min-height: 28px;
+
       padding: 4px;
+
+      font-size: 11px;
     }
 
     .queen-back {
@@ -323,46 +404,48 @@
     }
 
     .queen-quote {
-      font-size: 10px;
-      line-height: 1.23;
+      font-size: 9.5px;
+      line-height: 1.2;
     }
 
     .queen-quote.long {
-      font-size: 8.7px;
-      line-height: 1.18;
+      font-size: 8.3px;
+      line-height: 1.16;
     }
 
     .queen-quote.very-long {
-      font-size: 7.8px;
-      line-height: 1.15;
+      font-size: 7.5px;
+      line-height: 1.13;
     }
 
     .queen-back-name {
-      margin-top: 6px;
-      font-size: 9px;
+      margin-top: 5px;
+
+      font-size: 8.5px;
     }
 
     .crown-icon {
-      width: 45px;
-      height: 40px;
+      width: 44px;
+      height: 38px;
     }
 
     .heart-icon {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
+    }
+
+    #dragHint {
+      bottom: 10px;
+
+      font-size: 9.5px;
     }
 
     #centreButton {
       right: 10px;
       bottom: 10px;
 
-      padding: 7px 11px;
+      padding: 7px 10px;
 
-      font-size: 11px;
-    }
-
-    #dragHint {
-      bottom: 10px;
       font-size: 10px;
     }
 
@@ -383,21 +466,36 @@
   <div id="queensBoard"></div>
 </div>
 
+
 <div id="dragHint">
-  <span class="desktopHint">Drag to explore • Click a Queen</span>
-  <span class="mobileHint">Swipe sideways • Tap a Queen</span>
+
+  <span class="desktopHint">
+    Drag to explore • Click a Queen
+  </span>
+
+  <span class="mobileHint">
+    Swipe sideways • Tap a Queen
+  </span>
+
 </div>
 
-<button id="centreButton">
-  Back to Kirsty
+
+<button
+  id="centreButton"
+  type="button"
+>
+  Back to Queen Kirsty
 </button>
+
 
 <script>
 
 /* =====================================================
-   TOTAL TILES
+   TOTAL NUMBER OF TILES
 
    49 = Kirsty + 48 Queens
+
+   Increase this number when another Queen joins.
    ===================================================== */
 
 const totalQueens = 49;
@@ -438,6 +536,7 @@ const crownSVG = `
   />
 </svg>
 `;
+
 
 const heartSVG = `
 <svg
@@ -572,23 +671,38 @@ const queens = [
    AUTOMATIC CROWN-ONLY QUEENS
    ===================================================== */
 
-const usedIds = new Set(
-  queens.map(queen => queen.id)
-);
+const usedIds =
+  new Set(
+    queens.map(
+      queen => queen.id
+    )
+  );
 
-for (let i = 1; i <= totalQueens; i++) {
+
+for (
+  let i = 1;
+  i <= totalQueens;
+  i++
+) {
 
   const id =
     `Q${String(i).padStart(3, "0")}`;
 
+
   if (!usedIds.has(id)) {
 
     queens.push({
+
       id: id,
+
       name: "",
+
       image: "",
+
       quote: "",
+
       crownOnly: true
+
     });
 
   }
@@ -596,20 +710,32 @@ for (let i = 1; i <= totalQueens; i++) {
 
 
 /* =====================================================
-   SETUP
+   ELEMENTS / STATE
    ===================================================== */
 
 const viewport =
-  document.getElementById("queensViewport");
+  document.getElementById(
+    "queensViewport"
+  );
+
 
 const board =
-  document.getElementById("queensBoard");
+  document.getElementById(
+    "queensBoard"
+  );
+
 
 const centreButton =
-  document.getElementById("centreButton");
+  document.getElementById(
+    "centreButton"
+  );
+
 
 const dragHint =
-  document.getElementById("dragHint");
+  document.getElementById(
+    "dragHint"
+  );
+
 
 let offsetX = 0;
 let offsetY = 0;
@@ -621,11 +747,14 @@ let startOffsetX = 0;
 let startOffsetY = 0;
 
 let dragging = false;
+
 let movedDuringDrag = false;
 
-let centreCard = null;
-let activePointerId = null;
 let horizontalGesture = false;
+
+let activePointerId = null;
+
+let centreCard = null;
 
 
 /* =====================================================
@@ -633,26 +762,45 @@ let horizontalGesture = false;
    ===================================================== */
 
 function isMobile() {
-  return window.matchMedia("(max-width: 600px)").matches;
+
+  return window.matchMedia(
+    "(max-width: 600px)"
+  ).matches;
+
 }
 
 
 function shuffle(array) {
 
-  const copy = [...array];
+  const copy =
+    [...array];
 
-  for (let i = copy.length - 1; i > 0; i--) {
+
+  for (
+    let i = copy.length - 1;
+    i > 0;
+    i--
+  ) {
 
     const j =
       Math.floor(
         Math.random() * (i + 1)
       );
 
-    [copy[i], copy[j]] =
-      [copy[j], copy[i]];
+
+    [
+      copy[i],
+      copy[j]
+    ] = [
+      copy[j],
+      copy[i]
+    ];
+
   }
 
+
   return copy;
+
 }
 
 
@@ -662,15 +810,51 @@ function getQuoteClass(quote) {
     return "queen-quote";
   }
 
+
   if (quote.length > 220) {
     return "queen-quote very-long";
   }
+
 
   if (quote.length > 150) {
     return "queen-quote long";
   }
 
+
   return "queen-quote";
+
+}
+
+
+/* =====================================================
+   UI STATES
+   ===================================================== */
+
+function showExploringState() {
+
+  dragHint.classList.add(
+    "hidden"
+  );
+
+
+  centreButton.classList.add(
+    "visible"
+  );
+
+}
+
+
+function showHomeState() {
+
+  dragHint.classList.remove(
+    "hidden"
+  );
+
+
+  centreButton.classList.remove(
+    "visible"
+  );
+
 }
 
 
@@ -683,11 +867,18 @@ function createCard(queen) {
   const card =
     document.createElement("div");
 
+
   card.className =
     "queen-card" +
-    (queen.kirsty ? " kirsty" : "");
+    (
+      queen.kirsty
+        ? " kirsty"
+        : ""
+    );
+
 
   let frontHTML = "";
+
 
   if (queen.crownOnly) {
 
@@ -703,10 +894,13 @@ function createCard(queen) {
       <div class="queen-front photo-card">
 
         <div class="queen-photo">
+
           <img
             src="${queen.image}"
             alt="${queen.name}"
+            loading="lazy"
           >
+
         </div>
 
         <div class="queen-name">
@@ -715,14 +909,20 @@ function createCard(queen) {
 
       </div>
     `;
+
   }
 
+
   let backHTML = "";
+
 
   if (queen.quote) {
 
     const quoteClass =
-      getQuoteClass(queen.quote);
+      getQuoteClass(
+        queen.quote
+      );
+
 
     backHTML = `
       <div class="queen-back">
@@ -745,7 +945,9 @@ function createCard(queen) {
         ${heartSVG}
       </div>
     `;
+
   }
+
 
   card.innerHTML = `
     <div class="queen-card-inner">
@@ -754,269 +956,417 @@ function createCard(queen) {
     </div>
   `;
 
+
   return card;
+
 }
 
 
 /* =====================================================
-   DESKTOP BOARD
+   DESKTOP WALL
    ===================================================== */
 
-function buildDesktopWall(kirsty, others) {
+function buildDesktopWall(
+  kirsty,
+  others
+) {
 
   let columns =
     Math.ceil(
-      Math.sqrt(queens.length)
+      Math.sqrt(
+        queens.length
+      )
     );
+
 
   if (columns % 2 === 0) {
     columns++;
   }
 
+
   let rows =
     Math.ceil(
-      queens.length / columns
+      queens.length /
+      columns
     );
+
 
   if (rows % 2 === 0) {
     rows++;
   }
+
 
   columns += 2;
   rows += 2;
 
+
   if (columns % 2 === 0) {
     columns++;
   }
+
 
   if (rows % 2 === 0) {
     rows++;
   }
 
+
   board.style.setProperty(
     "--columns",
     columns
   );
 
+
   const totalSlots =
     columns * rows;
 
+
   const centreRow =
-    Math.floor(rows / 2);
+    Math.floor(
+      rows / 2
+    );
+
 
   const centreColumn =
-    Math.floor(columns / 2);
+    Math.floor(
+      columns / 2
+    );
+
 
   const centreIndex =
-    centreRow * columns +
+    centreRow *
+    columns +
     centreColumn;
 
-  let positions = [];
 
-  for (let i = 0; i < totalSlots; i++) {
+  const positions = [];
 
-    if (i !== centreIndex) {
+
+  for (
+    let i = 0;
+    i < totalSlots;
+    i++
+  ) {
+
+    if (
+      i !== centreIndex
+    ) {
+
       positions.push(i);
+
     }
 
   }
 
-  positions.sort((a, b) => {
 
-    const rowA =
-      Math.floor(a / columns);
+  positions.sort(
+    (a, b) => {
 
-    const colA =
-      a % columns;
+      const rowA =
+        Math.floor(
+          a / columns
+        );
 
-    const rowB =
-      Math.floor(b / columns);
 
-    const colB =
-      b % columns;
+      const colA =
+        a % columns;
 
-    const distanceA =
-      Math.hypot(
-        rowA - centreRow,
-        colA - centreColumn
+
+      const rowB =
+        Math.floor(
+          b / columns
+        );
+
+
+      const colB =
+        b % columns;
+
+
+      const distanceA =
+        Math.hypot(
+          rowA - centreRow,
+          colA - centreColumn
+        );
+
+
+      const distanceB =
+        Math.hypot(
+          rowB - centreRow,
+          colB - centreColumn
+        );
+
+
+      return (
+        distanceA -
+        distanceB +
+        (
+          Math.random() -
+          0.5
+        ) * 0.5
       );
 
-    const distanceB =
-      Math.hypot(
-        rowB - centreRow,
-        colB - centreColumn
-      );
+    }
+  );
 
-    return (
-      distanceA -
-      distanceB +
-      (Math.random() - 0.5) * 0.5
-    );
-
-  });
 
   const slots =
-    new Array(totalSlots).fill(null);
+    new Array(
+      totalSlots
+    ).fill(null);
 
-  slots[centreIndex] =
-    kirsty;
 
-  others.forEach((queen, index) => {
+  slots[
+    centreIndex
+  ] = kirsty;
 
-    slots[
-      positions[index]
-    ] = queen;
 
-  });
+  others.forEach(
+    (queen, index) => {
 
-  slots.forEach(queen => {
+      slots[
+        positions[index]
+      ] = queen;
 
-    if (!queen) {
+    }
+  );
+
+
+  slots.forEach(
+    queen => {
+
+      if (!queen) {
+
+        board.appendChild(
+          document.createElement(
+            "div"
+          )
+        );
+
+
+        return;
+
+      }
+
+
+      const card =
+        createCard(queen);
+
 
       board.appendChild(
-        document.createElement("div")
+        card
       );
 
-      return;
+
+      if (
+        queen.kirsty
+      ) {
+
+        centreCard =
+          card;
+
+      }
+
     }
+  );
 
-    const card =
-      createCard(queen);
-
-    board.appendChild(card);
-
-    if (queen.kirsty) {
-      centreCard = card;
-    }
-
-  });
 }
 
 
 /* =====================================================
-   MOBILE BOARD
-
-   Exactly 3 rows.
-   Kirsty sits in centre row / centre column.
+   MOBILE WALL
    ===================================================== */
 
-function buildMobileWall(kirsty, others) {
+function buildMobileWall(
+  kirsty,
+  others
+) {
 
   const rows = 3;
 
-  /*
-    Add spare columns so there is some room beyond
-    the first/last Queen.
-  */
 
   let columns =
-    Math.ceil(queens.length / rows) + 2;
+    Math.ceil(
+      queens.length /
+      rows
+    ) + 2;
 
-  if (columns % 2 === 0) {
+
+  if (
+    columns % 2 === 0
+  ) {
+
     columns++;
+
   }
+
 
   board.style.setProperty(
     "--columns",
     columns
   );
 
+
   const totalSlots =
     columns * rows;
 
+
   const centreColumn =
-    Math.floor(columns / 2);
+    Math.floor(
+      columns / 2
+    );
+
 
   const centreRow = 1;
 
+
   /*
-    CSS grid-auto-flow is column, so:
-    position = column * 3 + row
+    Grid fills vertically first:
+    column × 3 + row.
   */
 
   const centreIndex =
-    centreColumn * rows +
+    centreColumn *
+    rows +
     centreRow;
 
-  let positions = [];
 
-  for (let i = 0; i < totalSlots; i++) {
+  const positions = [];
 
-    if (i !== centreIndex) {
+
+  for (
+    let i = 0;
+    i < totalSlots;
+    i++
+  ) {
+
+    if (
+      i !== centreIndex
+    ) {
+
       positions.push(i);
+
     }
 
   }
 
-  /*
-    Prefer positions nearest Kirsty horizontally.
-    */
 
-  positions.sort((a, b) => {
+  positions.sort(
+    (a, b) => {
 
-    const columnA =
-      Math.floor(a / rows);
+      const columnA =
+        Math.floor(
+          a / rows
+        );
 
-    const rowA =
-      a % rows;
 
-    const columnB =
-      Math.floor(b / rows);
+      const rowA =
+        a % rows;
 
-    const rowB =
-      b % rows;
 
-    const distanceA =
-      Math.abs(columnA - centreColumn) +
-      Math.abs(rowA - centreRow) * 0.15;
+      const columnB =
+        Math.floor(
+          b / rows
+        );
 
-    const distanceB =
-      Math.abs(columnB - centreColumn) +
-      Math.abs(rowB - centreRow) * 0.15;
 
-    return (
-      distanceA -
-      distanceB +
-      (Math.random() - 0.5) * 0.2
-    );
+      const rowB =
+        b % rows;
 
-  });
 
-  const slots =
-    new Array(totalSlots).fill(null);
+      const distanceA =
+        Math.abs(
+          columnA -
+          centreColumn
+        ) +
+        Math.abs(
+          rowA -
+          centreRow
+        ) * 0.15;
 
-  slots[centreIndex] =
-    kirsty;
 
-  others.forEach((queen, index) => {
+      const distanceB =
+        Math.abs(
+          columnB -
+          centreColumn
+        ) +
+        Math.abs(
+          rowB -
+          centreRow
+        ) * 0.15;
 
-    slots[
-      positions[index]
-    ] = queen;
 
-  });
-
-  slots.forEach(queen => {
-
-    if (!queen) {
-
-      board.appendChild(
-        document.createElement("div")
+      return (
+        distanceA -
+        distanceB +
+        (
+          Math.random() -
+          0.5
+        ) * 0.2
       );
 
-      return;
     }
+  );
 
-    const card =
-      createCard(queen);
 
-    board.appendChild(card);
+  const slots =
+    new Array(
+      totalSlots
+    ).fill(null);
 
-    if (queen.kirsty) {
-      centreCard = card;
+
+  slots[
+    centreIndex
+  ] = kirsty;
+
+
+  others.forEach(
+    (queen, index) => {
+
+      slots[
+        positions[index]
+      ] = queen;
+
     }
+  );
 
-  });
+
+  slots.forEach(
+    queen => {
+
+      if (!queen) {
+
+        board.appendChild(
+          document.createElement(
+            "div"
+          )
+        );
+
+
+        return;
+
+      }
+
+
+      const card =
+        createCard(queen);
+
+
+      board.appendChild(
+        card
+      );
+
+
+      if (
+        queen.kirsty
+      ) {
+
+        centreCard =
+          card;
+
+      }
+
+    }
+  );
+
 }
 
 
@@ -1027,19 +1377,25 @@ function buildMobileWall(kirsty, others) {
 function buildWall() {
 
   board.innerHTML = "";
+
   centreCard = null;
+
 
   const kirsty =
     queens.find(
-      queen => queen.kirsty
+      queen =>
+        queen.kirsty
     );
+
 
   const others =
     shuffle(
       queens.filter(
-        queen => !queen.kirsty
+        queen =>
+          !queen.kirsty
       )
     );
+
 
   if (isMobile()) {
 
@@ -1057,14 +1413,19 @@ function buildWall() {
 
   }
 
+
+  showHomeState();
+
+
   requestAnimationFrame(
     centreOnKirsty
   );
+
 }
 
 
 /* =====================================================
-   BOARD POSITION
+   POSITION
    ===================================================== */
 
 function updateBoardPosition() {
@@ -1076,21 +1437,27 @@ function updateBoardPosition() {
 
 
 /* =====================================================
-   CENTRE KIRSTY
+   CENTRE ON KIRSTY
    ===================================================== */
 
 function centreOnKirsty() {
 
-  if (!centreCard) return;
+  if (!centreCard) {
+    return;
+  }
+
 
   const viewportRect =
     viewport.getBoundingClientRect();
 
+
   board.style.transform =
-    "translate(0px, 0px)";
+    "translate(0px,0px)";
+
 
   const cardRect =
     centreCard.getBoundingClientRect();
+
 
   offsetX =
     viewportRect.width / 2 -
@@ -1099,10 +1466,6 @@ function centreOnKirsty() {
       cardRect.width / 2
     );
 
-  /*
-    On mobile the board fills the iframe vertically,
-    so centre Kirsty vertically as well.
-  */
 
   offsetY =
     viewportRect.height / 2 -
@@ -1111,7 +1474,9 @@ function centreOnKirsty() {
       cardRect.height / 2
     );
 
+
   updateBoardPosition();
+
 }
 
 
@@ -1124,20 +1489,27 @@ viewport.addEventListener(
   function(event) {
 
     dragging = true;
+
     movedDuringDrag = false;
+
     horizontalGesture = false;
+
 
     activePointerId =
       event.pointerId;
 
+
     dragStartX =
       event.clientX;
+
 
     dragStartY =
       event.clientY;
 
+
     startOffsetX =
       offsetX;
+
 
     startOffsetY =
       offsetY;
@@ -1154,118 +1526,164 @@ viewport.addEventListener(
   "pointermove",
   function(event) {
 
-    if (!dragging) return;
+    if (!dragging) {
+      return;
+    }
+
 
     const dx =
       event.clientX -
       dragStartX;
+
 
     const dy =
       event.clientY -
       dragStartY;
 
 
-    /*
-      MOBILE
-
-      Do nothing with predominantly vertical gestures.
-      That leaves them available for normal page scrolling.
-
-      Once a gesture is clearly horizontal, it becomes
-      a Queens-wall pan.
-    */
+    /* =================================================
+       MOBILE
+       ================================================= */
 
     if (isMobile()) {
 
+
+      /*
+        Determine intended direction first.
+      */
+
       if (!horizontalGesture) {
 
+
+        /*
+          Predominantly vertical:
+          abandon wall dragging.
+        */
+
         if (
-          Math.abs(dy) > 7 &&
-          Math.abs(dy) > Math.abs(dx)
+          Math.abs(dy) > 8 &&
+          Math.abs(dy) >
+          Math.abs(dx)
         ) {
 
           dragging = false;
+
           return;
+
         }
 
+
+        /*
+          Predominantly horizontal:
+          begin wall drag.
+        */
+
         if (
-          Math.abs(dx) > 7 &&
-          Math.abs(dx) > Math.abs(dy)
+          Math.abs(dx) > 8 &&
+          Math.abs(dx) >
+          Math.abs(dy)
         ) {
 
-          horizontalGesture = true;
-          movedDuringDrag = true;
+          horizontalGesture =
+            true;
+
+
+          movedDuringDrag =
+            true;
+
 
           viewport.classList.add(
             "dragging"
           );
 
-          dragHint.classList.add(
-            "hidden"
-          );
+
+          showExploringState();
+
 
           try {
+
             viewport.setPointerCapture(
               activePointerId
             );
+
           } catch (e) {}
 
         }
 
       }
 
-      if (!horizontalGesture) {
+
+      if (
+        !horizontalGesture
+      ) {
+
         return;
+
       }
+
+
+      /*
+        Mobile changes X only.
+      */
 
       offsetX =
         startOffsetX + dx;
 
-      /*
-        Do NOT change Y on mobile.
-      */
 
       updateBoardPosition();
 
+
       return;
+
     }
 
 
-    /*
-      DESKTOP
-    */
+    /* =================================================
+       DESKTOP
+       ================================================= */
 
     if (
       Math.abs(dx) > 5 ||
       Math.abs(dy) > 5
     ) {
 
-      if (!movedDuringDrag) {
+
+      if (
+        !movedDuringDrag
+      ) {
 
         try {
+
           viewport.setPointerCapture(
             activePointerId
           );
+
         } catch (e) {}
 
       }
 
-      movedDuringDrag = true;
+
+      movedDuringDrag =
+        true;
+
 
       viewport.classList.add(
         "dragging"
       );
 
-      dragHint.classList.add(
-        "hidden"
-      );
+
+      showExploringState();
+
     }
+
 
     offsetX =
       startOffsetX + dx;
 
+
     offsetY =
       startOffsetY + dy;
+
 
     updateBoardPosition();
 
@@ -1281,25 +1699,37 @@ viewport.addEventListener(
   "pointerup",
   function(event) {
 
-    if (!dragging && !horizontalGesture) {
+    if (
+      !dragging &&
+      !horizontalGesture
+    ) {
+
       return;
+
     }
+
 
     const wasDragging =
       movedDuringDrag;
 
+
     dragging = false;
+
     horizontalGesture = false;
+
 
     viewport.classList.remove(
       "dragging"
     );
 
+
     /*
-      No meaningful movement = flip card.
+      If there was no meaningful movement,
+      treat it as a tap/click and flip the card.
     */
 
     if (!wasDragging) {
+
 
       const elementUnderPointer =
         document.elementFromPoint(
@@ -1307,12 +1737,14 @@ viewport.addEventListener(
           event.clientY
         );
 
+
       const card =
         elementUnderPointer
           ? elementUnderPointer.closest(
               ".queen-card"
             )
           : null;
+
 
       if (card) {
 
@@ -1324,8 +1756,13 @@ viewport.addEventListener(
 
     }
 
-    movedDuringDrag = false;
-    activePointerId = null;
+
+    movedDuringDrag =
+      false;
+
+
+    activePointerId =
+      null;
 
   }
 );
@@ -1340,9 +1777,13 @@ viewport.addEventListener(
   function() {
 
     dragging = false;
+
     movedDuringDrag = false;
+
     horizontalGesture = false;
+
     activePointerId = null;
+
 
     viewport.classList.remove(
       "dragging"
@@ -1353,7 +1794,7 @@ viewport.addEventListener(
 
 
 /* =====================================================
-   CENTRE BUTTON
+   BACK TO QUEEN KIRSTY
    ===================================================== */
 
 centreButton.addEventListener(
@@ -1365,24 +1806,30 @@ centreButton.addEventListener(
   }
 );
 
+
 centreButton.addEventListener(
   "click",
   function(event) {
 
     event.stopPropagation();
 
+
     centreOnKirsty();
+
+
+    showHomeState();
 
   }
 );
 
 
 /* =====================================================
-   RESIZE / DESKTOP-MOBILE CHANGE
+   RESIZE
    ===================================================== */
 
 let lastMobileState =
   isMobile();
+
 
 window.addEventListener(
   "resize",
@@ -1391,6 +1838,7 @@ window.addEventListener(
     const newMobileState =
       isMobile();
 
+
     if (
       newMobileState !==
       lastMobileState
@@ -1398,6 +1846,7 @@ window.addEventListener(
 
       lastMobileState =
         newMobileState;
+
 
       buildWall();
 
