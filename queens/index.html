@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Kirsty's Queens</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f3eedc;
+  }
+
+  /* -------------------------------------------------
+     VISIBLE WINDOW
+     ------------------------------------------------- */
+
+  #queensViewport {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  #queensViewport.dragging {
+    cursor: grabbing;
+  }
+
+  /* -------------------------------------------------
+     LARGE BOARD THAT MOVES BEHIND THE WINDOW
+     ------------------------------------------------- */
+
+  #queensBoard {
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    display: grid;
+
+    grid-template-columns: repeat(var(--columns), 150px);
+    grid-auto-rows: 190px;
+
+    gap: 18px;
+
+    padding: 40px;
+
+    transform-origin: 0 0;
+    will-change: transform;
+  }
+
+  /* -------------------------------------------------
+     QUEEN CARD
+     ------------------------------------------------- */
+
+  .queen-card {
+    width: 150px;
+    height: 190px;
+
+    perspective: 1000px;
+
+    cursor: pointer;
+  }
+
+  .queen-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    transition: transform 0.55s ease;
+    transform-style: preserve-3d;
+  }
+
+  .queen-card.flipped .queen-card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .queen-front,
+  .queen-back {
+    position: absolute;
+    inset: 0;
+
+    border-radius: 8px;
+    overflow: hidden;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    box-shadow: 0 3px 12px rgba(0,0,0,0.13);
+  }
+
+  /* -------------------------------------------------
+     FRONT
+     ------------------------------------------------- */
+
+  .queen-front {
+    background: #e6a45d;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .queen-photo {
+    flex: 1;
+    min-height: 0;
+
+    background: #ddd;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+  }
+
+  .queen-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .queen-avatar {
+    width: 78px;
+    height: 78px;
+
+    border-radius: 50%;
+
+    background: #00878b;
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 34px;
+    font-weight: bold;
+  }
+
+  .queen-name {
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 7px;
+
+    background: #e6a45d;
+    color: #59584c;
+
+    font-size: 15px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  /* -------------------------------------------------
+     BACK / QUOTE
+     ------------------------------------------------- */
+
+  .queen-back {
+    transform: rotateY(180deg);
+
+    background: #00878b;
+    color: white;
+
+    padding: 16px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .queen-quote {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .queen-back-name {
+    margin-top: 12px;
+
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  /* -------------------------------------------------
+     KIRSTY
+     ------------------------------------------------- */
+
+  .queen-card.kirsty .queen-front,
+  .queen-card.kirsty .queen-back {
+    box-shadow:
+      0 0 0 4px #00878b,
+      0 5px 18px rgba(0,0,0,0.18);
+  }
+
+  /* -------------------------------------------------
+     RETURN TO CENTRE BUTTON
+     ------------------------------------------------- */
+
+  #centreButton {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 100;
+
+    border: 0;
+    border-radius: 999px;
+
+    padding: 10px 16px;
+
+    background: #59584c;
+    color: white;
+
+    font-size: 14px;
+    cursor: pointer;
+
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  /* Small instruction */
+  #dragHint {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+
+    z-index: 90;
+
+    padding: 7px 12px;
+
+    border-radius: 999px;
+
+    background: rgba(243,238,220,0.9);
+    color: #59584c;
+
+    font-size: 12px;
+
+    pointer-events: none;
+
+    transition: opacity 0.4s ease;
+  }
+
+  #dragHint.hidden {
+    opacity: 0;
+  }
+
+  @media (max-width: 600px) {
+
+    #queensBoard {
+      grid-template-columns: repeat(var(--columns), 125px);
+      grid-auto-rows: 160px;
+      gap: 14px;
+      padding: 30px;
+    }
+
+    .queen-card {
+      width: 125px;
+      height: 160px;
+    }
+
+    .queen-name {
+      min-height: 36px;
+      font-size: 13px;
+    }
+
+    .queen-quote {
+      font-size: 12px;
+    }
+
+    .queen-back {
+      padding: 12px;
+    }
+
+    .queen-avatar {
+      width: 64px;
+      height: 64px;
+      font-size: 28px;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div id="queensViewport">
+
+  <div id="queensBoard"></div>
+
+</div>
+
+<div id="dragHint">Drag to explore • Tap a Queen</div>
+
+<button id="centreButton">
+  Back to Kirsty
+</button>
+
+
+<script>
+
+/* =====================================================
+   QUEEN DATA
+   =====================================================
+
+   These are temporary test Queens.
+
+   Later we will move this information into its own
+   very simple file so this is the ONLY information
+   you have to edit when adding/removing a Queen.
+
+===================================================== */
+
+const queens = [
+
+  {
+    name: "Kirsty",
+    image: "",
+    quote: "I started Kirsty's Queens to bring people together to help fund better research.",
+    kirsty: true
+  },
+
+  {
+    name: "Sarah",
+    image: "",
+    quote: "I became a Queen because I wanted to be part of something that could make a real difference."
+  },
+
+  {
+    name: "Helen",
+    image: "",
+    quote: "Research matters to every family facing childhood cancer."
+  },
+
+  {
+    name: "Jo",
+    image: "",
+    quote: "I joined because one person can help, but a whole community can do so much more."
+  },
+
+  {
+    name: "Amanda",
+    image: "",
+    quote: "Kirsty's determination inspired me to get involved."
+  },
+
+  {
+    name: "Lisa",
+    image: "",
+    quote: "I wanted to help turn awareness into something practical."
+  },
+
+  {
+    name: "Karen",
+    image: "",
+    quote: "For children who deserve better treatments and better futures."
+  },
+
+  {
+    name: "Rachel",
+    image: "",
+    quote: "It felt like a simple way to stand alongside Kirsty."
+  },
+
+  {
+    name: "Anna",
+    image: "",
+    quote: "I joined to support research and the families who need it."
+  },
+
+  {
+    name: "Emma",
+    image: "",
+    quote: "Because every Queen makes the group a little stronger."
+  },
+
+  {
+    name: "Sophie",
+    image: "",
+    quote: "I wanted to be part of Kirsty's growing community."
+  },
+
+  {
+    name: "Claire",
+    image: "",
+    quote: "For better options for children diagnosed in the future."
+  },
+
+  {
+    name: "Jane",
+    image: "",
+    quote: "Kirsty's story made me want to do something useful."
+  },
+
+  {
+    name: "Caroline",
+    image: "",
+    quote: "I joined because research can change what happens next."
+  },
+
+  {
+    name: "Lucy",
+    image: "",
+    quote: "A small monthly commitment can become something much bigger together."
+  },
+
+  {
+    name: "Rebecca",
+    image: "",
+    quote: "Because children with cancer need more people in their corner."
+  },
+
+  {
+    name: "Michelle",
+    image: "",
+    quote: "I wanted Kirsty to know that people are standing with her."
+  },
+
+  {
+    name: "Louise",
+    image: "",
+    quote: "To help support the research that could make treatment kinder."
+  },
+
+  {
+    name: "Nicola",
+    image: "",
+    quote: "Because this is a club worth belonging to."
+  },
+
+  {
+    name: "Kate",
+    image: "",
+    quote: "I joined because together we can help fund change."
+  },
+
+  {
+    name: "Debbie",
+    image: "",
+    quote: "For every child and family hoping for better answers."
+  },
+
+  {
+    name: "Laura",
+    image: "",
+    quote: "One Queen among many, helping Kirsty push research forward."
+  },
+
+  {
+    name: "Julie",
+    image: "",
+    quote: "Because Kirsty asked, and because the reason matters."
+  },
+
+  {
+    name: "Amy",
+    image: "",
+    quote: "To add my support to a community doing something positive."
+  },
+
+  {
+    name: "Hannah",
+    image: "",
+    quote: "I became a Queen to help make childhood cancer research impossible to ignore."
+  },
+
+  {
+    name: "Mary",
+    image: "",
+    quote: "For better treatments, better outcomes and more hope."
+  },
+
+  {
+    name: "Victoria",
+    image: "",
+    quote: "Because collectively our small contributions can become significant."
+  },
+
+  {
+    name: "Alison",
+    image: "",
+    quote: "I wanted to join Kirsty's team and help research move forward."
+  },
+
+  {
+    name: "Charlotte",
+    image: "",
+    quote: "For all the children who come after Kirsty."
+  },
+
+  {
+    name: "Diane",
+    image: "",
+    quote: "I joined because nobody should have to face childhood cancer alone."
+  },
+
+  {
+    name: "Beth",
+    image: "",
+    quote: "Because the idea of Kirsty's Queens made me smile — and the cause matters."
+  }
+
+];
+
+
+/* =====================================================
+   BASIC SETUP
+   ===================================================== */
+
+const viewport = document.getElementById("queensViewport");
+const board = document.getElementById("queensBoard");
+const centreButton = document.getElementById("centreButton");
+const dragHint = document.getElementById("dragHint");
+
+let offsetX = 0;
+let offsetY = 0;
+
+let dragStartX = 0;
+let dragStartY = 0;
+
+let startOffsetX = 0;
+let startOffsetY = 0;
+
+let dragging = false;
+let movedDuringDrag = false;
+
+let centreCard = null;
+
+
+/* =====================================================
+   RANDOM SHUFFLE
+   ===================================================== */
+
+function shuffle(array) {
+
+  const copy = [...array];
+
+  for (let i = copy.length - 1; i > 0; i--) {
+
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+
+  }
+
+  return copy;
+}
+
+
+/* =====================================================
+   CREATE CARD
+   ===================================================== */
+
+function createCard(queen) {
+
+  const card = document.createElement("div");
+
+  card.className =
+    "queen-card" +
+    (queen.kirsty ? " kirsty" : "");
+
+  const initial =
+    queen.name
+      ? queen.name.charAt(0).toUpperCase()
+      : "?";
+
+  const imageHTML =
+    queen.image
+      ? `<img src="${queen.image}" alt="${queen.name}">`
+      : `<div class="queen-avatar">${initial}</div>`;
+
+  card.innerHTML = `
+
+    <div class="queen-card-inner">
+
+      <div class="queen-front">
+
+        <div class="queen-photo">
+          ${imageHTML}
+        </div>
+
+        <div class="queen-name">
+          ${queen.name}
+        </div>
+
+      </div>
+
+      <div class="queen-back">
+
+        <div class="queen-quote">
+          “${queen.quote}”
+        </div>
+
+        <div class="queen-back-name">
+          ${queen.name}
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+
+  card.addEventListener("click", function () {
+
+    if (movedDuringDrag) return;
+
+    card.classList.toggle("flipped");
+
+  });
+
+  return card;
+}
+
+
+/* =====================================================
+   BUILD THE WALL
+   ===================================================== */
+
+function buildWall() {
+
+  board.innerHTML = "";
+
+  const kirsty =
+    queens.find(q => q.kirsty);
+
+  const others =
+    shuffle(
+      queens.filter(q => !q.kirsty)
+    );
+
+
+  /*
+     We deliberately use an ODD number of columns
+     and rows so there is one exact centre position.
+  */
+
+  let columns =
+    Math.ceil(Math.sqrt(queens.length));
+
+  if (columns % 2 === 0) {
+    columns++;
+  }
+
+  let rows =
+    Math.ceil(queens.length / columns);
+
+  if (rows % 2 === 0) {
+    rows++;
+  }
+
+
+  /*
+     Add extra breathing room around the populated
+     area so the board feels explorable rather than
+     like a rigid spreadsheet.
+  */
+
+  columns += 2;
+  rows += 2;
+
+  if (columns % 2 === 0) columns++;
+  if (rows % 2 === 0) rows++;
+
+
+  board.style.setProperty(
+    "--columns",
+    columns
+  );
+
+
+  const totalSlots =
+    columns * rows;
+
+  const centreRow =
+    Math.floor(rows / 2);
+
+  const centreColumn =
+    Math.floor(columns / 2);
+
+  const centreIndex =
+    centreRow * columns + centreColumn;
+
+
+  /*
+     Make every grid position available,
+     except the exact centre.
+  */
+
+  let positions = [];
+
+  for (
+    let i = 0;
+    i < totalSlots;
+    i++
+  ) {
+
+    if (i !== centreIndex) {
+      positions.push(i);
+    }
+
+  }
+
+
+  /*
+     Sort possible positions roughly by distance
+     from Kirsty.
+
+     This means the Queens fill outwards from her,
+     rather than leaving large gaps near the centre.
+  */
+
+  positions.sort((a, b) => {
+
+    const rowA =
+      Math.floor(a / columns);
+
+    const colA =
+      a % columns;
+
+    const rowB =
+      Math.floor(b / columns);
+
+    const colB =
+      b % columns;
+
+    const distanceA =
+      Math.hypot(
+        rowA - centreRow,
+        colA - centreColumn
+      );
+
+    const distanceB =
+      Math.hypot(
+        rowB - centreRow,
+        colB - centreColumn
+      );
+
+    /*
+       Small random element prevents exactly the
+       same pattern every time.
+    */
+
+    return (
+      distanceA -
+      distanceB +
+      (Math.random() - 0.5) * 0.5
+    );
+
+  });
+
+
+  /*
+     Create blank grid slots.
+  */
+
+  const slots =
+    new Array(totalSlots).fill(null);
+
+  slots[centreIndex] = kirsty;
+
+
+  others.forEach((queen, index) => {
+
+    slots[positions[index]] = queen;
+
+  });
+
+
+  slots.forEach((queen) => {
+
+    if (!queen) {
+
+      const blank =
+        document.createElement("div");
+
+      board.appendChild(blank);
+
+      return;
+
+    }
+
+    const card =
+      createCard(queen);
+
+    board.appendChild(card);
+
+    if (queen.kirsty) {
+      centreCard = card;
+    }
+
+  });
+
+
+  /*
+     Wait until browser has calculated dimensions,
+     then centre Kirsty in the visible window.
+  */
+
+  requestAnimationFrame(
+    centreOnKirsty
+  );
+
+}
+
+
+/* =====================================================
+   MOVE BOARD
+   ===================================================== */
+
+function updateBoardPosition() {
+
+  board.style.transform =
+    `translate(${offsetX}px, ${offsetY}px)`;
+
+}
+
+
+/* =====================================================
+   RETURN KIRSTY TO CENTRE
+   ===================================================== */
+
+function centreOnKirsty() {
+
+  if (!centreCard) return;
+
+  const viewportRect =
+    viewport.getBoundingClientRect();
+
+  /*
+     Temporarily calculate card position without
+     current translation affecting our calculation.
+  */
+
+  board.style.transform =
+    "translate(0px, 0px)";
+
+  const cardRect =
+    centreCard.getBoundingClientRect();
+
+  offsetX =
+    viewportRect.width / 2 -
+    (cardRect.left + cardRect.width / 2);
+
+  offsetY =
+    viewportRect.height / 2 -
+    (cardRect.top + cardRect.height / 2);
+
+  updateBoardPosition();
+
+}
+
+
+/* =====================================================
+   DRAG / PAN
+   ===================================================== */
+
+viewport.addEventListener(
+  "pointerdown",
+  function(event) {
+
+    dragging = true;
+    movedDuringDrag = false;
+
+    dragStartX =
+      event.clientX;
+
+    dragStartY =
+      event.clientY;
+
+    startOffsetX =
+      offsetX;
+
+    startOffsetY =
+      offsetY;
+
+    viewport.classList.add(
+      "dragging"
+    );
+
+    viewport.setPointerCapture(
+      event.pointerId
+    );
+
+  }
+);
+
+
+viewport.addEventListener(
+  "pointermove",
+  function(event) {
+
+    if (!dragging) return;
+
+    const dx =
+      event.clientX -
+      dragStartX;
+
+    const dy =
+      event.clientY -
+      dragStartY;
+
+    if (
+      Math.abs(dx) > 5 ||
+      Math.abs(dy) > 5
+    ) {
+
+      movedDuringDrag = true;
+
+      dragHint.classList.add(
+        "hidden"
+      );
+
+    }
+
+    offsetX =
+      startOffsetX + dx;
+
+    offsetY =
+      startOffsetY + dy;
+
+    updateBoardPosition();
+
+  }
+);
+
+
+viewport.addEventListener(
+  "pointerup",
+  function() {
+
+    dragging = false;
+
+    viewport.classList.remove(
+      "dragging"
+    );
+
+    /*
+       Keep movedDuringDrag true for long enough
+       to stop the browser interpreting the end
+       of a drag as a click on a card.
+    */
+
+    setTimeout(
+      () => {
+        movedDuringDrag = false;
+      },
+      50
+    );
+
+  }
+);
+
+
+viewport.addEventListener(
+  "pointercancel",
+  function() {
+
+    dragging = false;
+
+    viewport.classList.remove(
+      "dragging"
+    );
+
+  }
+);
+
+
+/* =====================================================
+   CENTRE BUTTON
+   ===================================================== */
+
+centreButton.addEventListener(
+  "click",
+  centreOnKirsty
+);
+
+
+/* =====================================================
+   WINDOW RESIZE
+   ===================================================== */
+
+window.addEventListener(
+  "resize",
+  centreOnKirsty
+);
+
+
+/* =====================================================
+   START
+   ===================================================== */
+
+buildWall();
+
+</script>
+
+</body>
+</html>
