@@ -17,9 +17,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-
     font-family: Arial, Helvetica, sans-serif;
-
     background: #F3EEDC;
   }
 
@@ -49,15 +47,11 @@
     position: absolute;
     left: 0;
     top: 0;
-
     display: grid;
-
     grid-template-columns: repeat(var(--columns), 150px);
     grid-auto-rows: 190px;
-
     gap: 18px;
     padding: 40px;
-
     transform-origin: 0 0;
     will-change: transform;
   }
@@ -73,7 +67,6 @@
     position: relative;
     width: 100%;
     height: 100%;
-
     transition: transform 0.55s ease;
     transform-style: preserve-3d;
   }
@@ -86,14 +79,10 @@
   .queen-back {
     position: absolute;
     inset: 0;
-
     overflow: hidden;
-
     border-radius: 9px;
-
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-
     box-shadow: 0 3px 12px rgba(0,0,0,0.13);
   }
 
@@ -120,16 +109,12 @@
 
   .queen-name {
     min-height: 42px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     padding: 7px;
-
     background: var(--yellow);
     color: var(--dark);
-
     font-size: 15px;
     font-weight: bold;
     text-align: center;
@@ -151,18 +136,13 @@
 
   .queen-back {
     transform: rotateY(180deg);
-
     display: flex;
     flex-direction: column;
-
     align-items: center;
     justify-content: center;
-
     padding: 16px;
-
     background: var(--teal);
     color: white;
-
     text-align: center;
   }
 
@@ -203,47 +183,31 @@
 
   #centreButton {
     position: fixed;
-
     right: 16px;
     bottom: 16px;
-
     z-index: 100;
-
     border: 0;
     border-radius: 999px;
-
     padding: 10px 16px;
-
     background: var(--dark);
     color: white;
-
     font-size: 14px;
     cursor: pointer;
-
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
   #dragHint {
     position: fixed;
-
     left: 50%;
     bottom: 18px;
-
     transform: translateX(-50%);
-
     z-index: 90;
-
     padding: 7px 12px;
-
     border-radius: 999px;
-
     background: rgba(243,238,220,0.92);
     color: var(--dark);
-
     font-size: 12px;
-
     pointer-events: none;
-
     transition: opacity 0.4s ease;
   }
 
@@ -252,11 +216,9 @@
   }
 
   @media (max-width: 600px) {
-
     #queensBoard {
       grid-template-columns: repeat(var(--columns), 125px);
       grid-auto-rows: 160px;
-
       gap: 14px;
       padding: 30px;
     }
@@ -324,6 +286,22 @@
 
 <script>
 
+/* =====================================================
+   TOTAL NUMBER OF TILES
+
+   Change this number whenever the total grows.
+
+   49 currently means:
+   1 central Kirsty + 48 Queens.
+   ===================================================== */
+
+const totalQueens = 49;
+
+
+/* =====================================================
+   ICONS
+   ===================================================== */
+
 const crownSVG = `
 <svg
   class="crown-icon"
@@ -375,6 +353,16 @@ const heartSVG = `
   "/>
 </svg>
 `;
+
+
+/* =====================================================
+   QUEENS WITH PHOTOS
+
+   Add a new block here ONLY when a Queen has a photo.
+
+   The code below automatically creates enough crown-only
+   cards to bring the wall up to totalQueens.
+   ===================================================== */
 
 const queens = [
 
@@ -479,17 +467,39 @@ const queens = [
 
 ];
 
-for (let i = 15; i <= 49; i++) {
 
-  queens.push({
-    id: `Q${String(i).padStart(3, "0")}`,
-    name: "",
-    image: "",
-    quote: "",
-    crownOnly: true
-  });
+/* =====================================================
+   AUTOMATIC CROWN-ONLY QUEENS
 
+   No manual Q-number maintenance is required here.
+   ===================================================== */
+
+const usedIds = new Set(
+  queens.map(queen => queen.id)
+);
+
+for (let i = 1; i <= totalQueens; i++) {
+
+  const id =
+    `Q${String(i).padStart(3, "0")}`;
+
+  if (!usedIds.has(id)) {
+
+    queens.push({
+      id: id,
+      name: "",
+      image: "",
+      quote: "",
+      crownOnly: true
+    });
+
+  }
 }
+
+
+/* =====================================================
+   BASIC SETUP
+   ===================================================== */
 
 const viewport =
   document.getElementById("queensViewport");
@@ -517,16 +527,16 @@ let movedDuringDrag = false;
 
 let centreCard = null;
 
+
+/* =====================================================
+   SHUFFLE
+   ===================================================== */
+
 function shuffle(array) {
 
-  const copy =
-    [...array];
+  const copy = [...array];
 
-  for (
-    let i = copy.length - 1;
-    i > 0;
-    i--
-  ) {
+  for (let i = copy.length - 1; i > 0; i--) {
 
     const j =
       Math.floor(
@@ -546,6 +556,11 @@ function shuffle(array) {
   return copy;
 }
 
+
+/* =====================================================
+   QUOTE SIZE
+   ===================================================== */
+
 function getQuoteClass(quote) {
 
   if (!quote) {
@@ -563,6 +578,11 @@ function getQuoteClass(quote) {
   return "queen-quote";
 }
 
+
+/* =====================================================
+   CREATE CARD
+   ===================================================== */
+
 function createCard(queen) {
 
   const card =
@@ -577,26 +597,21 @@ function createCard(queen) {
   if (queen.crownOnly) {
 
     frontHTML = `
-
       <div class="queen-front crown-card">
         ${crownSVG}
       </div>
-
     `;
 
   } else {
 
     frontHTML = `
-
       <div class="queen-front photo-card">
 
         <div class="queen-photo">
-
           <img
             src="${queen.image}"
             alt="${queen.name}"
           >
-
         </div>
 
         <div class="queen-name">
@@ -604,7 +619,6 @@ function createCard(queen) {
         </div>
 
       </div>
-
     `;
 
   }
@@ -617,7 +631,6 @@ function createCard(queen) {
       getQuoteClass(queen.quote);
 
     backHTML = `
-
       <div class="queen-back">
 
         <div class="${quoteClass}">
@@ -629,35 +642,32 @@ function createCard(queen) {
         </div>
 
       </div>
-
     `;
 
   } else {
 
     backHTML = `
-
       <div class="queen-back">
         ${heartSVG}
       </div>
-
     `;
 
   }
 
   card.innerHTML = `
-
     <div class="queen-card-inner">
-
       ${frontHTML}
-
       ${backHTML}
-
     </div>
-
   `;
 
   return card;
 }
+
+
+/* =====================================================
+   BUILD WALL
+   ===================================================== */
 
 function buildWall() {
 
@@ -731,9 +741,7 @@ function buildWall() {
   ) {
 
     if (i !== centreIndex) {
-
       positions.push(i);
-
     }
 
   }
@@ -810,9 +818,7 @@ function buildWall() {
       board.appendChild(card);
 
       if (queen.kirsty) {
-
         centreCard = card;
-
       }
 
     }
@@ -824,12 +830,22 @@ function buildWall() {
 
 }
 
+
+/* =====================================================
+   BOARD POSITION
+   ===================================================== */
+
 function updateBoardPosition() {
 
   board.style.transform =
     `translate(${offsetX}px, ${offsetY}px)`;
 
 }
+
+
+/* =====================================================
+   CENTRE ON KIRSTY
+   ===================================================== */
 
 function centreOnKirsty() {
 
@@ -861,6 +877,11 @@ function centreOnKirsty() {
   updateBoardPosition();
 
 }
+
+
+/* =====================================================
+   POINTER DOWN
+   ===================================================== */
 
 viewport.addEventListener(
   "pointerdown",
@@ -900,6 +921,11 @@ viewport.addEventListener(
   }
 );
 
+
+/* =====================================================
+   POINTER MOVE
+   ===================================================== */
+
 viewport.addEventListener(
   "pointermove",
   function(event) {
@@ -937,6 +963,11 @@ viewport.addEventListener(
 
   }
 );
+
+
+/* =====================================================
+   POINTER UP
+   ===================================================== */
 
 viewport.addEventListener(
   "pointerup",
@@ -980,15 +1011,18 @@ viewport.addEventListener(
 
     setTimeout(
       () => {
-
         movedDuringDrag = false;
-
       },
       50
     );
 
   }
 );
+
+
+/* =====================================================
+   POINTER CANCEL
+   ===================================================== */
 
 viewport.addEventListener(
   "pointercancel",
@@ -1003,12 +1037,15 @@ viewport.addEventListener(
   }
 );
 
+
+/* =====================================================
+   CENTRE BUTTON
+   ===================================================== */
+
 centreButton.addEventListener(
   "pointerdown",
   function(event) {
-
     event.stopPropagation();
-
   }
 );
 
@@ -1023,10 +1060,20 @@ centreButton.addEventListener(
   }
 );
 
+
+/* =====================================================
+   RESIZE
+   ===================================================== */
+
 window.addEventListener(
   "resize",
   centreOnKirsty
 );
+
+
+/* =====================================================
+   START
+   ===================================================== */
 
 buildWall();
 
