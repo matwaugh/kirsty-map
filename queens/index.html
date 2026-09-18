@@ -21,10 +21,6 @@
     background: #f3eedc;
   }
 
-  /* -------------------------------------------------
-     VISIBLE WINDOW
-     ------------------------------------------------- */
-
   #queensViewport {
     position: relative;
     width: 100%;
@@ -38,10 +34,6 @@
   #queensViewport.dragging {
     cursor: grabbing;
   }
-
-  /* -------------------------------------------------
-     LARGE BOARD THAT MOVES BEHIND THE WINDOW
-     ------------------------------------------------- */
 
   #queensBoard {
     position: absolute;
@@ -60,10 +52,6 @@
     transform-origin: 0 0;
     will-change: transform;
   }
-
-  /* -------------------------------------------------
-     QUEEN CARD
-     ------------------------------------------------- */
 
   .queen-card {
     width: 150px;
@@ -100,10 +88,6 @@
 
     box-shadow: 0 3px 12px rgba(0,0,0,0.13);
   }
-
-  /* -------------------------------------------------
-     FRONT
-     ------------------------------------------------- */
 
   .queen-front {
     background: #e6a45d;
@@ -166,10 +150,6 @@
     text-align: center;
   }
 
-  /* -------------------------------------------------
-     BACK / QUOTE
-     ------------------------------------------------- */
-
   .queen-back {
     transform: rotateY(180deg);
 
@@ -196,20 +176,12 @@
     font-weight: bold;
   }
 
-  /* -------------------------------------------------
-     KIRSTY
-     ------------------------------------------------- */
-
   .queen-card.kirsty .queen-front,
   .queen-card.kirsty .queen-back {
     box-shadow:
       0 0 0 4px #00878b,
       0 5px 18px rgba(0,0,0,0.18);
   }
-
-  /* -------------------------------------------------
-     RETURN TO CENTRE BUTTON
-     ------------------------------------------------- */
 
   #centreButton {
     position: fixed;
@@ -231,7 +203,6 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
-  /* Small instruction */
   #dragHint {
     position: fixed;
     left: 50%;
@@ -297,9 +268,7 @@
 <body>
 
 <div id="queensViewport">
-
   <div id="queensBoard"></div>
-
 </div>
 
 <div id="dragHint">Drag to explore • Tap a Queen</div>
@@ -308,20 +277,11 @@
   Back to Kirsty
 </button>
 
-
 <script>
 
 /* =====================================================
    QUEEN DATA
-   =====================================================
-
-   These are temporary test Queens.
-
-   Later we will move this information into its own
-   very simple file so this is the ONLY information
-   you have to edit when adding/removing a Queen.
-
-===================================================== */
+   ===================================================== */
 
 const queens = [
 
@@ -613,14 +573,6 @@ function createCard(queen) {
 
   `;
 
-  card.addEventListener("click", function () {
-
-    if (movedDuringDrag) return;
-
-    card.classList.toggle("flipped");
-
-  });
-
   return card;
 }
 
@@ -643,8 +595,7 @@ function buildWall() {
 
 
   /*
-     We deliberately use an ODD number of columns
-     and rows so there is one exact centre position.
+     Odd numbers ensure one exact centre position.
   */
 
   let columns =
@@ -663,9 +614,7 @@ function buildWall() {
 
 
   /*
-     Add extra breathing room around the populated
-     area so the board feels explorable rather than
-     like a rigid spreadsheet.
+     Add space around the populated area.
   */
 
   columns += 2;
@@ -695,8 +644,7 @@ function buildWall() {
 
 
   /*
-     Make every grid position available,
-     except the exact centre.
+     Every possible position except centre.
   */
 
   let positions = [];
@@ -715,11 +663,8 @@ function buildWall() {
 
 
   /*
-     Sort possible positions roughly by distance
-     from Kirsty.
-
-     This means the Queens fill outwards from her,
-     rather than leaving large gaps near the centre.
+     Fill outward from Kirsty,
+     with a little randomness.
   */
 
   positions.sort((a, b) => {
@@ -748,11 +693,6 @@ function buildWall() {
         colB - centreColumn
       );
 
-    /*
-       Small random element prevents exactly the
-       same pattern every time.
-    */
-
     return (
       distanceA -
       distanceB +
@@ -761,10 +701,6 @@ function buildWall() {
 
   });
 
-
-  /*
-     Create blank grid slots.
-  */
 
   const slots =
     new Array(totalSlots).fill(null);
@@ -804,11 +740,6 @@ function buildWall() {
   });
 
 
-  /*
-     Wait until browser has calculated dimensions,
-     then centre Kirsty in the visible window.
-  */
-
   requestAnimationFrame(
     centreOnKirsty
   );
@@ -839,11 +770,6 @@ function centreOnKirsty() {
   const viewportRect =
     viewport.getBoundingClientRect();
 
-  /*
-     Temporarily calculate card position without
-     current translation affecting our calculation.
-  */
-
   board.style.transform =
     "translate(0px, 0px)";
 
@@ -864,12 +790,20 @@ function centreOnKirsty() {
 
 
 /* =====================================================
-   DRAG / PAN
+   POINTER DOWN
    ===================================================== */
 
 viewport.addEventListener(
   "pointerdown",
   function(event) {
+
+    /*
+       Ignore the centre button.
+    */
+
+    if (event.target.closest("#centreButton")) {
+      return;
+    }
 
     dragging = true;
     movedDuringDrag = false;
@@ -897,6 +831,10 @@ viewport.addEventListener(
   }
 );
 
+
+/* =====================================================
+   POINTER MOVE
+   ===================================================== */
 
 viewport.addEventListener(
   "pointermove",
@@ -937,9 +875,27 @@ viewport.addEventListener(
 );
 
 
+/* =====================================================
+   POINTER UP
+
+   This is the important change.
+
+   We decide here whether the gesture was:
+
+   - a click/tap
+   - or a drag
+
+   This works consistently on desktop and mobile.
+   ===================================================== */
+
 viewport.addEventListener(
   "pointerup",
-  function() {
+  function(event) {
+
+    if (!dragging) return;
+
+    const wasDragging =
+      movedDuringDrag;
 
     dragging = false;
 
@@ -947,15 +903,51 @@ viewport.addEventListener(
       "dragging"
     );
 
+
     /*
-       Keep movedDuringDrag true for long enough
-       to stop the browser interpreting the end
-       of a drag as a click on a card.
+       If the pointer barely moved,
+       treat the gesture as a click/tap.
     */
+
+    if (!wasDragging) {
+
+      /*
+         Because pointer capture is active,
+         event.target may be the viewport.
+
+         So instead we ask the browser
+         which element is physically underneath
+         the pointer coordinates.
+      */
+
+      const elementUnderPointer =
+        document.elementFromPoint(
+          event.clientX,
+          event.clientY
+        );
+
+      const card =
+        elementUnderPointer
+          ? elementUnderPointer.closest(".queen-card")
+          : null;
+
+
+      if (card) {
+
+        card.classList.toggle(
+          "flipped"
+        );
+
+      }
+
+    }
+
 
     setTimeout(
       () => {
+
         movedDuringDrag = false;
+
       },
       50
     );
@@ -963,6 +955,10 @@ viewport.addEventListener(
   }
 );
 
+
+/* =====================================================
+   POINTER CANCEL
+   ===================================================== */
 
 viewport.addEventListener(
   "pointercancel",
@@ -983,8 +979,29 @@ viewport.addEventListener(
    ===================================================== */
 
 centreButton.addEventListener(
+  "pointerdown",
+  function(event) {
+
+    /*
+       Stop this pointer event from starting
+       a drag on the viewport behind it.
+    */
+
+    event.stopPropagation();
+
+  }
+);
+
+
+centreButton.addEventListener(
   "click",
-  centreOnKirsty
+  function(event) {
+
+    event.stopPropagation();
+
+    centreOnKirsty();
+
+  }
 );
 
 
