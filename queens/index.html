@@ -17,16 +17,35 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+
     font-family: Arial, Helvetica, sans-serif;
-    background: #f3eedc;
+
+    background: #F3EEDC;
   }
+
+  :root {
+    --teal: #00878B;
+    --dark: #59584C;
+    --yellow: #FDD197;
+    --salmon: #FF756B;
+    --cream: #F3EEDC;
+  }
+
+
+  /* =====================================================
+     VIEWPORT
+     ===================================================== */
 
   #queensViewport {
     position: relative;
+
     width: 100%;
     height: 100vh;
+
     overflow: hidden;
+
     cursor: grab;
+
     touch-action: none;
     user-select: none;
   }
@@ -35,8 +54,14 @@
     cursor: grabbing;
   }
 
+
+  /* =====================================================
+     MOVING BOARD
+     ===================================================== */
+
   #queensBoard {
     position: absolute;
+
     left: 0;
     top: 0;
 
@@ -50,8 +75,14 @@
     padding: 40px;
 
     transform-origin: 0 0;
+
     will-change: transform;
   }
+
+
+  /* =====================================================
+     CARD
+     ===================================================== */
 
   .queen-card {
     width: 150px;
@@ -64,10 +95,12 @@
 
   .queen-card-inner {
     position: relative;
+
     width: 100%;
     height: 100%;
 
     transition: transform 0.55s ease;
+
     transform-style: preserve-3d;
   }
 
@@ -78,10 +111,12 @@
   .queen-front,
   .queen-back {
     position: absolute;
+
     inset: 0;
 
-    border-radius: 8px;
     overflow: hidden;
+
+    border-radius: 9px;
 
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -89,83 +124,109 @@
     box-shadow: 0 3px 12px rgba(0,0,0,0.13);
   }
 
-  .queen-front {
-    background: #e6a45d;
 
+  /* =====================================================
+     PHOTO FRONT
+     ===================================================== */
+
+  .queen-front.photo-card {
     display: flex;
     flex-direction: column;
+
+    background: var(--yellow);
   }
 
   .queen-photo {
     flex: 1;
+
     min-height: 0;
 
-    background: #ddd;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
     overflow: hidden;
+
+    background: #ddd;
   }
 
   .queen-photo img {
     width: 100%;
     height: 100%;
+
+    display: block;
+
     object-fit: cover;
+
     pointer-events: none;
-  }
-
-  .queen-avatar {
-    width: 78px;
-    height: 78px;
-
-    border-radius: 50%;
-
-    background: #00878b;
-    color: white;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 34px;
-    font-weight: bold;
   }
 
   .queen-name {
     min-height: 42px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
     padding: 7px;
 
-    background: #e6a45d;
-    color: #59584c;
+    background: var(--yellow);
+
+    color: var(--dark);
 
     font-size: 15px;
     font-weight: bold;
+
     text-align: center;
   }
+
+
+  /* =====================================================
+     CROWN FRONT
+     ===================================================== */
+
+  .queen-front.crown-card {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    background: var(--salmon);
+  }
+
+  .crown-icon {
+    width: 82px;
+    height: 70px;
+
+    fill: var(--cream);
+
+    pointer-events: none;
+  }
+
+
+  /* =====================================================
+     CARD BACK
+     ===================================================== */
 
   .queen-back {
     transform: rotateY(180deg);
 
-    background: #00878b;
-    color: white;
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
 
     padding: 16px;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    background: var(--teal);
+
+    color: white;
+
     text-align: center;
   }
 
   .queen-quote {
     font-size: 14px;
+
     line-height: 1.35;
   }
 
@@ -176,37 +237,69 @@
     font-weight: bold;
   }
 
+
+  /* =====================================================
+     HEART BACK
+     ===================================================== */
+
+  .heart-icon {
+    width: 58px;
+    height: 58px;
+
+    fill: var(--cream);
+
+    pointer-events: none;
+  }
+
+
+  /* =====================================================
+     CENTRAL KIRSTY
+     ===================================================== */
+
   .queen-card.kirsty .queen-front,
   .queen-card.kirsty .queen-back {
     box-shadow:
-      0 0 0 4px #00878b,
+      0 0 0 4px var(--teal),
       0 5px 18px rgba(0,0,0,0.18);
   }
 
+
+  /* =====================================================
+     UI
+     ===================================================== */
+
   #centreButton {
     position: fixed;
+
     right: 16px;
     bottom: 16px;
+
     z-index: 100;
 
     border: 0;
+
     border-radius: 999px;
 
     padding: 10px 16px;
 
-    background: #59584c;
+    background: var(--dark);
+
     color: white;
 
     font-size: 14px;
+
     cursor: pointer;
 
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
+
   #dragHint {
     position: fixed;
+
     left: 50%;
     bottom: 18px;
+
     transform: translateX(-50%);
 
     z-index: 90;
@@ -215,8 +308,9 @@
 
     border-radius: 999px;
 
-    background: rgba(243,238,220,0.9);
-    color: #59584c;
+    background: rgba(243,238,220,0.92);
+
+    color: var(--dark);
 
     font-size: 12px;
 
@@ -229,12 +323,19 @@
     opacity: 0;
   }
 
+
+  /* =====================================================
+     MOBILE
+     ===================================================== */
+
   @media (max-width: 600px) {
 
     #queensBoard {
       grid-template-columns: repeat(var(--columns), 125px);
       grid-auto-rows: 160px;
+
       gap: 14px;
+
       padding: 30px;
     }
 
@@ -245,6 +346,7 @@
 
     .queen-name {
       min-height: 36px;
+
       font-size: 13px;
     }
 
@@ -256,10 +358,14 @@
       padding: 12px;
     }
 
-    .queen-avatar {
-      width: 64px;
-      height: 64px;
-      font-size: 28px;
+    .crown-icon {
+      width: 68px;
+      height: 58px;
+    }
+
+    .heart-icon {
+      width: 48px;
+      height: 48px;
     }
   }
 </style>
@@ -268,221 +374,232 @@
 <body>
 
 <div id="queensViewport">
+
   <div id="queensBoard"></div>
+
 </div>
 
-<div id="dragHint">Drag to explore • Tap a Queen</div>
+<div id="dragHint">
+  Drag to explore • Tap a Queen
+</div>
 
 <button id="centreButton">
   Back to Kirsty
 </button>
 
+
 <script>
+
+
+/* =====================================================
+   ICONS
+   ===================================================== */
+
+const crownSVG = `
+<svg
+  class="crown-icon"
+  viewBox="0 0 120 100"
+  xmlns="http://www.w3.org/2000/svg"
+  aria-hidden="true"
+>
+  <circle cx="18" cy="22" r="7"/>
+  <circle cx="60" cy="10" r="7"/>
+  <circle cx="102" cy="22" r="7"/>
+
+  <path d="
+    M15 32
+    L36 57
+    L59 22
+    L83 57
+    L105 32
+    L96 78
+    L24 78
+    Z
+  "/>
+
+  <rect
+    x="24"
+    y="82"
+    width="72"
+    height="10"
+    rx="3"
+  />
+</svg>
+`;
+
+
+const heartSVG = `
+<svg
+  class="heart-icon"
+  viewBox="0 0 100 100"
+  xmlns="http://www.w3.org/2000/svg"
+  aria-hidden="true"
+>
+  <path d="
+    M50 88
+    C44 80 18 61 10 46
+    C0 27 11 12 28 12
+    C39 12 46 19 50 27
+    C54 19 61 12 72 12
+    C89 12 100 27 90 46
+    C82 61 56 80 50 88
+    Z
+  "/>
+</svg>
+`;
+
+
 
 /* =====================================================
    QUEEN DATA
+
+   Q001 = Kirsty in centre
+   Q002-Q014 = photographed Queens
+   Q015-Q049 = crown-only Queens
    ===================================================== */
 
 const queens = [
 
   {
+    id: "Q001",
     name: "Kirsty",
-    image: "",
-    quote: "I started Kirsty's Queens to bring people together to help fund better research.",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738116/Q001_Kirsty_Portrait_dwgqzg.jpg",
+    quote: "",
     kirsty: true
   },
 
   {
-    name: "Sarah",
-    image: "",
-    quote: "I became a Queen because I wanted to be part of something that could make a real difference."
+    id: "Q002",
+    name: "Anne",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738116/Q002_Anne_nwkfry.jpg",
+    quote: ""
   },
 
   {
-    name: "Helen",
-    image: "",
-    quote: "Research matters to every family facing childhood cancer."
+    id: "Q003",
+    name: "Kirstie",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738117/Q003_KirstieL_kfc4fq.jpg",
+    quote: ""
   },
 
   {
-    name: "Jo",
-    image: "",
-    quote: "I joined because one person can help, but a whole community can do so much more."
+    id: "Q004",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738118/Q004_KirstyA_ne1w9w.jpg",
+    quote: "All Kirstys are ace but one Kirsty who is just a bit more wonderful than all the rest. If I can help this beautiful girl fundraise then I will do all I can."
   },
 
   {
-    name: "Amanda",
-    image: "",
-    quote: "Kirsty's determination inspired me to get involved."
+    id: "Q005",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738214/Q005_Kirsty_qts7pf.jpg",
+    quote: ""
   },
 
   {
-    name: "Lisa",
-    image: "",
-    quote: "I wanted to help turn awareness into something practical."
+    id: "Q006",
+    name: "Hayley",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738119/Q006_Hayley_xgxap5.jpg",
+    quote: ""
   },
 
   {
-    name: "Karen",
-    image: "",
-    quote: "For children who deserve better treatments and better futures."
+    id: "Q007",
+    name: "Chris",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738120/Q007_ChrisF_hzkpsk.jpg",
+    quote: ""
   },
 
   {
-    name: "Rachel",
-    image: "",
-    quote: "It felt like a simple way to stand alongside Kirsty."
+    id: "Q008",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738130/Q008_KirstyB_uvmwpz.jpg",
+    quote: ""
   },
 
   {
-    name: "Anna",
-    image: "",
-    quote: "I joined to support research and the families who need it."
+    id: "Q009",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738212/Q009_KirstyE_irndpk.png",
+    quote: ""
   },
 
   {
-    name: "Emma",
-    image: "",
-    quote: "Because every Queen makes the group a little stronger."
+    id: "Q010",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738121/Q010_KirstyF_dkwd4c.png",
+    quote: ""
   },
 
   {
-    name: "Sophie",
-    image: "",
-    quote: "I wanted to be part of Kirsty's growing community."
+    id: "Q011",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738211/Q011_KirstyO_krokbu.jpg",
+    quote: ""
   },
 
   {
-    name: "Claire",
-    image: "",
-    quote: "For better options for children diagnosed in the future."
+    id: "Q012",
+    name: "Shazia",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738122/Q012_Shazia_kghegv.jpg",
+    quote: "Proud to be supporting Kirsty, an incredible young lady raising funding for much-needed brain tumour research."
   },
 
   {
-    name: "Jane",
-    image: "",
-    quote: "Kirsty's story made me want to do something useful."
+    id: "Q013",
+    name: "Soo",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738123/Q013_SooS_l9n915.jpg",
+    quote: "I’ve known a few people with brain tumours but none as young as Kirsty. When I heard her story I thought it was really time things changed."
   },
 
   {
-    name: "Caroline",
-    image: "",
-    quote: "I joined because research can change what happens next."
-  },
-
-  {
-    name: "Lucy",
-    image: "",
-    quote: "A small monthly commitment can become something much bigger together."
-  },
-
-  {
-    name: "Rebecca",
-    image: "",
-    quote: "Because children with cancer need more people in their corner."
-  },
-
-  {
-    name: "Michelle",
-    image: "",
-    quote: "I wanted Kirsty to know that people are standing with her."
-  },
-
-  {
-    name: "Louise",
-    image: "",
-    quote: "To help support the research that could make treatment kinder."
-  },
-
-  {
-    name: "Nicola",
-    image: "",
-    quote: "Because this is a club worth belonging to."
-  },
-
-  {
-    name: "Kate",
-    image: "",
-    quote: "I joined because together we can help fund change."
-  },
-
-  {
-    name: "Debbie",
-    image: "",
-    quote: "For every child and family hoping for better answers."
-  },
-
-  {
-    name: "Laura",
-    image: "",
-    quote: "One Queen among many, helping Kirsty push research forward."
-  },
-
-  {
-    name: "Julie",
-    image: "",
-    quote: "Because Kirsty asked, and because the reason matters."
-  },
-
-  {
-    name: "Amy",
-    image: "",
-    quote: "To add my support to a community doing something positive."
-  },
-
-  {
-    name: "Hannah",
-    image: "",
-    quote: "I became a Queen to help make childhood cancer research impossible to ignore."
-  },
-
-  {
-    name: "Mary",
-    image: "",
-    quote: "For better treatments, better outcomes and more hope."
-  },
-
-  {
-    name: "Victoria",
-    image: "",
-    quote: "Because collectively our small contributions can become significant."
-  },
-
-  {
-    name: "Alison",
-    image: "",
-    quote: "I wanted to join Kirsty's team and help research move forward."
-  },
-
-  {
-    name: "Charlotte",
-    image: "",
-    quote: "For all the children who come after Kirsty."
-  },
-
-  {
-    name: "Diane",
-    image: "",
-    quote: "I joined because nobody should have to face childhood cancer alone."
-  },
-
-  {
-    name: "Beth",
-    image: "",
-    quote: "Because the idea of Kirsty's Queens made me smile — and the cause matters."
+    id: "Q014",
+    name: "Kirsty",
+    image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789738124/Q014_KirstyS_fjcxgl.jpg",
+    quote: ""
   }
 
 ];
+
+
+/* Add 35 crown-only Queens: Q015-Q049 */
+
+for (let i = 15; i <= 49; i++) {
+
+  queens.push({
+
+    id: `Q${String(i).padStart(3, "0")}`,
+
+    name: "",
+
+    image: "",
+
+    quote: "",
+
+    crownOnly: true
+
+  });
+
+}
+
 
 
 /* =====================================================
    BASIC SETUP
    ===================================================== */
 
-const viewport = document.getElementById("queensViewport");
-const board = document.getElementById("queensBoard");
-const centreButton = document.getElementById("centreButton");
-const dragHint = document.getElementById("dragHint");
+const viewport =
+  document.getElementById("queensViewport");
+
+const board =
+  document.getElementById("queensBoard");
+
+const centreButton =
+  document.getElementById("centreButton");
+
+const dragHint =
+  document.getElementById("dragHint");
+
 
 let offsetX = 0;
 let offsetY = 0;
@@ -494,29 +611,46 @@ let startOffsetX = 0;
 let startOffsetY = 0;
 
 let dragging = false;
+
 let movedDuringDrag = false;
 
 let centreCard = null;
 
 
+
 /* =====================================================
-   RANDOM SHUFFLE
+   SHUFFLE
    ===================================================== */
 
 function shuffle(array) {
 
-  const copy = [...array];
+  const copy =
+    [...array];
 
-  for (let i = copy.length - 1; i > 0; i--) {
+  for (
+    let i = copy.length - 1;
+    i > 0;
+    i--
+  ) {
 
-    const j = Math.floor(Math.random() * (i + 1));
+    const j =
+      Math.floor(
+        Math.random() * (i + 1)
+      );
 
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+    [
+      copy[i],
+      copy[j]
+    ] = [
+      copy[j],
+      copy[i]
+    ];
 
   }
 
   return copy;
 }
+
 
 
 /* =====================================================
@@ -525,30 +659,41 @@ function shuffle(array) {
 
 function createCard(queen) {
 
-  const card = document.createElement("div");
+  const card =
+    document.createElement("div");
+
 
   card.className =
     "queen-card" +
     (queen.kirsty ? " kirsty" : "");
 
-  const initial =
-    queen.name
-      ? queen.name.charAt(0).toUpperCase()
-      : "?";
 
-  const imageHTML =
-    queen.image
-      ? `<img src="${queen.image}" alt="${queen.name}">`
-      : `<div class="queen-avatar">${initial}</div>`;
+  let frontHTML = "";
 
-  card.innerHTML = `
 
-    <div class="queen-card-inner">
+  if (queen.crownOnly) {
 
-      <div class="queen-front">
+    frontHTML = `
+
+      <div class="queen-front crown-card">
+        ${crownSVG}
+      </div>
+
+    `;
+
+  } else {
+
+    frontHTML = `
+
+      <div class="queen-front photo-card">
 
         <div class="queen-photo">
-          ${imageHTML}
+
+          <img
+            src="${queen.image}"
+            alt="${queen.name}"
+          >
+
         </div>
 
         <div class="queen-name">
@@ -556,6 +701,18 @@ function createCard(queen) {
         </div>
 
       </div>
+
+    `;
+
+  }
+
+
+  let backHTML = "";
+
+
+  if (queen.quote) {
+
+    backHTML = `
 
       <div class="queen-back">
 
@@ -569,59 +726,96 @@ function createCard(queen) {
 
       </div>
 
+    `;
+
+  } else {
+
+    backHTML = `
+
+      <div class="queen-back">
+        ${heartSVG}
+      </div>
+
+    `;
+
+  }
+
+
+  card.innerHTML = `
+
+    <div class="queen-card-inner">
+
+      ${frontHTML}
+
+      ${backHTML}
+
     </div>
 
   `;
+
 
   return card;
 }
 
 
+
 /* =====================================================
-   BUILD THE WALL
+   BUILD WALL
    ===================================================== */
 
 function buildWall() {
 
   board.innerHTML = "";
 
-  const kirsty =
-    queens.find(q => q.kirsty);
 
-  const others =
-    shuffle(
-      queens.filter(q => !q.kirsty)
+  const kirsty =
+    queens.find(
+      queen => queen.kirsty
     );
 
 
-  /*
-     Odd numbers ensure one exact centre position.
-  */
+  const others =
+    shuffle(
+      queens.filter(
+        queen => !queen.kirsty
+      )
+    );
+
 
   let columns =
-    Math.ceil(Math.sqrt(queens.length));
+    Math.ceil(
+      Math.sqrt(queens.length)
+    );
+
 
   if (columns % 2 === 0) {
     columns++;
   }
 
+
   let rows =
-    Math.ceil(queens.length / columns);
+    Math.ceil(
+      queens.length / columns
+    );
+
 
   if (rows % 2 === 0) {
     rows++;
   }
 
 
-  /*
-     Add space around the populated area.
-  */
-
   columns += 2;
   rows += 2;
 
-  if (columns % 2 === 0) columns++;
-  if (rows % 2 === 0) rows++;
+
+  if (columns % 2 === 0) {
+    columns++;
+  }
+
+
+  if (rows % 2 === 0) {
+    rows++;
+  }
 
 
   board.style.setProperty(
@@ -633,21 +827,22 @@ function buildWall() {
   const totalSlots =
     columns * rows;
 
+
   const centreRow =
     Math.floor(rows / 2);
+
 
   const centreColumn =
     Math.floor(columns / 2);
 
+
   const centreIndex =
-    centreRow * columns + centreColumn;
+    centreRow * columns +
+    centreColumn;
 
-
-  /*
-     Every possible position except centre.
-  */
 
   let positions = [];
+
 
   for (
     let i = 0;
@@ -656,88 +851,103 @@ function buildWall() {
   ) {
 
     if (i !== centreIndex) {
+
       positions.push(i);
+
     }
 
   }
 
 
-  /*
-     Fill outward from Kirsty,
-     with a little randomness.
-  */
+  positions.sort(
+    (a, b) => {
 
-  positions.sort((a, b) => {
+      const rowA =
+        Math.floor(a / columns);
 
-    const rowA =
-      Math.floor(a / columns);
+      const colA =
+        a % columns;
 
-    const colA =
-      a % columns;
+      const rowB =
+        Math.floor(b / columns);
 
-    const rowB =
-      Math.floor(b / columns);
+      const colB =
+        b % columns;
 
-    const colB =
-      b % columns;
 
-    const distanceA =
-      Math.hypot(
-        rowA - centreRow,
-        colA - centreColumn
+      const distanceA =
+        Math.hypot(
+          rowA - centreRow,
+          colA - centreColumn
+        );
+
+
+      const distanceB =
+        Math.hypot(
+          rowB - centreRow,
+          colB - centreColumn
+        );
+
+
+      return (
+        distanceA -
+        distanceB +
+        (Math.random() - 0.5) * 0.5
       );
 
-    const distanceB =
-      Math.hypot(
-        rowB - centreRow,
-        colB - centreColumn
-      );
-
-    return (
-      distanceA -
-      distanceB +
-      (Math.random() - 0.5) * 0.5
-    );
-
-  });
+    }
+  );
 
 
   const slots =
     new Array(totalSlots).fill(null);
 
-  slots[centreIndex] = kirsty;
+
+  slots[centreIndex] =
+    kirsty;
 
 
-  others.forEach((queen, index) => {
+  others.forEach(
+    (queen, index) => {
 
-    slots[positions[index]] = queen;
-
-  });
-
-
-  slots.forEach((queen) => {
-
-    if (!queen) {
-
-      const blank =
-        document.createElement("div");
-
-      board.appendChild(blank);
-
-      return;
+      slots[
+        positions[index]
+      ] = queen;
 
     }
+  );
 
-    const card =
-      createCard(queen);
 
-    board.appendChild(card);
+  slots.forEach(
+    queen => {
 
-    if (queen.kirsty) {
-      centreCard = card;
+      if (!queen) {
+
+        const blank =
+          document.createElement("div");
+
+        board.appendChild(blank);
+
+        return;
+
+      }
+
+
+      const card =
+        createCard(queen);
+
+
+      board.appendChild(card);
+
+
+      if (queen.kirsty) {
+
+        centreCard = card;
+
+      }
+
     }
-
-  });
+  );
 
 
   requestAnimationFrame(
@@ -747,8 +957,9 @@ function buildWall() {
 }
 
 
+
 /* =====================================================
-   MOVE BOARD
+   BOARD POSITION
    ===================================================== */
 
 function updateBoardPosition() {
@@ -759,34 +970,48 @@ function updateBoardPosition() {
 }
 
 
+
 /* =====================================================
-   RETURN KIRSTY TO CENTRE
+   CENTRE ON KIRSTY
    ===================================================== */
 
 function centreOnKirsty() {
 
   if (!centreCard) return;
 
+
   const viewportRect =
     viewport.getBoundingClientRect();
+
 
   board.style.transform =
     "translate(0px, 0px)";
 
+
   const cardRect =
     centreCard.getBoundingClientRect();
 
+
   offsetX =
     viewportRect.width / 2 -
-    (cardRect.left + cardRect.width / 2);
+    (
+      cardRect.left +
+      cardRect.width / 2
+    );
+
 
   offsetY =
     viewportRect.height / 2 -
-    (cardRect.top + cardRect.height / 2);
+    (
+      cardRect.top +
+      cardRect.height / 2
+    );
+
 
   updateBoardPosition();
 
 }
+
 
 
 /* =====================================================
@@ -797,16 +1022,19 @@ viewport.addEventListener(
   "pointerdown",
   function(event) {
 
-    /*
-       Ignore the centre button.
-    */
-
-    if (event.target.closest("#centreButton")) {
+    if (
+      event.target.closest(
+        "#centreButton"
+      )
+    ) {
       return;
     }
 
+
     dragging = true;
+
     movedDuringDrag = false;
+
 
     dragStartX =
       event.clientX;
@@ -814,15 +1042,18 @@ viewport.addEventListener(
     dragStartY =
       event.clientY;
 
+
     startOffsetX =
       offsetX;
 
     startOffsetY =
       offsetY;
 
+
     viewport.classList.add(
       "dragging"
     );
+
 
     viewport.setPointerCapture(
       event.pointerId
@@ -830,6 +1061,7 @@ viewport.addEventListener(
 
   }
 );
+
 
 
 /* =====================================================
@@ -842,13 +1074,16 @@ viewport.addEventListener(
 
     if (!dragging) return;
 
+
     const dx =
       event.clientX -
       dragStartX;
 
+
     const dy =
       event.clientY -
       dragStartY;
+
 
     if (
       Math.abs(dx) > 5 ||
@@ -857,17 +1092,21 @@ viewport.addEventListener(
 
       movedDuringDrag = true;
 
+
       dragHint.classList.add(
         "hidden"
       );
 
     }
 
+
     offsetX =
       startOffsetX + dx;
 
+
     offsetY =
       startOffsetY + dy;
+
 
     updateBoardPosition();
 
@@ -875,17 +1114,9 @@ viewport.addEventListener(
 );
 
 
+
 /* =====================================================
    POINTER UP
-
-   This is the important change.
-
-   We decide here whether the gesture was:
-
-   - a click/tap
-   - or a drag
-
-   This works consistently on desktop and mobile.
    ===================================================== */
 
 viewport.addEventListener(
@@ -894,31 +1125,21 @@ viewport.addEventListener(
 
     if (!dragging) return;
 
+
     const wasDragging =
       movedDuringDrag;
 
+
     dragging = false;
+
 
     viewport.classList.remove(
       "dragging"
     );
 
 
-    /*
-       If the pointer barely moved,
-       treat the gesture as a click/tap.
-    */
-
     if (!wasDragging) {
 
-      /*
-         Because pointer capture is active,
-         event.target may be the viewport.
-
-         So instead we ask the browser
-         which element is physically underneath
-         the pointer coordinates.
-      */
 
       const elementUnderPointer =
         document.elementFromPoint(
@@ -926,9 +1147,12 @@ viewport.addEventListener(
           event.clientY
         );
 
+
       const card =
         elementUnderPointer
-          ? elementUnderPointer.closest(".queen-card")
+          ? elementUnderPointer.closest(
+              ".queen-card"
+            )
           : null;
 
 
@@ -956,6 +1180,7 @@ viewport.addEventListener(
 );
 
 
+
 /* =====================================================
    POINTER CANCEL
    ===================================================== */
@@ -966,12 +1191,14 @@ viewport.addEventListener(
 
     dragging = false;
 
+
     viewport.classList.remove(
       "dragging"
     );
 
   }
 );
+
 
 
 /* =====================================================
@@ -981,11 +1208,6 @@ viewport.addEventListener(
 centreButton.addEventListener(
   "pointerdown",
   function(event) {
-
-    /*
-       Stop this pointer event from starting
-       a drag on the viewport behind it.
-    */
 
     event.stopPropagation();
 
@@ -1005,14 +1227,16 @@ centreButton.addEventListener(
 );
 
 
+
 /* =====================================================
-   WINDOW RESIZE
+   RESIZE
    ===================================================== */
 
 window.addEventListener(
   "resize",
   centreOnKirsty
 );
+
 
 
 /* =====================================================
