@@ -55,6 +55,10 @@
     cursor: grabbing;
   }
 
+  #queensViewport.overview-active {
+    cursor: pointer;
+  }
+
 
   /* =====================================================
      BOARD
@@ -365,7 +369,6 @@
     z-index: 100;
 
     border: 0;
-
     border-radius: 999px;
 
     padding: 9px 14px;
@@ -379,6 +382,16 @@
     cursor: pointer;
 
     box-shadow: 0 2px 7px rgba(0,0,0,0.2);
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.25s ease;
+  }
+
+  #overviewButton.visible {
+    opacity: 1;
+    pointer-events: auto;
   }
 
 
@@ -388,19 +401,14 @@
 
   @media (max-width: 600px) {
 
-    /*
-       Permit vertical page gestures where the browser
-       allows them, while our JS only moves the wall
-       horizontally.
-    */
-
     #queensViewport {
       touch-action: pan-y;
     }
 
 
     /*
-       Three-row wall extending sideways.
+       Normal mobile explore mode:
+       three rows extending sideways.
     */
 
     #queensBoard {
@@ -415,6 +423,23 @@
 
       padding: 12px;
     }
+
+
+    /*
+       Mobile overview:
+       temporarily reflow into a compact desktop-style grid.
+    */
+
+    #queensBoard.overview-grid {
+      grid-template-columns: repeat(11, 100px);
+
+      grid-template-rows: none;
+
+      grid-auto-flow: row;
+      grid-auto-columns: initial;
+      grid-auto-rows: 135px;
+    }
+
 
     .queen-card {
       width: 100px;
@@ -479,14 +504,6 @@
       font-size: 10px;
     }
 
-    .desktopHint {
-      display: none;
-    }
-
-    .mobileHint {
-      display: inline;
-    }
-
     #overviewButton {
       right: 10px;
       top: 10px;
@@ -494,6 +511,14 @@
       padding: 7px 10px;
 
       font-size: 10px;
+    }
+
+    .desktopHint {
+      display: none;
+    }
+
+    .mobileHint {
+      display: inline;
     }
   }
 </style>
@@ -539,10 +564,6 @@
 
 /* =====================================================
    TOTAL NUMBER OF TILES
-
-   49 = Kirsty + 48 Queens
-
-   Increase this number when another Queen joins.
    ===================================================== */
 
 const totalQueens = 108;
@@ -849,6 +870,8 @@ let overviewScale = 1;
 let savedOffsetX = 0;
 let savedOffsetY = 0;
 
+let hasStartedExploring = false;
+
 
 /* =====================================================
    HELPERS
@@ -925,12 +948,20 @@ function getQuoteClass(quote) {
 
 function showExploringState() {
 
+  hasStartedExploring = true;
+
+
   dragHint.classList.add(
     "hidden"
   );
 
 
   centreButton.classList.add(
+    "visible"
+  );
+
+
+  overviewButton.classList.add(
     "visible"
   );
 
@@ -947,6 +978,21 @@ function showHomeState() {
   centreButton.classList.remove(
     "visible"
   );
+
+
+  if (!hasStartedExploring) {
+
+    overviewButton.classList.remove(
+      "visible"
+    );
+
+  } else {
+
+    overviewButton.classList.add(
+      "visible"
+    );
+
+  }
 
 }
 
@@ -1311,11 +1357,6 @@ function buildMobileWall(
   const centreRow = 1;
 
 
-  /*
-    Grid fills vertically first:
-    column × 3 + row.
-  */
-
   const centreIndex =
     centreColumn *
     rows +
@@ -1472,6 +1513,14 @@ function buildWall() {
   overviewMode = false;
   overviewScale = 1;
 
+  board.classList.remove(
+    "overview-grid"
+  );
+
+  viewport.classList.remove(
+    "overview-active"
+  );
+
   overviewButton.textContent =
     "See all";
 
@@ -1550,8 +1599,11 @@ function centreOnKirsty() {
     viewport.getBoundingClientRect();
 
 
+  overviewScale = 1;
+
+
   board.style.transform =
-    "translate(0px,0px)";
+    "translate(0px,0px) scale(1)";
 
 
   const cardRect =
@@ -1590,51 +1642,86 @@ function showOverview(savePosition = true) {
     savedOffsetY = offsetY;
   }
 
+
   overviewMode = true;
 
 
-  const viewportWidth =
-    viewport.clientWidth;
+  viewport.classList.add(
+    "overview-active"
+  );
 
 
-  const viewportHeight =
-    viewport.clientHeight;
+  /*
+    On mobile, turn the long three-row wall
+    into a compact overview grid.
+  */
 
+  if (isMobile()) {
 
-  const boardWidth =
-    board.scrollWidth;
-
-
-  const boardHeight =
-    board.scrollHeight;
-
-
-  const padding = 20;
-
-
-  overviewScale =
-    Math.min(
-      (viewportWidth - padding * 2) / boardWidth,
-      (viewportHeight - padding * 2) / boardHeight,
-      1
+    board.classList.add(
+      "overview-grid"
     );
 
-
-  offsetX =
-    (
-      viewportWidth -
-      boardWidth * overviewScale
-    ) / 2;
+  }
 
 
-  offsetY =
-    (
-      viewportHeight -
-      boardHeight * overviewScale
-    ) / 2;
+  /*
+    Wait a frame so the browser has applied
+    the new mobile grid before measuring it.
+  */
+
+  requestAnimationFrame(
+    function() {
+
+      const viewportWidth =
+        viewport.clientWidth;
 
 
-  updateBoardPosition();
+      const viewportHeight =
+        viewport.clientHeight;
+
+
+      const boardWidth =
+        board.scrollWidth;
+
+
+      const boardHeight =
+        board.scrollHeight;
+
+
+      const padding = 20;
+
+
+      overviewScale =
+        Math.min(
+          (viewportWidth - padding * 2) /
+            boardWidth,
+
+          (viewportHeight - padding * 2) /
+            boardHeight,
+
+          1
+        );
+
+
+      offsetX =
+        (
+          viewportWidth -
+          boardWidth * overviewScale
+        ) / 2;
+
+
+      offsetY =
+        (
+          viewportHeight -
+          boardHeight * overviewScale
+        ) / 2;
+
+
+      updateBoardPosition();
+
+    }
+  );
 
 
   overviewButton.textContent =
@@ -1650,6 +1737,11 @@ function showOverview(savePosition = true) {
     "visible"
   );
 
+
+  overviewButton.classList.add(
+    "visible"
+  );
+
 }
 
 
@@ -1657,16 +1749,38 @@ function hideOverview() {
 
   overviewMode = false;
 
+
+  viewport.classList.remove(
+    "overview-active"
+  );
+
+
+  board.classList.remove(
+    "overview-grid"
+  );
+
+
   overviewScale = 1;
 
   offsetX = savedOffsetX;
   offsetY = savedOffsetY;
+
 
   updateBoardPosition();
 
 
   overviewButton.textContent =
     "See all";
+
+
+  overviewButton.classList.add(
+    "visible"
+  );
+
+
+  centreButton.classList.add(
+    "visible"
+  );
 
 }
 
@@ -1679,9 +1793,19 @@ viewport.addEventListener(
   "pointerdown",
   function(event) {
 
+    /*
+      In overview, any click/tap returns
+      to normal explore mode.
+    */
+
     if (overviewMode) {
+
+      hideOverview();
+
       return;
+
     }
+
 
     dragging = true;
 
@@ -1743,17 +1867,8 @@ viewport.addEventListener(
     if (isMobile()) {
 
 
-      /*
-        Determine intended direction first.
-      */
-
       if (!horizontalGesture) {
 
-
-        /*
-          Predominantly vertical:
-          abandon wall dragging.
-        */
 
         if (
           Math.abs(dy) > 8 &&
@@ -1767,11 +1882,6 @@ viewport.addEventListener(
 
         }
 
-
-        /*
-          Predominantly horizontal:
-          begin wall drag.
-        */
 
         if (
           Math.abs(dx) > 8 &&
@@ -1816,10 +1926,6 @@ viewport.addEventListener(
 
       }
 
-
-      /*
-        Mobile changes X only.
-      */
 
       offsetX =
         startOffsetX + dx;
@@ -1917,11 +2023,6 @@ viewport.addEventListener(
       "dragging"
     );
 
-
-    /*
-      If there was no meaningful movement,
-      treat it as a tap/click and flip the card.
-    */
 
     if (!wasDragging) {
 
@@ -2076,6 +2177,9 @@ window.addEventListener(
 
       lastMobileState =
         newMobileState;
+
+
+      hasStartedExploring = false;
 
 
       buildWall();
