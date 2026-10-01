@@ -353,15 +353,45 @@
 
 
   /* =====================================================
+     SEE ALL BUTTON
+     ===================================================== */
+
+  #overviewButton {
+    position: fixed;
+
+    right: 14px;
+    top: 14px;
+
+    z-index: 100;
+
+    border: 0;
+
+    border-radius: 999px;
+
+    padding: 9px 14px;
+
+    background: var(--teal);
+    color: white;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+
+    cursor: pointer;
+
+    box-shadow: 0 2px 7px rgba(0,0,0,0.2);
+  }
+
+
+  /* =====================================================
      MOBILE
      ===================================================== */
 
   @media (max-width: 600px) {
 
     /*
-      Permit vertical page gestures where the browser
-      allows them, while our JS only moves the wall
-      horizontally.
+       Permit vertical page gestures where the browser
+       allows them, while our JS only moves the wall
+       horizontally.
     */
 
     #queensViewport {
@@ -370,7 +400,7 @@
 
 
     /*
-      Three-row wall extending sideways.
+       Three-row wall extending sideways.
     */
 
     #queensBoard {
@@ -456,6 +486,15 @@
     .mobileHint {
       display: inline;
     }
+
+    #overviewButton {
+      right: 10px;
+      top: 10px;
+
+      padding: 7px 10px;
+
+      font-size: 10px;
+    }
   }
 </style>
 </head>
@@ -485,6 +524,14 @@
   type="button"
 >
   Back to Queen Kirsty
+</button>
+
+
+<button
+  id="overviewButton"
+  type="button"
+>
+  See all
 </button>
 
 
@@ -664,35 +711,35 @@ const queens = [
     quote: ""
   },
 
- {
+  {
     id: "Q015",
     name: "Jane",
     image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1789932460/Q015_JaneH_vva3bf.jpg",
     quote: ""
   },
 
-{
+  {
     id: "Q016",
     name: "Jonathan",
     image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1790872597/Q016_Jonathan_zmlmv4.jpg",
     quote: "Many of us have had our lives touched by cancer. Kirsty gives hope to so many people through her constant efforts to help breakthroughs in treatment."
   },
 
- {
+  {
     id: "Q017",
     name: "Kirsty",
     image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1790872598/Q017_Kirsty_hvyf4g.jpg",
     quote: "How can we not help support a worthwhile cause?"
   },
 
- {
+  {
     id: "Q018",
     name: "Kirsty",
     image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1790872597/Q018_Kirsty2_nokvv4.jpg",
     quote: "I think this campaign is a fantastic way to create and raise awareness from such a wonderful little girl… Queen Kirsty 🧡"
   },
 
- {
+  {
     id: "Q019",
     name: "Terri",
     image: "https://res.cloudinary.com/dokkdedmu/image/upload/v1790872598/Q019_Terri_ylhj2f.jpg",
@@ -765,6 +812,12 @@ const centreButton =
   );
 
 
+const overviewButton =
+  document.getElementById(
+    "overviewButton"
+  );
+
+
 const dragHint =
   document.getElementById(
     "dragHint"
@@ -789,6 +842,12 @@ let horizontalGesture = false;
 let activePointerId = null;
 
 let centreCard = null;
+
+let overviewMode = false;
+let overviewScale = 1;
+
+let savedOffsetX = 0;
+let savedOffsetY = 0;
 
 
 /* =====================================================
@@ -850,7 +909,7 @@ function getQuoteClass(quote) {
   }
 
 
-  if (quote.length > 150) {
+  if (quote.length > 135) {
     return "queen-quote long";
   }
 
@@ -1410,6 +1469,12 @@ function buildMobileWall(
 
 function buildWall() {
 
+  overviewMode = false;
+  overviewScale = 1;
+
+  overviewButton.textContent =
+    "See all";
+
   board.innerHTML = "";
 
   centreCard = null;
@@ -1465,7 +1530,7 @@ function buildWall() {
 function updateBoardPosition() {
 
   board.style.transform =
-    `translate(${offsetX}px, ${offsetY}px)`;
+    `translate(${offsetX}px, ${offsetY}px) scale(${overviewScale})`;
 
 }
 
@@ -1515,12 +1580,108 @@ function centreOnKirsty() {
 
 
 /* =====================================================
+   OVERVIEW
+   ===================================================== */
+
+function showOverview(savePosition = true) {
+
+  if (savePosition) {
+    savedOffsetX = offsetX;
+    savedOffsetY = offsetY;
+  }
+
+  overviewMode = true;
+
+
+  const viewportWidth =
+    viewport.clientWidth;
+
+
+  const viewportHeight =
+    viewport.clientHeight;
+
+
+  const boardWidth =
+    board.scrollWidth;
+
+
+  const boardHeight =
+    board.scrollHeight;
+
+
+  const padding = 20;
+
+
+  overviewScale =
+    Math.min(
+      (viewportWidth - padding * 2) / boardWidth,
+      (viewportHeight - padding * 2) / boardHeight,
+      1
+    );
+
+
+  offsetX =
+    (
+      viewportWidth -
+      boardWidth * overviewScale
+    ) / 2;
+
+
+  offsetY =
+    (
+      viewportHeight -
+      boardHeight * overviewScale
+    ) / 2;
+
+
+  updateBoardPosition();
+
+
+  overviewButton.textContent =
+    "Back to explore";
+
+
+  dragHint.classList.add(
+    "hidden"
+  );
+
+
+  centreButton.classList.remove(
+    "visible"
+  );
+
+}
+
+
+function hideOverview() {
+
+  overviewMode = false;
+
+  overviewScale = 1;
+
+  offsetX = savedOffsetX;
+  offsetY = savedOffsetY;
+
+  updateBoardPosition();
+
+
+  overviewButton.textContent =
+    "See all";
+
+}
+
+
+/* =====================================================
    POINTER DOWN
    ===================================================== */
 
 viewport.addEventListener(
   "pointerdown",
   function(event) {
+
+    if (overviewMode) {
+      return;
+    }
 
     dragging = true;
 
@@ -1828,6 +1989,41 @@ viewport.addEventListener(
 
 
 /* =====================================================
+   SEE ALL
+   ===================================================== */
+
+overviewButton.addEventListener(
+  "pointerdown",
+  function(event) {
+
+    event.stopPropagation();
+
+  }
+);
+
+
+overviewButton.addEventListener(
+  "click",
+  function(event) {
+
+    event.stopPropagation();
+
+
+    if (overviewMode) {
+
+      hideOverview();
+
+    } else {
+
+      showOverview();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
    BACK TO QUEEN KIRSTY
    ===================================================== */
 
@@ -1886,7 +2082,15 @@ window.addEventListener(
 
     } else {
 
-      centreOnKirsty();
+      if (overviewMode) {
+
+        showOverview(false);
+
+      } else {
+
+        centreOnKirsty();
+
+      }
 
     }
 
