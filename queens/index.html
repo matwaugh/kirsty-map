@@ -923,23 +923,32 @@ function shuffle(array) {
   ) {
 
     const j =
-      Math.floor(
-        Math.random() * (i + 1)
-      );
+      function weightedShuffle(array) {
 
+  return array
+    .map(queen => ({
 
-    [
-      copy[i],
-      copy[j]
-    ] = [
-      copy[j],
-      copy[i]
-    ];
+      queen: queen,
 
-  }
+      /*
+        Photo cards receive four times the weighting
+        of crown-only cards, so they tend to appear
+        nearer Kirsty without being rigidly grouped.
+      */
 
+      order:
+        -Math.log(Math.random()) /
+        (queen.crownOnly ? 1 : 4)
 
-  return copy;
+    }))
+    .sort(
+      (a, b) =>
+        a.order - b.order
+    )
+    .map(
+      item =>
+        item.queen
+    );
 
 }
 
@@ -1557,7 +1566,7 @@ function buildWall() {
 
 
   const others =
-    shuffle(
+    weightedShuffle(
       queens.filter(
         queen =>
           !queen.kirsty
