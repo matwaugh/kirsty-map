@@ -221,7 +221,7 @@
     align-items: center;
     justify-content: center;
 
-    padding: 14px;
+    padding: 10px;
 
     background: var(--teal);
     color: white;
@@ -229,22 +229,22 @@
     text-align: center;
   }
 
+  /*
+     Quote size is calculated in JavaScript from the
+     actual rendered text. These values are simply
+     the maximum/fallback size.
+  */
   .queen-quote {
-    font-size: 12.5px;
-    line-height: 1.32;
+    width: 100%;
+
+    font-size: 14px;
+    line-height: 1.16;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 
-  .queen-quote.long {
-    font-size: 11px;
-    line-height: 1.28;
-  }
 
-  .queen-quote.very-long {
-    font-size: 9.8px;
-    line-height: 1.22;
-  }
-
-  
   .heart-icon {
     width: 48px;
     height: 48px;
@@ -449,21 +449,11 @@
     }
 
    .queen-back {
-  padding: 7px;
+  padding: 8px;
 }
 
 .queen-quote {
-  font-size: 11.5px;
-  line-height: 1.18;
-}
-
-.queen-quote.long {
-  font-size: 10.5px;
-  line-height: 1.16;
-}
-
-.queen-quote.very-long {
-  font-size: 9.5px;
+  font-size: 12.5px;
   line-height: 1.14;
 }
 
@@ -945,23 +935,144 @@ function weightedShuffle(array) {
 
 }
 
-function getQuoteClass(quote) {
+function fitQuote(element) {
 
-  if (!quote) {
-    return "queen-quote";
+  if (!element) {
+    return;
   }
 
 
-if (quote.length > 260) {
-  return "queen-quote very-long";
+  const back =
+    element.closest(
+      ".queen-back"
+    );
+
+
+  if (!back) {
+    return;
+  }
+
+
+  const backStyle =
+    window.getComputedStyle(
+      back
+    );
+
+
+  const availableWidth =
+    back.clientWidth -
+    parseFloat(backStyle.paddingLeft) -
+    parseFloat(backStyle.paddingRight);
+
+
+  const availableHeight =
+    back.clientHeight -
+    parseFloat(backStyle.paddingTop) -
+    parseFloat(backStyle.paddingBottom);
+
+
+  const maximumSize =
+    isMobile()
+      ? 12.5
+      : 14;
+
+
+  const preferredMinimum =
+    isMobile()
+      ? 8.5
+      : 9;
+
+
+  const absoluteMinimum =
+    7.5;
+
+
+  const lineHeight =
+    isMobile()
+      ? 1.14
+      : 1.16;
+
+
+  element.style.width =
+    `${availableWidth}px`;
+
+
+  element.style.lineHeight =
+    String(lineHeight);
+
+
+  function fitsAt(size) {
+
+    element.style.fontSize =
+      `${size}px`;
+
+
+    return (
+      element.scrollHeight <=
+        availableHeight + 0.5 &&
+      element.scrollWidth <=
+        availableWidth + 0.5
+    );
+
+  }
+
+
+  let low =
+    preferredMinimum;
+
+  let high =
+    maximumSize;
+
+
+  if (!fitsAt(low)) {
+
+    low =
+      absoluteMinimum;
+
+    high =
+      preferredMinimum;
+
+  }
+
+
+  for (
+    let i = 0;
+    i < 12;
+    i++
+  ) {
+
+    const size =
+      (low + high) / 2;
+
+
+    if (fitsAt(size)) {
+
+      low = size;
+
+    } else {
+
+      high = size;
+
+    }
+
+  }
+
+
+  element.style.fontSize =
+    `${low.toFixed(2)}px`;
+
 }
 
-if (quote.length > 180) {
-  return "queen-quote long";
-}
 
+function fitAllQuotes() {
 
-  return "queen-quote";
+  document
+    .querySelectorAll(
+      ".queen-quote"
+    )
+    .forEach(
+      fitQuote
+    );
 
 }
 
@@ -1081,20 +1192,14 @@ function createCard(queen) {
 
   if (queen.quote) {
 
-    const quoteClass =
-      getQuoteClass(
-        queen.quote
-      );
-
-
     backHTML = `
       <div class="queen-back">
 
-        <div class="${quoteClass}">
+        <div class="queen-quote">
           “${queen.quote}”
         </div>
 
-             </div>
+      </div>
     `;
 
   } else {
@@ -1586,7 +1691,18 @@ function buildWall() {
 
 
   requestAnimationFrame(
-    centreOnKirsty
+    function() {
+
+      centreOnKirsty();
+
+      /*
+        Fit every quote after the cards have been laid
+        out at their real dimensions.
+      */
+
+      fitAllQuotes();
+
+    }
   );
 
 }
@@ -2215,6 +2331,11 @@ window.addEventListener(
         centreOnKirsty();
 
       }
+
+
+      requestAnimationFrame(
+        fitAllQuotes
+      );
 
     }
 
