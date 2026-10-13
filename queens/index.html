@@ -448,24 +448,24 @@
       font-size: 11px;
     }
 
-    .queen-back {
-      padding: 9px;
-    }
+   .queen-back {
+  padding: 7px;
+}
 
-    .queen-quote {
-      font-size: 9.5px;
-      line-height: 1.2;
-    }
+.queen-quote {
+  font-size: 11.5px;
+  line-height: 1.18;
+}
 
-    .queen-quote.long {
-      font-size: 8.3px;
-      line-height: 1.16;
-    }
+.queen-quote.long {
+  font-size: 10.5px;
+  line-height: 1.16;
+}
 
-    .queen-quote.very-long {
-      font-size: 7.5px;
-      line-height: 1.13;
-    }
+.queen-quote.very-long {
+  font-size: 9.5px;
+  line-height: 1.14;
+}
 
         .crown-icon {
       width: 44px;
@@ -952,14 +952,13 @@ function getQuoteClass(quote) {
   }
 
 
-  if (quote.length > 220) {
-    return "queen-quote very-long";
-  }
+if (quote.length > 260) {
+  return "queen-quote very-long";
+}
 
-
-  if (quote.length > 135) {
-    return "queen-quote long";
-  }
+if (quote.length > 180) {
+  return "queen-quote long";
+}
 
 
   return "queen-quote";
