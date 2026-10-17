@@ -207,6 +207,30 @@
     pointer-events: none;
   }
 
+ 
+.crown-card {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.crown-name {
+  color: var(--cream);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .crown-card {
+    gap: 8px;
+  }
+
+  .crown-name {
+    font-size: 11px;
+  }
+}
+
 
   /* =====================================================
      CARD BACK
@@ -1181,15 +1205,18 @@ function createCard(queen) {
   let frontHTML = "";
 
 
-  if (queen.crownOnly) {
+  
+if (queen.crownOnly) {
 
-    frontHTML = `
-      <div class="queen-front crown-card">
-        ${crownSVG}
-      </div>
-    `;
+  frontHTML = `
+    <div class="queen-front crown-card">
+      ${crownSVG}
+      <div class="crown-name">Kirsty Queen</div>
+    </div>
+  `;
 
-  } else {
+} else {
+
 
     frontHTML = `
       <div class="queen-front photo-card">
