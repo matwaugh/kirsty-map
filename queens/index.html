@@ -981,9 +981,16 @@ let hasStartedExploring = false;
 
 function isMobile() {
 
-  return window.matchMedia(
-    "(max-width: 600px)"
-  ).matches;
+  /*
+    Use the actual Queens viewport width rather than
+    window.matchMedia(). When this page is loaded inside
+    the Carrd iframe, the browser can briefly report a
+    narrow window while Carrd is still laying the page out.
+    Measuring the rendered viewport avoids occasionally
+    building the three-row mobile wall on desktop.
+  */
+
+  return viewport.clientWidth <= 600;
 
 }
 
@@ -2378,60 +2385,147 @@ centreButton.addEventListener(
    RESIZE
    ===================================================== */
 
-let lastMobileState =
-  isMobile();
+let lastMobileState = null;
+
+let resizeTimer = null;
+
+
+function refreshLayout() {
+
+  const newMobileState =
+    isMobile();
+
+
+  /*
+    Rebuild if this is the first reliable measurement,
+    or if the actual viewport width has crossed the
+    600px desktop/mobile breakpoint.
+  */
+
+  if (
+    lastMobileState === null ||
+    newMobileState !== lastMobileState
+  ) {
+
+    lastMobileState =
+      newMobileState;
+
+
+    hasStartedExploring = false;
+
+
+    buildWall();
+
+    return;
+
+  }
+
+
+  /*
+    Same layout mode, but dimensions may have changed.
+    Re-centre or recalculate the overview and then
+    refit the quote text.
+  */
+
+  if (overviewMode) {
+
+    showOverview(false);
+
+  } else {
+
+    centreOnKirsty();
+
+  }
+
+
+  requestAnimationFrame(
+    fitAllQuotes
+  );
+
+}
 
 
 window.addEventListener(
   "resize",
   function() {
 
-    const newMobileState =
-      isMobile();
+    /*
+      Carrd can resize the iframe several times while
+      laying out the page. Debouncing prevents us from
+      rebuilding against a transient intermediate width.
+    */
+
+    clearTimeout(
+      resizeTimer
+    );
 
 
-    if (
-      newMobileState !==
-      lastMobileState
-    ) {
-
-      lastMobileState =
-        newMobileState;
-
-
-      hasStartedExploring = false;
-
-
-      buildWall();
-
-    } else {
-
-      if (overviewMode) {
-
-        showOverview(false);
-
-      } else {
-
-        centreOnKirsty();
-
-      }
-
-
-      requestAnimationFrame(
-        fitAllQuotes
+    resizeTimer =
+      setTimeout(
+        refreshLayout,
+        120
       );
-
-    }
 
   }
 );
+
+
+/*
+  ResizeObserver watches the actual Queens viewport.
+  This is more reliable than the window resize event
+  when Carrd changes the iframe dimensions.
+*/
+
+if ("ResizeObserver" in window) {
+
+  const viewportObserver =
+    new ResizeObserver(
+      function() {
+
+        clearTimeout(
+          resizeTimer
+        );
+
+
+        resizeTimer =
+          setTimeout(
+            refreshLayout,
+            120
+          );
+
+      }
+    );
+
+
+  viewportObserver.observe(
+    viewport
+  );
+
+}
 
 
 /* =====================================================
    START
    ===================================================== */
 
-buildWall();
+/*
+  Wait for Carrd/iframe layout to settle before choosing
+  desktop or mobile for the first time.
+*/
+
+requestAnimationFrame(
+  function() {
+
+    requestAnimationFrame(
+      function() {
+
+        refreshLayout();
+
+      }
+    );
+
+  }
+);
 
 </script>
 
