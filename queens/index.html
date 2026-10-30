@@ -1923,27 +1923,56 @@ function centreOnKirsty() {
 
 
 /* =====================================================
-   OVERVIEW — SCALABLE IMPERIAL CROWN
+   OVERVIEW — REFERENCE-PROPORTION CROWN
    ===================================================== */
 
 let crownOverviewCards = null;
 
 
 /*
-   The overview crown is built from two parts:
+   REFERENCE SHAPE
 
-   1. A solid, wide base/body.
-   2. Five stepped peaks:
-      - centre highest
-      - inner pair medium
-      - outer pair lower
+   This is deliberately based on the proportions of the
+   231-card crown reference:
 
-   The total occupied positions always matches the number of
-   Queens exactly, so there are no random holes in the body.
+   - 22 cards wide
+   - 6-row solid rectangular base
+   - 5 peaks above it
+   - centre peak tallest
+   - inner pair medium
+   - outer pair short
+   - very short narrow tips before the peaks widen
 
-   As the Queen count grows, the crown becomes wider and denser
-   while retaining the same overall proportions.
+   The 231-card version contains EXACTLY 231 occupied cells.
+   Larger totals scale this same mask up rather than inventing
+   taller towers.
 */
+
+const referenceCrownMask = [
+
+  "..........#...........",
+  "..........##..........",
+  ".........###..........",
+
+  ".....#...####...#.....",
+
+  "....###..####..###....",
+
+  ".#..###.######.###..#.",
+
+  "###.###.##########.###",
+
+  "######################",
+  "######################",
+
+  "######################",
+  "######################",
+  "######################",
+  "######################",
+  "######################",
+  "######################"
+
+];
 
 
 function shuffledCopy(array) {
@@ -1982,681 +2011,363 @@ function shuffledCopy(array) {
 }
 
 
-function centredRun(
-  centre,
-  width,
-  maxColumns
-) {
+function referencePositions() {
 
-  const result = [];
+  const positions = [];
 
 
-  let start =
-    Math.round(
-      centre -
-      (width - 1) / 2
+  referenceCrownMask
+    .forEach(
+      (row, rowIndex) => {
+
+        [...row].forEach(
+          (character, columnIndex) => {
+
+            if (
+              character === "#"
+            ) {
+
+              positions.push({
+
+                row: rowIndex,
+                column: columnIndex,
+
+                x:
+                  columnIndex / 21,
+
+                y:
+                  rowIndex / 14
+
+              });
+
+            }
+
+          }
+        );
+
+      }
     );
 
 
-  start =
+  return positions;
+
+}
+
+
+/*
+   The 231-card reference above is the master silhouette.
+
+   For higher totals, sample the same 22×15 silhouette onto a
+   proportionally larger grid. That makes the crown denser and
+   larger without turning the peaks into tall towers.
+*/
+
+function pointInsideReferenceCrown(
+  x,
+  y
+) {
+
+  const referenceColumn =
     Math.max(
       0,
       Math.min(
-        maxColumns - width,
-        start
+        21,
+        Math.round(
+          x * 21
+        )
       )
     );
 
 
-  for (
-    let i = 0;
-    i < width;
-    i++
-  ) {
-
-    result.push(
-      start + i
+  const referenceRow =
+    Math.max(
+      0,
+      Math.min(
+        14,
+        Math.round(
+          y * 14
+        )
+      )
     );
 
-  }
 
-
-  return result;
-
-}
-
-
-function uniqueSorted(values) {
-
-  return Array.from(
-    new Set(values)
-  ).sort(
-    (a, b) =>
-      a - b
+  return (
+    referenceCrownMask[
+      referenceRow
+    ][
+      referenceColumn
+    ] === "#"
   );
 
 }
 
 
-function trimRunSymmetrically(
-  rowColumns,
-  targetCount
+function generateReferenceCrownLayout(
+  count
 ) {
+
+  const basePositions =
+    referencePositions();
+
+
+  /*
+     At 231 use the reference literally.
+  */
 
   if (
-    targetCount >=
-    rowColumns.length
+    count === 231
   ) {
-    return rowColumns.slice();
+
+    return {
+
+      columns: 22,
+      rows: 15,
+      positions:
+        basePositions
+
+    };
+
   }
 
 
-  const remove =
-    rowColumns.length -
-    targetCount;
+  /*
+     Below 231, retain the same canvas and favour positions
+     nearest the crown's visual centre/body.
+  */
+
+  if (
+    count < 231
+  ) {
+
+    const selected =
+      basePositions
+        .slice()
+        .sort(
+          (a, b) => {
+
+            const da =
+              Math.hypot(
+                a.x - 0.5,
+                a.y - 0.66
+              );
 
 
-  const removeLeft =
-    Math.floor(
-      remove / 2
+            const db =
+              Math.hypot(
+                b.x - 0.5,
+                b.y - 0.66
+              );
+
+
+            return da - db;
+
+          }
+        )
+        .slice(
+          0,
+          count
+        );
+
+
+    return {
+
+      columns: 22,
+      rows: 15,
+      positions: selected
+
+    };
+
+  }
+
+
+  /*
+     Above 231, grow width and height together according to
+     sqrt(count), preserving approximately the 22:15 aspect.
+  */
+
+  const growth =
+    Math.sqrt(
+      count / 231
     );
 
 
-  return rowColumns.slice(
-    removeLeft,
-    removeLeft + targetCount
-  );
-
-}
-
-
-function buildImperialCrownCapacity(
-  columns,
-  bodyRows,
-  peakRows
-) {
-
-  const rows = [];
-
-
-  /*
-     Five peak centres.
-     The outer peaks sit near the shoulders,
-     the centre peak is dominant.
-  */
-
-  const centres = [
-    columns * 0.08,
-    columns * 0.29,
-    columns * 0.50,
-    columns * 0.71,
-    columns * 0.92
-  ];
-
-
-  /*
-     Relative peak heights.
-  */
-
-  const heights = [
+  let columns =
     Math.max(
-      3,
+      22,
       Math.round(
-        peakRows * 0.56
+        22 * growth
       )
-    ),
+    );
 
+
+  let rows =
     Math.max(
-      4,
+      15,
       Math.round(
-        peakRows * 0.78
+        15 * growth
       )
-    ),
-
-    peakRows,
-
-    Math.max(
-      4,
-      Math.round(
-        peakRows * 0.78
-      )
-    ),
-
-    Math.max(
-      3,
-      Math.round(
-        peakRows * 0.56
-      )
-    )
-  ];
+    );
 
 
-  /*
-     Upper crown.
+  while (true) {
 
-     Each peak starts narrow and widens toward the shoulder.
-     Lower peak rows overlap more, which creates arches/valleys
-     rather than five isolated towers.
-  */
-
-  for (
-    let row = 0;
-    row < peakRows;
-    row++
-  ) {
-
-    const rowColumns = [];
+    const positions = [];
 
 
     for (
-      let peak = 0;
-      peak < 5;
-      peak++
+      let row = 0;
+      row < rows;
+      row++
     ) {
 
-      const height =
-        heights[peak];
-
-
-      const peakStartRow =
-        peakRows -
-        height;
-
-
-      if (
-        row < peakStartRow
+      for (
+        let column = 0;
+        column < columns;
+        column++
       ) {
-        continue;
-      }
+
+        const x =
+          columns <= 1
+            ? 0.5
+            : column /
+              (columns - 1);
 
 
-      const localRow =
-        row -
-        peakStartRow;
+        const y =
+          rows <= 1
+            ? 0.5
+            : row /
+              (rows - 1);
 
 
-      const progress =
-        height <= 1
-          ? 1
-          : localRow /
-            (height - 1);
-
-
-      /*
-         1 card at the very tip, expanding to a broad shoulder.
-      */
-
-      let width =
-        1 +
-        Math.round(
-          progress *
-          Math.max(
-            2,
-            columns * 0.10
+        if (
+          pointInsideReferenceCrown(
+            x,
+            y
           )
-        );
+        ) {
 
+          positions.push({
 
-      /*
-         Keep the expansion stepped and visually balanced.
-      */
+            row: row,
+            column: column,
+            x: x,
+            y: y
 
-      if (
-        width > 1 &&
-        width % 2 === 0
-      ) {
-        width++;
+          });
+
+        }
+
       }
-
-
-      centredRun(
-        centres[peak],
-        width,
-        columns
-      )
-        .forEach(
-          column =>
-            rowColumns.push(
-              column
-            )
-        );
 
     }
-
-
-    rows.push(
-      uniqueSorted(
-        rowColumns
-      )
-    );
-
-  }
-
-
-  /*
-     Solid body.
-
-     Top body rows are slightly narrower, then widen into a
-     strong rectangular base. This gives the crown weight and
-     stops it looking like a collection of spires.
-  */
-
-  for (
-    let row = 0;
-    row < bodyRows;
-    row++
-  ) {
-
-    const progress =
-      bodyRows <= 1
-        ? 1
-        : row /
-          (bodyRows - 1);
-
-
-    let widthFraction;
 
 
     if (
-      progress < 0.34
+      positions.length >= count
     ) {
 
-      /*
-         Upper shoulder section.
-      */
+      let exact =
+        positions.slice();
 
-      widthFraction =
-        0.84 +
-        progress * 0.18;
-
-    } else {
 
       /*
-         Broad lower body.
+         Remove any small excess from the outer edges of the
+         lower body only. The five peaks remain untouched.
       */
 
-      widthFraction =
-        0.90 +
-        progress * 0.10;
-
-    }
-
-
-    let width =
-      Math.round(
-        columns *
-        widthFraction
-      );
-
-
-    width =
-      Math.max(
-        7,
-        Math.min(
-          columns,
-          width
-        )
-      );
-
-
-    rows.push(
-      centredRun(
-        (columns - 1) / 2,
-        width,
-        columns
-      )
-    );
-
-  }
-
-
-  return rows;
-
-}
-
-
-function countRows(rows) {
-
-  return rows.reduce(
-    (sum, row) =>
-      sum +
-      row.length,
-    0
-  );
-
-}
-
-
-function makeExactCrownRows(
-  capacityRows,
-  targetCount,
-  peakRows
-) {
-
-  const rows =
-    capacityRows.map(
-      row =>
-        row.slice()
-    );
-
-
-  let current =
-    countRows(rows);
-
-
-  /*
-     Remove excess mainly from the body, symmetrically from
-     row edges. Peak geometry is protected as much as possible.
-  */
-
-  while (
-    current >
-    targetCount
-  ) {
-
-    let changed = false;
-
-
-    for (
-      let row =
-        rows.length - 1;
-
-      row >= peakRows &&
-      current > targetCount;
-
-      row--
-    ) {
-
-      if (
-        rows[row].length <= 5
+      while (
+        exact.length > count
       ) {
-        continue;
+
+        const candidates =
+          exact
+            .map(
+              (position, index) => ({
+                position: position,
+                index: index
+              })
+            )
+            .filter(
+              item =>
+                item.position.y >= 0.60
+            )
+            .sort(
+              (a, b) => {
+
+                const edgeA =
+                  Math.abs(
+                    a.position.x -
+                    0.5
+                  );
+
+
+                const edgeB =
+                  Math.abs(
+                    b.position.x -
+                    0.5
+                  );
+
+
+                if (
+                  edgeA !== edgeB
+                ) {
+
+                  return edgeB - edgeA;
+
+                }
+
+
+                return (
+                  b.position.y -
+                  a.position.y
+                );
+
+              }
+            );
+
+
+        const removeIndex =
+          candidates.length
+            ? candidates[0].index
+            : exact.length - 1;
+
+
+        exact.splice(
+          removeIndex,
+          1
+        );
+
       }
 
 
-      rows[row] =
-        trimRunSymmetrically(
-          rows[row],
-          rows[row].length - 1
-        );
+      return {
 
+        columns: columns,
+        rows: rows,
+        positions: exact
 
-      current--;
-      changed = true;
+      };
 
     }
 
 
     /*
-       If the body cannot lose any more, trim the lowest peak
-       rows before touching the tips.
+       Add density while keeping close to the reference aspect.
     */
 
     if (
-      !changed &&
-      current > targetCount
+      columns / rows <
+      22 / 15
     ) {
 
-      for (
-        let row =
-          peakRows - 1;
+      columns++;
 
-        row >= 0 &&
-        current > targetCount;
+    } else {
 
-        row--
-      ) {
-
-        if (
-          rows[row].length <= 1
-        ) {
-          continue;
-        }
-
-
-        rows[row] =
-          trimRunSymmetrically(
-            rows[row],
-            rows[row].length - 1
-          );
-
-
-        current--;
-        changed = true;
-
-      }
+      rows++;
 
     }
-
-
-    if (!changed) {
-      break;
-    }
-
-  }
-
-
-  /*
-     If we are short, add cards back into body rows,
-     expanding outward one adjacent cell at a time.
-  */
-
-  while (
-    current <
-    targetCount
-  ) {
-
-    let changed = false;
-
-
-    for (
-      let row =
-        rows.length - 1;
-
-      row >= peakRows &&
-      current < targetCount;
-
-      row--
-    ) {
-
-      const rowColumns =
-        rows[row];
-
-
-      const first =
-        rowColumns[0];
-
-
-      const last =
-        rowColumns[
-          rowColumns.length - 1
-        ];
-
-
-      if (
-        first > 0
-      ) {
-
-        rowColumns.unshift(
-          first - 1
-        );
-
-        current++;
-        changed = true;
-
-      }
-
-
-      if (
-        current >= targetCount
-      ) {
-        break;
-      }
-
-
-      if (
-        last <
-        Math.max(
-          ...capacityRows.flat()
-        )
-      ) {
-
-        rowColumns.push(
-          last + 1
-        );
-
-        current++;
-        changed = true;
-
-      }
-
-    }
-
-
-    if (!changed) {
-      break;
-    }
-
-  }
-
-
-  return rows;
-
-}
-
-
-function generateImperialCrownLayout(
-  count
-) {
-
-  /*
-     Start with proportions chosen to resemble the reference:
-     broad base, medium overall height, substantial peaks.
-  */
-
-  let columns =
-    Math.max(
-      23,
-      Math.ceil(
-        Math.sqrt(
-          count * 2.35
-        )
-      )
-    );
-
-
-  if (
-    columns % 2 === 0
-  ) {
-    columns++;
-  }
-
-
-  while (true) {
-
-    const peakRows =
-      Math.max(
-        7,
-        Math.round(
-          columns * 0.36
-        )
-      );
-
-
-    const bodyRows =
-      Math.max(
-        6,
-        Math.round(
-          columns * 0.28
-        )
-      );
-
-
-    const capacityRows =
-      buildImperialCrownCapacity(
-        columns,
-        bodyRows,
-        peakRows
-      );
-
-
-    const capacity =
-      countRows(
-        capacityRows
-      );
-
-
-    if (
-      capacity >= count
-    ) {
-
-      const exactRows =
-        makeExactCrownRows(
-          capacityRows,
-          count,
-          peakRows
-        );
-
-
-      if (
-        countRows(
-          exactRows
-        ) === count
-      ) {
-
-        const positions = [];
-
-
-        exactRows.forEach(
-          (rowColumns, row) => {
-
-            rowColumns.forEach(
-              column => {
-
-                positions.push({
-
-                  row: row,
-                  column: column,
-
-                  x:
-                    columns <= 1
-                      ? 0.5
-                      : column /
-                        (columns - 1),
-
-                  y:
-                    exactRows.length <= 1
-                      ? 0.5
-                      : row /
-                        (
-                          exactRows.length -
-                          1
-                        )
-
-                });
-
-              }
-            );
-
-          }
-        );
-
-
-        return {
-
-          columns: columns,
-          rows:
-            exactRows.length,
-          positions: positions
-
-        };
-
-      }
-
-    }
-
-
-    columns += 2;
 
   }
 
@@ -2666,10 +2377,6 @@ function generateImperialCrownLayout(
 function distanceFromKirstyPosition(
   position
 ) {
-
-  /*
-     Kirsty sits centrally within the solid crown body.
-  */
 
   const kirstyX = 0.5;
   const kirstyY = 0.70;
@@ -2758,14 +2465,10 @@ function arrangeCrownOverview() {
 
 
   const layout =
-    generateImperialCrownLayout(
+    generateReferenceCrownLayout(
       cardCount
     );
 
-
-  /*
-     Sort by closeness to Kirsty.
-  */
 
   const positionsByDistance =
     layout.positions
@@ -2782,11 +2485,7 @@ function arrangeCrownOverview() {
 
 
   /*
-     Photographed Queens should TEND to cluster near Kirsty,
-     but not form a rigid square.
-
-     We therefore choose them from a pool around Kirsty that
-     is larger than the photo count, then shuffle within it.
+     Photos still tend to cluster near Kirsty.
   */
 
   const photoCount =
@@ -2892,11 +2591,6 @@ function arrangeCrownOverview() {
       }
     );
 
-
-  /*
-     Rebuild as a sparse explicit CSS grid.
-     The occupied cells themselves form the crown.
-  */
 
   board.innerHTML = "";
 
@@ -3105,11 +2799,6 @@ function hideOverview() {
 
   crownOverviewCards = null;
 
-
-  /*
-     Rebuild the normal explore wall so all normal
-     desktop/mobile grid rules are restored.
-  */
 
   buildWall();
 
