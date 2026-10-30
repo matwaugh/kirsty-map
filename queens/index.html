@@ -1923,148 +1923,152 @@ function centreOnKirsty() {
 
 
 /* =====================================================
-   OVERVIEW — SCALABLE CROWN
+   OVERVIEW — SCALABLE FILLED CROWN
    ===================================================== */
 
 let crownOverviewCards = null;
 
 
 /*
-   Crown silhouette in normalised 0–1 coordinates.
+   Build an exact-count crown.
 
-   The top edge has five points and four valleys.
-   The sides taper very slightly, and the lower section
-   forms a solid band so the shape reads clearly as a crown.
+   The crown is made row by row so there are NO unused
+   positions inside the occupied silhouette.
 
-   These proportions stay the same as the Queen count grows.
+   Upper rows form five deliberate peaks.
+   Lower rows form a solid, slightly flared crown body.
+
+   As the number of Queens grows, the crown automatically
+   gains columns/rows while keeping the same overall shape.
 */
 
-function crownTopY(x) {
+function distributeInteger(total, weights) {
 
-  const peaks = [
-    { x: 0.06, y: 0.28 },
-    { x: 0.28, y: 0.10 },
-    { x: 0.50, y: 0.02 },
-    { x: 0.72, y: 0.10 },
-    { x: 0.94, y: 0.28 }
-  ];
-
-  const valleys = [
-    { x: 0.00, y: 0.34 },
-    { x: 0.17, y: 0.48 },
-    { x: 0.39, y: 0.43 },
-    { x: 0.61, y: 0.43 },
-    { x: 0.83, y: 0.48 },
-    { x: 1.00, y: 0.34 }
-  ];
+  const weightTotal =
+    weights.reduce(
+      (sum, value) =>
+        sum + value,
+      0
+    );
 
 
-  const points = [
-    valleys[0],
-    peaks[0],
-    valleys[1],
-    peaks[1],
-    valleys[2],
-    peaks[2],
-    valleys[3],
-    peaks[3],
-    valleys[4],
-    peaks[4],
-    valleys[5]
-  ];
+  const raw =
+    weights.map(
+      value =>
+        total *
+        value /
+        weightTotal
+    );
+
+
+  const result =
+    raw.map(
+      value =>
+        Math.floor(value)
+    );
+
+
+  let remaining =
+    total -
+    result.reduce(
+      (sum, value) =>
+        sum + value,
+      0
+    );
+
+
+  const order =
+    raw
+      .map(
+        (value, index) => ({
+          index: index,
+          fraction:
+            value -
+            Math.floor(value)
+        })
+      )
+      .sort(
+        (a, b) =>
+          b.fraction -
+          a.fraction
+      );
+
+
+  let pointer = 0;
+
+
+  while (remaining > 0) {
+
+    result[
+      order[pointer % order.length].index
+    ]++;
+
+    pointer++;
+    remaining--;
+
+  }
+
+
+  return result;
+
+}
+
+
+function centredColumns(
+  centre,
+  count,
+  maxColumns
+) {
+
+  const columns = [];
+
+  let left =
+    Math.round(
+      centre -
+      (count - 1) / 2
+    );
+
+
+  left =
+    Math.max(
+      0,
+      Math.min(
+        maxColumns - count,
+        left
+      )
+    );
 
 
   for (
     let i = 0;
-    i < points.length - 1;
+    i < count;
     i++
   ) {
 
-    const a = points[i];
-    const b = points[i + 1];
-
-    if (
-      x >= a.x &&
-      x <= b.x
-    ) {
-
-      const t =
-        (x - a.x) /
-        (b.x - a.x);
-
-      return (
-        a.y +
-        (b.y - a.y) * t
-      );
-
-    }
+    columns.push(
+      left + i
+    );
 
   }
 
-  return 0.34;
+
+  return columns;
 
 }
 
 
-function crownSideInset(y) {
+function generateFilledCrownLayout(count) {
 
   /*
-     Slight inward taper toward the top.
-     The broad lower band remains strong and crown-like.
+     Choose overall density from the Queen count.
+
+     Around 231 Queens this produces roughly a 23–25 column
+     crown; near 500 it grows automatically.
   */
-
-  if (y >= 0.72) {
-    return 0.00;
-  }
-
-  const t =
-    (0.72 - y) / 0.72;
-
-  return 0.035 * t;
-
-}
-
-
-function pointInsideCrown(x, y) {
-
-  const top =
-    crownTopY(x);
-
-  if (y < top) {
-    return false;
-  }
-
-
-  const inset =
-    crownSideInset(y);
-
-
-  if (
-    x < inset ||
-    x > 1 - inset
-  ) {
-    return false;
-  }
-
-
-  return true;
-
-}
-
-
-/*
-   Build a virtual grid dense enough to hold every Queen.
-
-   We target roughly a 1.55:1 crown footprint. The algorithm
-   increases density until there are enough valid crown cells,
-   so this continues to work as the wall grows toward 500.
-*/
-
-function generateCrownLayout(count) {
 
   let columns =
     Math.max(
-      19,
+      23,
       Math.ceil(
         Math.sqrt(count * 2.45)
       )
@@ -2076,104 +2080,528 @@ function generateCrownLayout(count) {
   }
 
 
+  /*
+     Five peak centres.
+  */
+
+  const peakFractions = [
+    0.08,
+    0.29,
+    0.50,
+    0.71,
+    0.92
+  ];
+
+
+  /*
+     Try increasingly taller crowns until there is comfortably
+     enough capacity to place every Queen while retaining shape.
+  */
+
+  let rows =
+    Math.max(
+      13,
+      Math.round(
+        columns / 1.65
+      )
+    );
+
+
   while (true) {
 
-    const rows =
+    const peakRows =
       Math.max(
-        11,
+        5,
         Math.round(
-          columns / 1.55
+          rows * 0.42
         )
       );
 
 
-    const positions = [];
+    const bodyRows =
+      rows -
+      peakRows;
+
+
+    /*
+       Peak-row target widths.
+
+       Top row has just the five tips.
+       Each following row expands each peak until the forms
+       merge naturally into the body.
+    */
+
+    const peakRowPositions = [];
 
 
     for (
       let row = 0;
-      row < rows;
+      row < peakRows;
       row++
     ) {
 
-      for (
-        let column = 0;
-        column < columns;
-        column++
-      ) {
-
-        const x =
-          columns === 1
-            ? 0.5
-            : column /
-              (columns - 1);
+      const progress =
+        peakRows === 1
+          ? 1
+          : row /
+            (peakRows - 1);
 
 
-        const y =
-          rows === 1
-            ? 0.5
-            : row /
-              (rows - 1);
-
-
-        if (
-          pointInsideCrown(
-            x,
-            y
+      let perPeakWidth =
+        1 +
+        Math.floor(
+          progress *
+          Math.max(
+            2,
+            columns * 0.075
           )
-        ) {
+        );
 
-          positions.push({
 
-            row: row,
-            column: column,
-            x: x,
-            y: y
+      if (perPeakWidth % 2 === 0) {
+        perPeakWidth++;
+      }
 
-          });
+
+      const used =
+        new Set();
+
+
+      peakFractions.forEach(
+        fraction => {
+
+          const centre =
+            fraction *
+            (columns - 1);
+
+
+          centredColumns(
+            centre,
+            perPeakWidth,
+            columns
+          )
+            .forEach(
+              column =>
+                used.add(column)
+            );
 
         }
+      );
+
+
+      const sorted =
+        Array.from(used)
+          .sort(
+            (a, b) =>
+              a - b
+          );
+
+
+      peakRowPositions.push(
+        sorted
+      );
+
+    }
+
+
+    /*
+       Body rows are contiguous and solid.
+
+       They begin slightly narrower, then flare gently toward
+       the base. Every occupied body row has no holes.
+    */
+
+    const bodyRowPositions = [];
+
+
+    for (
+      let row = 0;
+      row < bodyRows;
+      row++
+    ) {
+
+      const progress =
+        bodyRows <= 1
+          ? 1
+          : row /
+            (bodyRows - 1);
+
+
+      const widthFraction =
+        0.78 +
+        progress * 0.22;
+
+
+      let width =
+        Math.max(
+          7,
+          Math.round(
+            columns *
+            widthFraction
+          )
+        );
+
+
+      if (width > columns) {
+        width = columns;
+      }
+
+
+      const centre =
+        (columns - 1) / 2;
+
+
+      bodyRowPositions.push(
+        centredColumns(
+          centre,
+          width,
+          columns
+        )
+      );
+
+    }
+
+
+    const allRows =
+      peakRowPositions.concat(
+        bodyRowPositions
+      );
+
+
+    const capacity =
+      allRows.reduce(
+        (sum, rowPositions) =>
+          sum +
+          rowPositions.length,
+        0
+      );
+
+
+    if (
+      capacity >= count
+    ) {
+
+      /*
+         Convert the row capacities into EXACT row counts.
+
+         We strongly preserve the peak rows, because they are
+         what makes the silhouette read as a crown.
+
+         Any reduction needed to hit the exact Queen count
+         comes mainly from the broad lower body rows.
+      */
+
+      const minimums =
+        allRows.map(
+          (rowPositions, index) => {
+
+            if (index < peakRows) {
+              return rowPositions.length;
+            }
+
+            return Math.min(
+              rowPositions.length,
+              Math.max(
+                5,
+                Math.round(
+                  rowPositions.length *
+                  0.70
+                )
+              )
+            );
+
+          }
+        );
+
+
+      let minimumTotal =
+        minimums.reduce(
+          (sum, value) =>
+            sum + value,
+          0
+        );
+
+
+      /*
+         If the protected minimum shape itself is too large,
+         reduce the overall crown width and retry.
+      */
+
+      if (
+        minimumTotal > count
+      ) {
+
+        columns =
+          Math.max(
+            19,
+            columns - 2
+          );
+
+        rows =
+          Math.max(
+            11,
+            Math.round(
+              columns / 1.65
+            )
+          );
+
+        continue;
+
+      }
+
+
+      const expandable =
+        allRows.map(
+          (rowPositions, index) =>
+            rowPositions.length -
+            minimums[index]
+        );
+
+
+      const extrasNeeded =
+        count -
+        minimumTotal;
+
+
+      const extraAllocation =
+        extrasNeeded > 0
+          ? distributeInteger(
+              extrasNeeded,
+              expandable.map(
+                value =>
+                  value > 0
+                    ? value
+                    : 0.0001
+              )
+            )
+          : allRows.map(
+              () => 0
+            );
+
+
+      const exactRows =
+        allRows.map(
+          (rowPositions, index) => {
+
+            const desiredCount =
+              Math.min(
+                rowPositions.length,
+                minimums[index] +
+                extraAllocation[index]
+              );
+
+
+            if (
+              desiredCount >=
+              rowPositions.length
+            ) {
+
+              return rowPositions;
+
+            }
+
+
+            /*
+               Trim symmetrically from the OUTSIDE only,
+               leaving each row solid rather than making holes.
+            */
+
+            const start =
+              Math.floor(
+                (
+                  rowPositions.length -
+                  desiredCount
+                ) / 2
+              );
+
+
+            return rowPositions.slice(
+              start,
+              start +
+              desiredCount
+            );
+
+          }
+        );
+
+
+      /*
+         Rounding can occasionally leave us a tile or two short.
+         Add those back to the broadest lower rows, still from
+         adjacent edge positions so no internal gaps appear.
+      */
+
+      let exactTotal =
+        exactRows.reduce(
+          (sum, rowPositions) =>
+            sum +
+            rowPositions.length,
+          0
+        );
+
+
+      if (
+        exactTotal < count
+      ) {
+
+        for (
+          let row =
+            exactRows.length - 1;
+
+          row >= 0 &&
+          exactTotal < count;
+
+          row--
+        ) {
+
+          const source =
+            allRows[row];
+
+
+          while (
+            exactRows[row].length <
+              source.length &&
+            exactTotal < count
+          ) {
+
+            const current =
+              exactRows[row];
+
+
+            const first =
+              current[0];
+
+
+            const last =
+              current[
+                current.length - 1
+              ];
+
+
+            const sourceFirst =
+              source[0];
+
+
+            const sourceLast =
+              source[
+                source.length - 1
+              ];
+
+
+            if (
+              first > sourceFirst
+            ) {
+
+              current.unshift(
+                first - 1
+              );
+
+              exactTotal++;
+
+            } else if (
+              last < sourceLast
+            ) {
+
+              current.push(
+                last + 1
+              );
+
+              exactTotal++;
+
+            } else {
+
+              break;
+
+            }
+
+          }
+
+        }
+
+      }
+
+
+      const positions = [];
+
+
+      exactRows.forEach(
+        (rowPositions, row) => {
+
+          rowPositions.forEach(
+            column => {
+
+              positions.push({
+
+                row: row,
+                column: column,
+
+                x:
+                  columns === 1
+                    ? 0.5
+                    : column /
+                      (columns - 1),
+
+                y:
+                  rows === 1
+                    ? 0.5
+                    : row /
+                      (rows - 1)
+
+              });
+
+            }
+          );
+
+        }
+      );
+
+
+      /*
+         Defensive final trim: only from the outermost bottom
+         positions if integer allocation ever overshoots.
+      */
+
+      while (
+        positions.length > count
+      ) {
+
+        positions.pop();
+
+      }
+
+
+      if (
+        positions.length === count
+      ) {
+
+        return {
+
+          columns: columns,
+          rows: rows,
+          positions: positions
+
+        };
 
       }
 
     }
 
 
-    if (
-      positions.length >= count
-    ) {
-
-      return {
-
-        columns: columns,
-        rows: rows,
-        positions: positions
-
-      };
-
-    }
-
-
-    columns += 2;
+    rows++;
 
   }
 
 }
 
 
-/*
-   Score positions by distance from Kirsty's intended centre
-   point. Photo Queens get the nearest positions first, while
-   crown-only placeholders fill outward from them.
-
-   A small random component stops the arrangement looking
-   mechanically concentric.
-*/
-
 function distanceFromKirstyPosition(position) {
 
+  /*
+     Kirsty sits in the central lower-middle of the crown body.
+  */
+
   const kirstyX = 0.5;
-  const kirstyY = 0.69;
+  const kirstyY = 0.68;
 
 
   return Math.hypot(
@@ -2278,8 +2706,10 @@ function buildCrownOverviewCards() {
 function arrangeCrownOverview() {
 
   if (!crownOverviewCards) {
+
     crownOverviewCards =
       buildCrownOverviewCards();
+
   }
 
 
@@ -2288,12 +2718,17 @@ function arrangeCrownOverview() {
 
 
   const layout =
-    generateCrownLayout(
+    generateFilledCrownLayout(
       cardCount
     );
 
 
-  const sortedPositions =
+  /*
+     Positions nearest Kirsty are used first for photographs.
+     This preserves the existing visual bias toward Kirsty.
+  */
+
+  const sortedByDistance =
     layout.positions
       .slice()
       .sort(
@@ -2303,35 +2738,27 @@ function arrangeCrownOverview() {
       );
 
 
-  /*
-     Put Kirsty closest to the visual centre of the crown.
-  */
-
   const kirstyPosition =
-    sortedPositions[0];
+    sortedByDistance.shift();
 
-
-  const remainingPositions =
-    sortedPositions.slice(1);
-
-
-  /*
-     Photo Queens should tend to cluster around Kirsty as before,
-     but not form one rigid block. Give them the nearer pool,
-     then shuffle within that pool.
-  */
 
   const photoCount =
     crownOverviewCards.photos.length;
 
 
+  /*
+     Use a near-centre pool larger than the photo count,
+     then shuffle it. This gives a cluster without turning
+     all the photographs into a rigid rectangular block.
+  */
+
   const nearPoolSize =
     Math.min(
-      remainingPositions.length,
+      sortedByDistance.length,
       Math.max(
         photoCount,
         Math.round(
-          photoCount * 1.75
+          photoCount * 1.65
         )
       )
     );
@@ -2339,16 +2766,16 @@ function arrangeCrownOverview() {
 
   const nearPool =
     shuffledCopy(
-      remainingPositions.slice(
+      sortedByDistance.slice(
         0,
         nearPoolSize
       )
     );
 
 
-  const farPool =
+  const outerPool =
     shuffledCopy(
-      remainingPositions.slice(
+      sortedByDistance.slice(
         nearPoolSize
       )
     );
@@ -2364,7 +2791,7 @@ function arrangeCrownOverview() {
   const crownPositions =
     shuffledCopy(
       nearPool.concat(
-        farPool
+        outerPool
       )
     );
 
@@ -2394,19 +2821,13 @@ function arrangeCrownOverview() {
     .forEach(
       (card, index) => {
 
-        if (
-          photoPositions[index]
-        ) {
+        placements.push({
 
-          placements.push({
+          card: card,
+          position:
+            photoPositions[index]
 
-            card: card,
-            position:
-              photoPositions[index]
-
-          });
-
-        }
+        });
 
       }
     );
@@ -2416,27 +2837,17 @@ function arrangeCrownOverview() {
     .forEach(
       (card, index) => {
 
-        if (
-          crownPositions[index]
-        ) {
+        placements.push({
 
-          placements.push({
+          card: card,
+          position:
+            crownPositions[index]
 
-            card: card,
-            position:
-              crownPositions[index]
-
-          });
-
-        }
+        });
 
       }
     );
 
-
-  /*
-     Rebuild the board as an explicit crown-shaped CSS grid.
-  */
 
   board.innerHTML = "";
 
@@ -2469,8 +2880,8 @@ function arrangeCrownOverview() {
 
   board.style.gap =
     isMobile()
-      ? "7px"
-      : "10px";
+      ? "6px"
+      : "9px";
 
 
   board.style.padding =
@@ -2637,11 +3048,6 @@ function hideOverview() {
 
   crownOverviewCards = null;
 
-
-  /*
-     Rebuild the normal explore wall so all of its normal
-     desktop/mobile grid rules are restored cleanly.
-  */
 
   buildWall();
 
