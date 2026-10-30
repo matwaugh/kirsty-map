@@ -1923,43 +1923,592 @@ function centreOnKirsty() {
 
 
 /* =====================================================
-   OVERVIEW
+   OVERVIEW — SCALABLE CROWN
    ===================================================== */
 
-function showOverview(savePosition = true) {
+let crownOverviewCards = null;
 
-  if (savePosition) {
-    savedOffsetX = offsetX;
-    savedOffsetY = offsetY;
+
+/*
+   Crown silhouette in normalised 0–1 coordinates.
+
+   The top edge has five points and four valleys.
+   The sides taper very slightly, and the lower section
+   forms a solid band so the shape reads clearly as a crown.
+
+   These proportions stay the same as the Queen count grows.
+*/
+
+function crownTopY(x) {
+
+  const peaks = [
+    { x: 0.06, y: 0.28 },
+    { x: 0.28, y: 0.10 },
+    { x: 0.50, y: 0.02 },
+    { x: 0.72, y: 0.10 },
+    { x: 0.94, y: 0.28 }
+  ];
+
+  const valleys = [
+    { x: 0.00, y: 0.34 },
+    { x: 0.17, y: 0.48 },
+    { x: 0.39, y: 0.43 },
+    { x: 0.61, y: 0.43 },
+    { x: 0.83, y: 0.48 },
+    { x: 1.00, y: 0.34 }
+  ];
+
+
+  const points = [
+    valleys[0],
+    peaks[0],
+    valleys[1],
+    peaks[1],
+    valleys[2],
+    peaks[2],
+    valleys[3],
+    peaks[3],
+    valleys[4],
+    peaks[4],
+    valleys[5]
+  ];
+
+
+  for (
+    let i = 0;
+    i < points.length - 1;
+    i++
+  ) {
+
+    const a = points[i];
+    const b = points[i + 1];
+
+    if (
+      x >= a.x &&
+      x <= b.x
+    ) {
+
+      const t =
+        (x - a.x) /
+        (b.x - a.x);
+
+      return (
+        a.y +
+        (b.y - a.y) * t
+      );
+
+    }
+
+  }
+
+  return 0.34;
+
+}
+
+
+function crownSideInset(y) {
+
+  /*
+     Slight inward taper toward the top.
+     The broad lower band remains strong and crown-like.
+  */
+
+  if (y >= 0.72) {
+    return 0.00;
+  }
+
+  const t =
+    (0.72 - y) / 0.72;
+
+  return 0.035 * t;
+
+}
+
+
+function pointInsideCrown(x, y) {
+
+  const top =
+    crownTopY(x);
+
+  if (y < top) {
+    return false;
   }
 
 
-  overviewMode = true;
+  const inset =
+    crownSideInset(y);
 
 
-  viewport.classList.add(
-    "overview-active"
+  if (
+    x < inset ||
+    x > 1 - inset
+  ) {
+    return false;
+  }
+
+
+  return true;
+
+}
+
+
+/*
+   Build a virtual grid dense enough to hold every Queen.
+
+   We target roughly a 1.55:1 crown footprint. The algorithm
+   increases density until there are enough valid crown cells,
+   so this continues to work as the wall grows toward 500.
+*/
+
+function generateCrownLayout(count) {
+
+  let columns =
+    Math.max(
+      19,
+      Math.ceil(
+        Math.sqrt(count * 2.45)
+      )
+    );
+
+
+  if (columns % 2 === 0) {
+    columns++;
+  }
+
+
+  while (true) {
+
+    const rows =
+      Math.max(
+        11,
+        Math.round(
+          columns / 1.55
+        )
+      );
+
+
+    const positions = [];
+
+
+    for (
+      let row = 0;
+      row < rows;
+      row++
+    ) {
+
+      for (
+        let column = 0;
+        column < columns;
+        column++
+      ) {
+
+        const x =
+          columns === 1
+            ? 0.5
+            : column /
+              (columns - 1);
+
+
+        const y =
+          rows === 1
+            ? 0.5
+            : row /
+              (rows - 1);
+
+
+        if (
+          pointInsideCrown(
+            x,
+            y
+          )
+        ) {
+
+          positions.push({
+
+            row: row,
+            column: column,
+            x: x,
+            y: y
+
+          });
+
+        }
+
+      }
+
+    }
+
+
+    if (
+      positions.length >= count
+    ) {
+
+      return {
+
+        columns: columns,
+        rows: rows,
+        positions: positions
+
+      };
+
+    }
+
+
+    columns += 2;
+
+  }
+
+}
+
+
+/*
+   Score positions by distance from Kirsty's intended centre
+   point. Photo Queens get the nearest positions first, while
+   crown-only placeholders fill outward from them.
+
+   A small random component stops the arrangement looking
+   mechanically concentric.
+*/
+
+function distanceFromKirstyPosition(position) {
+
+  const kirstyX = 0.5;
+  const kirstyY = 0.69;
+
+
+  return Math.hypot(
+    (position.x - kirstyX) * 1.08,
+    (position.y - kirstyY)
+  );
+
+}
+
+
+function shuffledCopy(array) {
+
+  const result =
+    array.slice();
+
+
+  for (
+    let i = result.length - 1;
+    i > 0;
+    i--
+  ) {
+
+    const j =
+      Math.floor(
+        Math.random() *
+        (i + 1)
+      );
+
+
+    const temp =
+      result[i];
+
+    result[i] =
+      result[j];
+
+    result[j] =
+      temp;
+
+  }
+
+
+  return result;
+
+}
+
+
+function buildCrownOverviewCards() {
+
+  const cards =
+    Array.from(
+      board.querySelectorAll(
+        ".queen-card"
+      )
+    );
+
+
+  const kirstyCard =
+    cards.find(
+      card =>
+        card.classList.contains(
+          "kirsty"
+        )
+    );
+
+
+  const photoCards =
+    shuffledCopy(
+      cards.filter(
+        card =>
+          !card.classList.contains("kirsty") &&
+          !!card.querySelector(
+            ".photo-card"
+          )
+      )
+    );
+
+
+  const crownCards =
+    shuffledCopy(
+      cards.filter(
+        card =>
+          !card.classList.contains("kirsty") &&
+          !!card.querySelector(
+            ".crown-card"
+          )
+      )
+    );
+
+
+  return {
+
+    all: cards,
+    kirsty: kirstyCard,
+    photos: photoCards,
+    crowns: crownCards
+
+  };
+
+}
+
+
+function arrangeCrownOverview() {
+
+  if (!crownOverviewCards) {
+    crownOverviewCards =
+      buildCrownOverviewCards();
+  }
+
+
+  const cardCount =
+    crownOverviewCards.all.length;
+
+
+  const layout =
+    generateCrownLayout(
+      cardCount
+    );
+
+
+  const sortedPositions =
+    layout.positions
+      .slice()
+      .sort(
+        (a, b) =>
+          distanceFromKirstyPosition(a) -
+          distanceFromKirstyPosition(b)
+      );
+
+
+  /*
+     Put Kirsty closest to the visual centre of the crown.
+  */
+
+  const kirstyPosition =
+    sortedPositions[0];
+
+
+  const remainingPositions =
+    sortedPositions.slice(1);
+
+
+  /*
+     Photo Queens should tend to cluster around Kirsty as before,
+     but not form one rigid block. Give them the nearer pool,
+     then shuffle within that pool.
+  */
+
+  const photoCount =
+    crownOverviewCards.photos.length;
+
+
+  const nearPoolSize =
+    Math.min(
+      remainingPositions.length,
+      Math.max(
+        photoCount,
+        Math.round(
+          photoCount * 1.75
+        )
+      )
+    );
+
+
+  const nearPool =
+    shuffledCopy(
+      remainingPositions.slice(
+        0,
+        nearPoolSize
+      )
+    );
+
+
+  const farPool =
+    shuffledCopy(
+      remainingPositions.slice(
+        nearPoolSize
+      )
+    );
+
+
+  const photoPositions =
+    nearPool.splice(
+      0,
+      photoCount
+    );
+
+
+  const crownPositions =
+    shuffledCopy(
+      nearPool.concat(
+        farPool
+      )
+    );
+
+
+  const placements = [];
+
+
+  if (
+    crownOverviewCards.kirsty &&
+    kirstyPosition
+  ) {
+
+    placements.push({
+
+      card:
+        crownOverviewCards.kirsty,
+
+      position:
+        kirstyPosition
+
+    });
+
+  }
+
+
+  crownOverviewCards.photos
+    .forEach(
+      (card, index) => {
+
+        if (
+          photoPositions[index]
+        ) {
+
+          placements.push({
+
+            card: card,
+            position:
+              photoPositions[index]
+
+          });
+
+        }
+
+      }
+    );
+
+
+  crownOverviewCards.crowns
+    .forEach(
+      (card, index) => {
+
+        if (
+          crownPositions[index]
+        ) {
+
+          placements.push({
+
+            card: card,
+            position:
+              crownPositions[index]
+
+          });
+
+        }
+
+      }
+    );
+
+
+  /*
+     Rebuild the board as an explicit crown-shaped CSS grid.
+  */
+
+  board.innerHTML = "";
+
+
+  board.style.setProperty(
+    "--columns",
+    layout.columns
   );
 
 
-  /*
-    On mobile, turn the long three-row wall
-    into a compact overview grid.
-  */
-
-  if (isMobile()) {
-
-    board.classList.add(
-      "overview-grid"
-    );
-
-  }
+  board.style.gridTemplateColumns =
+    `repeat(${layout.columns}, ${isMobile() ? 100 : 125}px)`;
 
 
-  /*
-    Wait a frame so the browser has applied
-    the new mobile grid before measuring it.
-  */
+  board.style.gridTemplateRows =
+    `repeat(${layout.rows}, ${isMobile() ? 135 : 180}px)`;
+
+
+  board.style.gridAutoFlow =
+    "row";
+
+
+  board.style.gridAutoColumns =
+    "initial";
+
+
+  board.style.gridAutoRows =
+    "initial";
+
+
+  board.style.gap =
+    isMobile()
+      ? "7px"
+      : "10px";
+
+
+  board.style.padding =
+    isMobile()
+      ? "8px"
+      : "12px";
+
+
+  placements.forEach(
+    item => {
+
+      const card =
+        item.card;
+
+
+      card.style.gridColumn =
+        String(
+          item.position.column + 1
+        );
+
+
+      card.style.gridRow =
+        String(
+          item.position.row + 1
+        );
+
+
+      board.appendChild(
+        card
+      );
+
+    }
+  );
+
+
+  centreCard =
+    crownOverviewCards.kirsty;
+
 
   requestAnimationFrame(
     function() {
@@ -1980,7 +2529,10 @@ function showOverview(savePosition = true) {
         board.scrollHeight;
 
 
-      const padding = 20;
+      const padding =
+        isMobile()
+          ? 12
+          : 20;
 
 
       overviewScale =
@@ -1998,14 +2550,16 @@ function showOverview(savePosition = true) {
       offsetX =
         (
           viewportWidth -
-          boardWidth * overviewScale
+          boardWidth *
+          overviewScale
         ) / 2;
 
 
       offsetY =
         (
           viewportHeight -
-          boardHeight * overviewScale
+          boardHeight *
+          overviewScale
         ) / 2;
 
 
@@ -2013,6 +2567,41 @@ function showOverview(savePosition = true) {
 
     }
   );
+
+}
+
+
+function showOverview(savePosition = true) {
+
+  if (savePosition) {
+
+    savedOffsetX =
+      offsetX;
+
+    savedOffsetY =
+      offsetY;
+
+  }
+
+
+  overviewMode = true;
+
+
+  viewport.classList.add(
+    "overview-active"
+  );
+
+
+  board.classList.remove(
+    "overview-grid"
+  );
+
+
+  crownOverviewCards =
+    buildCrownOverviewCards();
+
+
+  arrangeCrownOverview();
 
 
   overviewButton.textContent =
@@ -2046,31 +2635,49 @@ function hideOverview() {
   );
 
 
-  board.classList.remove(
-    "overview-grid"
-  );
+  crownOverviewCards = null;
 
 
-  overviewScale = 1;
+  /*
+     Rebuild the normal explore wall so all of its normal
+     desktop/mobile grid rules are restored cleanly.
+  */
 
-  offsetX = savedOffsetX;
-  offsetY = savedOffsetY;
-
-
-  updateBoardPosition();
-
-
-  overviewButton.textContent =
-    "See all";
+  buildWall();
 
 
-  overviewButton.classList.add(
-    "visible"
-  );
+  requestAnimationFrame(
+    function() {
+
+      offsetX =
+        savedOffsetX;
+
+      offsetY =
+        savedOffsetY;
 
 
-  centreButton.classList.add(
-    "visible"
+      updateBoardPosition();
+
+
+      overviewButton.textContent =
+        "See all";
+
+
+      overviewButton.classList.add(
+        "visible"
+      );
+
+
+      centreButton.classList.add(
+        "visible"
+      );
+
+
+      dragHint.classList.add(
+        "hidden"
+      );
+
+    }
   );
 
 }
@@ -2493,7 +3100,7 @@ function refreshLayout() {
 
   if (overviewMode) {
 
-    showOverview(false);
+    arrangeCrownOverview();
 
   } else {
 
