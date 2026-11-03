@@ -1344,6 +1344,10 @@ function createCard(queen) {
     );
 
 
+  card.dataset.queenId =
+    queen.id;
+
+
   let frontHTML = "";
 
 
@@ -1968,6 +1972,8 @@ function centreOnKirsty() {
    ===================================================== */
 
 let crownOverviewCards = null;
+
+let normalLayoutSnapshot = null;
 
 
 /*
@@ -2702,6 +2708,211 @@ function buildCrownOverviewCards() {
 }
 
 
+
+function saveNormalLayoutSnapshot() {
+
+  const children =
+    Array.from(
+      board.children
+    );
+
+  const cardGridStyles =
+    new Map();
+
+  children.forEach(
+    child => {
+
+      if (
+        child.classList &&
+        child.classList.contains(
+          "queen-card"
+        )
+      ) {
+
+        cardGridStyles.set(
+          child,
+          {
+            gridColumn:
+              child.style.gridColumn,
+            gridRow:
+              child.style.gridRow
+          }
+        );
+
+      }
+
+    }
+  );
+
+  normalLayoutSnapshot = {
+
+    children: children,
+
+    cardGridStyles:
+      cardGridStyles,
+
+    boardStyles: {
+
+      columns:
+        board.style.getPropertyValue(
+          "--columns"
+        ),
+
+      gridTemplateColumns:
+        board.style.gridTemplateColumns,
+
+      gridTemplateRows:
+        board.style.gridTemplateRows,
+
+      gridAutoFlow:
+        board.style.gridAutoFlow,
+
+      gridAutoColumns:
+        board.style.gridAutoColumns,
+
+      gridAutoRows:
+        board.style.gridAutoRows,
+
+      gap:
+        board.style.gap,
+
+      padding:
+        board.style.padding
+
+    }
+
+  };
+
+}
+
+
+function restoreNormalLayoutSnapshot() {
+
+  if (!normalLayoutSnapshot) {
+    return false;
+  }
+
+  board.innerHTML = "";
+
+  const styles =
+    normalLayoutSnapshot.boardStyles;
+
+  board.style.setProperty(
+    "--columns",
+    styles.columns
+  );
+
+  board.style.gridTemplateColumns =
+    styles.gridTemplateColumns;
+
+  board.style.gridTemplateRows =
+    styles.gridTemplateRows;
+
+  board.style.gridAutoFlow =
+    styles.gridAutoFlow;
+
+  board.style.gridAutoColumns =
+    styles.gridAutoColumns;
+
+  board.style.gridAutoRows =
+    styles.gridAutoRows;
+
+  board.style.gap =
+    styles.gap;
+
+  board.style.padding =
+    styles.padding;
+
+  normalLayoutSnapshot.children
+    .forEach(
+      child => {
+
+        if (
+          child.classList &&
+          child.classList.contains(
+            "queen-card"
+          )
+        ) {
+
+          const saved =
+            normalLayoutSnapshot
+              .cardGridStyles
+              .get(
+                child
+              );
+
+          child.style.gridColumn =
+            saved
+              ? saved.gridColumn
+              : "";
+
+          child.style.gridRow =
+            saved
+              ? saved.gridRow
+              : "";
+
+        }
+
+        board.appendChild(
+          child
+        );
+
+      }
+    );
+
+  centreCard =
+    board.querySelector(
+      ".queen-card.kirsty"
+    );
+
+  return true;
+
+}
+
+
+function centreOnCard(
+  card
+) {
+
+  if (
+    !card ||
+    !board.contains(card)
+  ) {
+    return false;
+  }
+
+  const viewportRect =
+    viewport.getBoundingClientRect();
+
+  overviewScale = 1;
+
+  board.style.transform =
+    "translate(0px,0px) scale(1)";
+
+  const cardRect =
+    card.getBoundingClientRect();
+
+  offsetX =
+    viewportRect.width / 2 -
+    (
+      cardRect.left +
+      cardRect.width / 2
+    );
+
+  offsetY =
+    viewportRect.height / 2 -
+    (
+      cardRect.top +
+      cardRect.height / 2
+    );
+
+  updateBoardPosition();
+
+  return true;
+
+}
+
+
 function arrangeCrownOverview() {
 
   if (!crownOverviewCards) {
@@ -3036,6 +3247,9 @@ function showOverview(
   );
 
 
+  saveNormalLayoutSnapshot();
+
+
   crownOverviewCards =
     buildCrownOverviewCards();
 
@@ -3064,51 +3278,81 @@ function showOverview(
 }
 
 
-function hideOverview() {
+function hideOverview(
+  targetCard = null
+) {
 
   overviewMode = false;
-
 
   viewport.classList.remove(
     "overview-active"
   );
 
+  const restored =
+    restoreNormalLayoutSnapshot();
 
   crownOverviewCards = null;
 
-
-  buildWall();
-
+  overviewScale = 1;
 
   requestAnimationFrame(
     function() {
 
-      offsetX =
-        savedOffsetX;
+      let centredOnTarget =
+        false;
 
-      offsetY =
-        savedOffsetY;
+      if (
+        restored &&
+        targetCard &&
+        board.contains(
+          targetCard
+        )
+      ) {
 
+        centredOnTarget =
+          centreOnCard(
+            targetCard
+          );
 
-      updateBoardPosition();
+      }
 
+      if (
+        !centredOnTarget
+      ) {
+
+        offsetX =
+          savedOffsetX;
+
+        offsetY =
+          savedOffsetY;
+
+        updateBoardPosition();
+
+      }
 
       overviewButton.textContent =
         "See all";
-
 
       overviewButton.classList.add(
         "visible"
       );
 
-
       centreButton.classList.add(
         "visible"
       );
 
-
       dragHint.classList.add(
         "hidden"
+      );
+
+      hasStartedExploring =
+        true;
+
+      normalLayoutSnapshot =
+        null;
+
+      requestAnimationFrame(
+        fitAllQuotes
       );
 
     }
