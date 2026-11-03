@@ -1344,10 +1344,6 @@ function createCard(queen) {
     );
 
 
-  card.dataset.queenId =
-    queen.id;
-
-
   let frontHTML = "";
 
 
@@ -1862,29 +1858,232 @@ function buildWall() {
 
 
   const others =
-    weightedShuffle(
-      queens.filter(
+    queens.filter(
+      queen =>
+        !queen.kirsty
+    );
+
+
+  /*
+     The crown is now the ACTUAL explore wall.
+
+     "See all" never rearranges the cards. It only scales this
+     same crown down to fit the viewport. Therefore every card
+     has the same neighbours in close-up and in overview.
+  */
+
+  const layout =
+    generateSymmetricalCrownLayout(
+      queens.length
+    );
+
+
+  const positionsByDistance =
+    layout.positions
+      .slice()
+      .sort(
+        (a, b) =>
+          distanceFromKirstyPosition(a) -
+          distanceFromKirstyPosition(b)
+      );
+
+
+  const kirstyPosition =
+    positionsByDistance.find(
+      position =>
+        Math.abs(
+          position.x - 0.5
+        ) < 0.0001
+    ) ||
+    positionsByDistance[0];
+
+
+  const remainingPositions =
+    positionsByDistance.filter(
+      position =>
+        !(
+          position.row === kirstyPosition.row &&
+          position.column === kirstyPosition.column
+        )
+    );
+
+
+  const photoQueens =
+    shuffledCopy(
+      others.filter(
         queen =>
-          !queen.kirsty
+          !queen.crownOnly
       )
     );
 
 
-  if (isMobile()) {
-
-    buildMobileWall(
-      kirsty,
-      others
+  const crownQueens =
+    shuffledCopy(
+      others.filter(
+        queen =>
+          queen.crownOnly
+      )
     );
 
-  } else {
 
-    buildDesktopWall(
-      kirsty,
-      others
+  const nearPoolSize =
+    Math.min(
+      remainingPositions.length,
+      Math.max(
+        photoQueens.length,
+        Math.round(
+          photoQueens.length * 1.75
+        )
+      )
     );
+
+
+  const nearPool =
+    shuffledCopy(
+      remainingPositions.slice(
+        0,
+        nearPoolSize
+      )
+    );
+
+
+  const outerPool =
+    shuffledCopy(
+      remainingPositions.slice(
+        nearPoolSize
+      )
+    );
+
+
+  const photoPositions =
+    nearPool.splice(
+      0,
+      photoQueens.length
+    );
+
+
+  const crownPositions =
+    shuffledCopy(
+      nearPool.concat(
+        outerPool
+      )
+    );
+
+
+  board.style.setProperty(
+    "--columns",
+    layout.columns
+  );
+
+
+  board.style.gridTemplateColumns =
+    `repeat(${layout.columns}, ${isMobile() ? 100 : 125}px)`;
+
+
+  board.style.gridTemplateRows =
+    `repeat(${layout.rows}, ${isMobile() ? 135 : 180}px)`;
+
+
+  board.style.gridAutoFlow =
+    "row";
+
+
+  board.style.gridAutoColumns =
+    "initial";
+
+
+  board.style.gridAutoRows =
+    "initial";
+
+
+  board.style.gap =
+    isMobile()
+      ? "6px"
+      : "9px";
+
+
+  board.style.padding =
+    isMobile()
+      ? "8px"
+      : "12px";
+
+
+  function placeQueen(
+    queen,
+    position
+  ) {
+
+    if (
+      !queen ||
+      !position
+    ) {
+      return;
+    }
+
+
+    const card =
+      createCard(
+        queen
+      );
+
+
+    card.style.gridColumn =
+      String(
+        position.column + 1
+      );
+
+
+    card.style.gridRow =
+      String(
+        position.row + 1
+      );
+
+
+    board.appendChild(
+      card
+    );
+
+
+    if (
+      queen.kirsty
+    ) {
+
+      centreCard =
+        card;
+
+    }
 
   }
+
+
+  placeQueen(
+    kirsty,
+    kirstyPosition
+  );
+
+
+  photoQueens.forEach(
+    (queen, index) => {
+
+      placeQueen(
+        queen,
+        photoPositions[index]
+      );
+
+    }
+  );
+
+
+  crownQueens.forEach(
+    (queen, index) => {
+
+      placeQueen(
+        queen,
+        crownPositions[index]
+      );
+
+    }
+  );
 
 
   showHomeState();
@@ -1894,11 +2093,6 @@ function buildWall() {
     function() {
 
       centreOnKirsty();
-
-      /*
-        Fit every quote after the cards have been laid
-        out at their real dimensions.
-      */
 
       fitAllQuotes();
 
@@ -1972,8 +2166,6 @@ function centreOnKirsty() {
    ===================================================== */
 
 let crownOverviewCards = null;
-
-let normalLayoutSnapshot = null;
 
 
 /*
@@ -2653,504 +2845,37 @@ function distanceFromKirstyPosition(
 }
 
 
-function buildCrownOverviewCards() {
+/* =====================================================
+   SEE ALL / ZOOM
+   ===================================================== */
 
-  const cards =
-    Array.from(
-      board.querySelectorAll(
-        ".queen-card"
-      )
-    );
-
-
-  const kirstyCard =
-    cards.find(
-      card =>
-        card.classList.contains(
-          "kirsty"
-        )
-    );
-
-
-  const photoCards =
-    shuffledCopy(
-      cards.filter(
-        card =>
-          !card.classList.contains("kirsty") &&
-          !!card.querySelector(
-            ".photo-card"
-          )
-      )
-    );
-
-
-  const crownCards =
-    shuffledCopy(
-      cards.filter(
-        card =>
-          !card.classList.contains("kirsty") &&
-          !!card.querySelector(
-            ".crown-card"
-          )
-      )
-    );
-
-
-  return {
-
-    all: cards,
-    kirsty: kirstyCard,
-    photos: photoCards,
-    crowns: crownCards
-
-  };
-
-}
-
-
-
-function saveNormalLayoutSnapshot() {
-
-  const children =
-    Array.from(
-      board.children
-    );
-
-  const cardGridStyles =
-    new Map();
-
-  children.forEach(
-    child => {
-
-      if (
-        child.classList &&
-        child.classList.contains(
-          "queen-card"
-        )
-      ) {
-
-        cardGridStyles.set(
-          child,
-          {
-            gridColumn:
-              child.style.gridColumn,
-            gridRow:
-              child.style.gridRow
-          }
-        );
-
-      }
-
-    }
-  );
-
-  normalLayoutSnapshot = {
-
-    children: children,
-
-    cardGridStyles:
-      cardGridStyles,
-
-    boardStyles: {
-
-      columns:
-        board.style.getPropertyValue(
-          "--columns"
-        ),
-
-      gridTemplateColumns:
-        board.style.gridTemplateColumns,
-
-      gridTemplateRows:
-        board.style.gridTemplateRows,
-
-      gridAutoFlow:
-        board.style.gridAutoFlow,
-
-      gridAutoColumns:
-        board.style.gridAutoColumns,
-
-      gridAutoRows:
-        board.style.gridAutoRows,
-
-      gap:
-        board.style.gap,
-
-      padding:
-        board.style.padding
-
-    }
-
-  };
-
-}
-
-
-function restoreNormalLayoutSnapshot() {
-
-  if (!normalLayoutSnapshot) {
-    return false;
-  }
-
-  board.innerHTML = "";
-
-  const styles =
-    normalLayoutSnapshot.boardStyles;
-
-  board.style.setProperty(
-    "--columns",
-    styles.columns
-  );
-
-  board.style.gridTemplateColumns =
-    styles.gridTemplateColumns;
-
-  board.style.gridTemplateRows =
-    styles.gridTemplateRows;
-
-  board.style.gridAutoFlow =
-    styles.gridAutoFlow;
-
-  board.style.gridAutoColumns =
-    styles.gridAutoColumns;
-
-  board.style.gridAutoRows =
-    styles.gridAutoRows;
-
-  board.style.gap =
-    styles.gap;
-
-  board.style.padding =
-    styles.padding;
-
-  normalLayoutSnapshot.children
-    .forEach(
-      child => {
-
-        if (
-          child.classList &&
-          child.classList.contains(
-            "queen-card"
-          )
-        ) {
-
-          const saved =
-            normalLayoutSnapshot
-              .cardGridStyles
-              .get(
-                child
-              );
-
-          child.style.gridColumn =
-            saved
-              ? saved.gridColumn
-              : "";
-
-          child.style.gridRow =
-            saved
-              ? saved.gridRow
-              : "";
-
-        }
-
-        board.appendChild(
-          child
-        );
-
-      }
-    );
-
-  centreCard =
-    board.querySelector(
-      ".queen-card.kirsty"
-    );
-
-  return true;
-
-}
-
-
-function centreOnCard(
-  card
+function showOverview(
+  savePosition = true
 ) {
 
-  if (
-    !card ||
-    !board.contains(card)
-  ) {
-    return false;
-  }
+  if (savePosition) {
 
-  const viewportRect =
-    viewport.getBoundingClientRect();
+    savedOffsetX =
+      offsetX;
 
-  overviewScale = 1;
-
-  board.style.transform =
-    "translate(0px,0px) scale(1)";
-
-  const cardRect =
-    card.getBoundingClientRect();
-
-  offsetX =
-    viewportRect.width / 2 -
-    (
-      cardRect.left +
-      cardRect.width / 2
-    );
-
-  offsetY =
-    viewportRect.height / 2 -
-    (
-      cardRect.top +
-      cardRect.height / 2
-    );
-
-  updateBoardPosition();
-
-  return true;
-
-}
-
-
-function arrangeCrownOverview() {
-
-  if (!crownOverviewCards) {
-
-    crownOverviewCards =
-      buildCrownOverviewCards();
+    savedOffsetY =
+      offsetY;
 
   }
 
 
-  const cardCount =
-    crownOverviewCards.all.length;
+  overviewMode = true;
 
 
-  const layout =
-    generateSymmetricalCrownLayout(
-      cardCount
-    );
-
-
-  const positionsByDistance =
-    layout.positions
-      .slice()
-      .sort(
-        (a, b) =>
-          distanceFromKirstyPosition(a) -
-          distanceFromKirstyPosition(b)
-      );
-
-
-  /*
-     Kirsty takes the nearest centre-axis position.
-  */
-
-  const kirstyPosition =
-    positionsByDistance.find(
-      position =>
-        Math.abs(
-          position.x -
-          0.5
-        ) <
-        0.0001
-    ) ||
-    positionsByDistance[0];
-
-
-  const remainingPositions =
-    positionsByDistance.filter(
-      position =>
-        !(
-          position.row ===
-            kirstyPosition.row &&
-          position.column ===
-            kirstyPosition.column
-        )
-    );
-
-
-  /*
-     Photos still cluster near Kirsty, using a larger nearby
-     pool to avoid a rigid square block.
-  */
-
-  const photoCount =
-    crownOverviewCards.photos.length;
-
-
-  const nearPoolSize =
-    Math.min(
-      remainingPositions.length,
-
-      Math.max(
-        photoCount,
-        Math.round(
-          photoCount * 1.75
-        )
-      )
-    );
-
-
-  const nearPool =
-    shuffledCopy(
-      remainingPositions.slice(
-        0,
-        nearPoolSize
-      )
-    );
-
-
-  const outerPool =
-    shuffledCopy(
-      remainingPositions.slice(
-        nearPoolSize
-      )
-    );
-
-
-  const photoPositions =
-    nearPool.splice(
-      0,
-      photoCount
-    );
-
-
-  const crownPositions =
-    shuffledCopy(
-      nearPool.concat(
-        outerPool
-      )
-    );
-
-
-  const placements = [];
-
-
-  if (
-    crownOverviewCards.kirsty &&
-    kirstyPosition
-  ) {
-
-    placements.push({
-
-      card:
-        crownOverviewCards.kirsty,
-
-      position:
-        kirstyPosition
-
-    });
-
-  }
-
-
-  crownOverviewCards.photos
-    .forEach(
-      (card, index) => {
-
-        placements.push({
-
-          card: card,
-
-          position:
-            photoPositions[index]
-
-        });
-
-      }
-    );
-
-
-  crownOverviewCards.crowns
-    .forEach(
-      (card, index) => {
-
-        placements.push({
-
-          card: card,
-
-          position:
-            crownPositions[index]
-
-        });
-
-      }
-    );
-
-
-  board.innerHTML = "";
-
-
-  board.style.setProperty(
-    "--columns",
-    layout.columns
+  viewport.classList.add(
+    "overview-active"
   );
 
 
-  board.style.gridTemplateColumns =
-    `repeat(${layout.columns}, ${isMobile() ? 100 : 125}px)`;
-
-
-  board.style.gridTemplateRows =
-    `repeat(${layout.rows}, ${isMobile() ? 135 : 180}px)`;
-
-
-  board.style.gridAutoFlow =
-    "row";
-
-
-  board.style.gridAutoColumns =
-    "initial";
-
-
-  board.style.gridAutoRows =
-    "initial";
-
-
-  board.style.gap =
-    isMobile()
-      ? "6px"
-      : "9px";
-
-
-  board.style.padding =
-    isMobile()
-      ? "8px"
-      : "12px";
-
-
-  placements.forEach(
-    item => {
-
-      const card =
-        item.card;
-
-
-      card.style.gridColumn =
-        String(
-          item.position.column + 1
-        );
-
-
-      card.style.gridRow =
-        String(
-          item.position.row + 1
-        );
-
-
-      board.appendChild(
-        card
-      );
-
-    }
-  );
-
-
-  centreCard =
-    crownOverviewCards.kirsty;
-
+  /*
+     Same board, same cards, same crown. Only the scale and
+     translation change.
+  */
 
   requestAnimationFrame(
     function() {
@@ -3179,16 +2904,10 @@ function arrangeCrownOverview() {
 
       overviewScale =
         Math.min(
-          (
-            viewportWidth -
-            padding * 2
-          ) /
+          (viewportWidth - padding * 2) /
             boardWidth,
 
-          (
-            viewportHeight -
-            padding * 2
-          ) /
+          (viewportHeight - padding * 2) /
             boardHeight,
 
           1
@@ -3198,16 +2917,14 @@ function arrangeCrownOverview() {
       offsetX =
         (
           viewportWidth -
-          boardWidth *
-          overviewScale
+          boardWidth * overviewScale
         ) / 2;
 
 
       offsetY =
         (
           viewportHeight -
-          boardHeight *
-          overviewScale
+          boardHeight * overviewScale
         ) / 2;
 
 
@@ -3215,46 +2932,6 @@ function arrangeCrownOverview() {
 
     }
   );
-
-}
-
-
-function showOverview(
-  savePosition = true
-) {
-
-  if (savePosition) {
-
-    savedOffsetX =
-      offsetX;
-
-    savedOffsetY =
-      offsetY;
-
-  }
-
-
-  overviewMode = true;
-
-
-  viewport.classList.add(
-    "overview-active"
-  );
-
-
-  board.classList.remove(
-    "overview-grid"
-  );
-
-
-  saveNormalLayoutSnapshot();
-
-
-  crownOverviewCards =
-    buildCrownOverviewCards();
-
-
-  arrangeCrownOverview();
 
 
   overviewButton.textContent =
@@ -3278,47 +2955,86 @@ function showOverview(
 }
 
 
+function centreOnCard(
+  card
+) {
+
+  if (
+    !card ||
+    !board.contains(card)
+  ) {
+    return false;
+  }
+
+
+  const viewportRect =
+    viewport.getBoundingClientRect();
+
+
+  overviewScale = 1;
+
+
+  /* Measure the card at its real explore size. */
+  board.style.transform =
+    "translate(0px,0px) scale(1)";
+
+
+  const cardRect =
+    card.getBoundingClientRect();
+
+
+  offsetX =
+    viewportRect.width / 2 -
+    (
+      cardRect.left +
+      cardRect.width / 2
+    );
+
+
+  offsetY =
+    viewportRect.height / 2 -
+    (
+      cardRect.top +
+      cardRect.height / 2
+    );
+
+
+  updateBoardPosition();
+
+
+  return true;
+
+}
+
+
 function hideOverview(
   targetCard = null
 ) {
 
   overviewMode = false;
 
+
   viewport.classList.remove(
     "overview-active"
   );
 
-  const restored =
-    restoreNormalLayoutSnapshot();
-
-  crownOverviewCards = null;
 
   overviewScale = 1;
+
 
   requestAnimationFrame(
     function() {
 
-      let centredOnTarget =
-        false;
-
       if (
-        restored &&
         targetCard &&
-        board.contains(
+        board.contains(targetCard)
+      ) {
+
+        centreOnCard(
           targetCard
-        )
-      ) {
+        );
 
-        centredOnTarget =
-          centreOnCard(
-            targetCard
-          );
-
-      }
-
-      if (
-        !centredOnTarget
-      ) {
+      } else {
 
         offsetX =
           savedOffsetX;
@@ -3326,30 +3042,34 @@ function hideOverview(
         offsetY =
           savedOffsetY;
 
+
         updateBoardPosition();
 
       }
 
+
       overviewButton.textContent =
         "See all";
+
 
       overviewButton.classList.add(
         "visible"
       );
 
+
       centreButton.classList.add(
         "visible"
       );
+
 
       dragHint.classList.add(
         "hidden"
       );
 
+
       hasStartedExploring =
         true;
 
-      normalLayoutSnapshot =
-        null;
 
       requestAnimationFrame(
         fitAllQuotes
@@ -3361,6 +3081,9 @@ function hideOverview(
 }
 
 
+
+
+
 /* =====================================================
    POINTER DOWN
    ===================================================== */
@@ -3370,13 +3093,24 @@ viewport.addEventListener(
   function(event) {
 
     /*
-      In overview, any click/tap returns
-      to normal explore mode.
+      In overview, clicking/tapping a Queen zooms into that
+      exact Queen in the SAME crown layout.
     */
 
     if (overviewMode) {
 
-      hideOverview();
+      const clickedCard =
+        event.target
+          ? event.target.closest(
+              ".queen-card"
+            )
+          : null;
+
+
+      hideOverview(
+        clickedCard
+      );
+
 
       return;
 
@@ -3778,7 +3512,7 @@ function refreshLayout() {
 
   if (overviewMode) {
 
-    arrangeCrownOverview();
+    showOverview(false);
 
   } else {
 
